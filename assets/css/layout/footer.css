@@ -1,0 +1,10 @@
+/* Footer */
+.footer {
+  text-align: center;
+  padding: calc(var(--spacing-unit)*3) var(--spacing-unit)*2;
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
+  margin-top: auto;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
