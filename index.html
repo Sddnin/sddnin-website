@@ -1,1 +1,123 @@
-<!DOCTYPE html><html lang='vi'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Korean Study Hub</title><link rel='stylesheet' href='style.css'></head><body><header><h1>🇰🇷 Korean Study Hub</h1></header><main><h2>Chào mừng!</h2><p>Website học tiếng Hàn của bạn.</p><button>Bắt đầu học</button></main><script src='script.js'></script></body></html>
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Korean Study Hub – Premium Korean Learning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #818CF8;
+            --primary-dark: #3730A3;
+            --purple: #8B5CF6;
+            --purple-light: #A78BFA;
+            --bg: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --text: #0F172A;
+            --text-secondary: #64748B;
+            --border: #E2E8F0;
+            --shadow: 0 8px 32px rgba(79, 70, 229, 0.10);
+            --shadow-lg: 0 20px 60px rgba(79, 70, 229, 0.15);
+            --glass-bg: rgba(255, 255, 255, 0.72);
+            --glass-border: rgba(255, 255, 255, 0.40);
+            --radius: 20px;
+            --radius-sm: 12px;
+            --radius-lg: 32px;
+        }
+
+        .dark {
+            --bg: #0B1121;
+            --bg-card: #1A2332;
+            --text: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --border: #2D3A50;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.40);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.50);
+            --glass-bg: rgba(26, 35, 50, 0.72);
+            --glass-border: rgba(45, 58, 80, 0.40);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.4s ease, color 0.4s ease;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 10px;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%);
+        }
+
+        .gradient-subtle {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #4F46E5, #A78BFA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.35);
+            display: inline-flex;
+            align-items: center;
