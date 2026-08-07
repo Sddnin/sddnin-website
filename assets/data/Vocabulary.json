@@ -158,5 +158,325 @@
         "meaning": "Thú vị",
         "example": "이 책이 재미있어요.",
         "level": "TOPIK 1"
+    },
+    {
+        "id": 21,
+        "korean": "가다",
+        "romanization": "gada",
+        "meaning": "Đi",
+        "example": "집에 가요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 22,
+        "korean": "오다",
+        "romanization": "oda",
+        "meaning": "Đến",
+        "example": "비가 와요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 23,
+        "korean": "자다",
+        "romanization": "jada",
+        "meaning": "Ngủ",
+        "example": "밤에 일찍 자요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 24,
+        "korean": "일어나다",
+        "romanization": "ireonada",
+        "meaning": "Thức dậy",
+        "example": "아침 7시에 일어나요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 25,
+        "korean": "보다",
+        "romanization": "boda",
+        "meaning": "Xem, nhìn",
+        "example": "영화를 봐요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 26,
+        "korean": "듣다",
+        "romanization": "deutda",
+        "meaning": "Nghe",
+        "example": "음악을 들어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 27,
+        "korean": "읽다",
+        "romanization": "ikda",
+        "meaning": "Đọc",
+        "example": "책을 읽어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 28,
+        "korean": "쓰다",
+        "romanization": "sseuda",
+        "meaning": "Viết",
+        "example": "편지를 써요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 29,
+        "korean": "만나다",
+        "romanization": "mannada",
+        "meaning": "Gặp gỡ",
+        "example": "내일 친구를 만나요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 30,
+        "korean": "사다",
+        "romanization": "sada",
+        "meaning": "Mua",
+        "example": "시장에서 사과를 사요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 31,
+        "korean": "팔다",
+        "romanization": "palda",
+        "meaning": "Bán",
+        "example": "가게에서 옷을 팔아요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 32,
+        "korean": "알다",
+        "romanization": "alda",
+        "meaning": "Biết",
+        "example": "그 사람을 잘 알아요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 33,
+        "korean": "모르다",
+        "romanization": "moreuda",
+        "meaning": "Không biết",
+        "example": "한국어를 잘 몰라요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 34,
+        "korean": "일하다",
+        "romanization": "irhada",
+        "meaning": "Làm việc",
+        "example": "회사에서 일해요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 35,
+        "korean": "쉬다",
+        "romanization": "swida",
+        "meaning": "Nghỉ ngơi",
+        "example": "주말에는 집에서 쉬어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 36,
+        "korean": "웃다",
+        "romanization": "utda",
+        "meaning": "Cười",
+        "example": "밝게 웃어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 37,
+        "korean": "울다",
+        "romanization": "ulda",
+        "meaning": "Khóc",
+        "example": "아이가 슬퍼서 울어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 38,
+        "korean": "기다리다",
+        "romanization": "gidarida",
+        "meaning": "Chờ, đợi",
+        "example": "버스를 기다려요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 39,
+        "korean": "가르치다",
+        "romanization": "gareuchida",
+        "meaning": "Dạy",
+        "example": "선생님이 학생을 가르쳐요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 40,
+        "korean": "배우다",
+        "romanization": "baeuda",
+        "meaning": "Học",
+        "example": "한국어를 열심히 배워요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 41,
+        "korean": "집",
+        "romanization": "jip",
+        "meaning": "Nhà",
+        "example": "우리 집에 오세요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 42,
+        "korean": "회사",
+        "romanization": "hoesa",
+        "meaning": "Công ty",
+        "example": "회사에 출근해요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 43,
+        "korean": "병원",
+        "romanization": "byeongwon",
+        "meaning": "Bệnh viện",
+        "example": "아파서 병원에 가요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 44,
+        "korean": "식당",
+        "romanization": "sikdang",
+        "meaning": "Nhà hàng, quán ăn",
+        "example": "식당에서 점심을 먹어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 45,
+        "korean": "옷",
+        "romanization": "ot",
+        "meaning": "Quần áo",
+        "example": "예쁜 옷을 입어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 46,
+        "korean": "돈",
+        "romanization": "don",
+        "meaning": "Tiền",
+        "example": "지갑에 돈이 있어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 47,
+        "korean": "시간",
+        "romanization": "sigan",
+        "meaning": "Thời gian",
+        "example": "지금 몇 시예요?",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 48,
+        "korean": "오늘",
+        "romanization": "oneul",
+        "meaning": "Hôm nay",
+        "example": "오늘은 기분이 좋아요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 49,
+        "korean": "내일",
+        "romanization": "naeil",
+        "meaning": "Ngày mai",
+        "example": "내일 만납시다.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 50,
+        "korean": "어제",
+        "romanization": "eoje",
+        "meaning": "Hôm qua",
+        "example": "어제 영화를 봤어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 51,
+        "korean": "물",
+        "romanization": "mul",
+        "meaning": "Nước",
+        "example": "시원한 물을 마셔요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 52,
+        "korean": "밥",
+        "romanization": "bap",
+        "meaning": "Cơm, bữa ăn",
+        "example": "같이 밥을 먹을까요?",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 53,
+        "korean": "차",
+        "romanization": "cha",
+        "meaning": "Trà / Xe ô tô",
+        "example": "따뜻한 차를 마셔요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 54,
+        "korean": "전화",
+        "romanization": "jeonhwa",
+        "meaning": "Điện thoại",
+        "example": "친구에게 전화를 걸어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 55,
+        "korean": "선생님",
+        "romanization": "seonsaengnim",
+        "meaning": "Giáo viên",
+        "example": "선생님, 질문이 있습니다.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 56,
+        "korean": "학생",
+        "romanization": "haksaeng",
+        "meaning": "Học sinh, sinh viên",
+        "example": "저는 대학교 학생이에요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 57,
+        "korean": "의사",
+        "romanization": "uisa",
+        "meaning": "Bác sĩ",
+        "example": "의사 선생님이 진료를 해요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 58,
+        "korean": "나라",
+        "romanization": "nara",
+        "meaning": "Quốc gia",
+        "example": "어느 나라에서 왔어요?",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 59,
+        "korean": "한국",
+        "romanization": "hanguk",
+        "meaning": "Hàn Quốc",
+        "example": "한국에 여행을 가고 싶어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 60,
+        "korean": "베트남",
+        "romanization": "beteunam",
+        "meaning": "Việt Nam",
+        "example": "저는 베트남 사람입니다.",
+        "level": "TOPIK 1"
     }
 ]
