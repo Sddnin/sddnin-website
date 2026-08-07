@@ -1,87 +1,39 @@
-// === FILE: app.js ===
-// Điều khiển ứng dụng chính
+document.addEventListener("DOMContentLoaded", () => {
+    App.init();
+});
 
-(function() {
-    'use strict';
+const App = {
+    init() {
+        this.initTheme();
+        this.updateHeaderStats();
+    },
 
-    // Khởi tạo ứng dụng
-    function initApp() {
-        console.log('Korean Flashcard Hub initialized');
-        
-        // Kiểm tra và áp dụng theme đã lưu
-        const savedTheme = StorageManager.getTheme();
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            updateThemeButton(savedTheme);
+    // Phát âm tiếng Hàn chuẩn TTS
+    speakKorean(text) {
+        if (!('speechSynthesis' in window)) {
+            alert("Trình duyệt của bạn không hỗ trợ tính năng phát âm!");
+            return;
         }
+        window.speechSynthesis.cancel(); // Dừng câu đọc trước đó
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.85; // Tốc độ đọc chuẩn cho người học
+        window.speechSynthesis.speak(utterance);
+    },
 
-        // Highlight active nav link
-        highlightActiveNav();
-        
-        // Khởi tạo theme toggle
-        initThemeToggle();
+    // Hiển thị Streak & Số từ đã thuộc lên UI
+    updateHeaderStats() {
+        const stats = StorageManager.getStats();
+        const streakEl = document.getElementById('user-streak');
+        const learnedEl = document.getElementById('user-learned-count');
+
+        if (streakEl) streakEl.textContent = `🔥 ${stats.streak} ngày`;
+        if (learnedEl) learnedEl.textContent = `✅ ${stats.totalLearned} từ`;
+    },
+
+    // Khởi tạo Theme
+    initTheme() {
+        const savedTheme = localStorage.getItem('sddnin_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
     }
-
-    // Highlight navigation link hiện tại
-    function highlightActiveNav() {
-        const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('.main-nav a');
-        
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (currentPath.includes(link.getAttribute('href'))) {
-                link.classList.add('active');
-            }
-        });
-    }
-
-    // Khởi tạo nút chuyển theme
-    function initThemeToggle() {
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', function() {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
-                document.documentElement.setAttribute('data-theme', newTheme);
-                StorageManager.saveTheme(newTheme);
-                updateThemeButton(newTheme);
-            });
-        }
-    }
-
-    // Cập nhật icon nút theme
-    function updateThemeButton(theme) {
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-        }
-    }
-
-    // Format số với dấu phẩy
-    function formatNumber(num) {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    }
-
-    // Tạo element với class và attributes
-    function createElement(tag, className, attributes = {}) {
-        const element = document.createElement(tag);
-        if (className) {
-            element.className = className;
-        }
-        for (const [key, value] of Object.entries(attributes)) {
-            element.setAttribute(key, value);
-        }
-        return element;
-    }
-
-    // Export utilities
-    window.AppUtils = {
-        formatNumber,
-        createElement,
-        initApp
-    };
-
-    // Chạy khi DOM ready
-    document.addEventListener('DOMContentLoaded', initApp);
-})();
+};
