@@ -1,0 +1,44 @@
+class AddWord {
+  init() {
+    document.getElementById('add-word-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const word = {
+        korean: document.getElementById('korean').value,
+        romanization: document.getElementById('romanization').value,
+        meaning: document.getElementById('meaning').value,
+        example: document.getElementById('example').value,
+        level: document.getElementById('level').value
+      };
+      StorageManager.addCustomWord(word);
+      this.renderCustomWords();
+      e.target.reset();
+    });
+    this.renderCustomWords();
+    document.getElementById('export-btn').addEventListener('click', () => {
+      const data = StorageManager.exportAll();
+      const blob = new Blob([data], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'korean-flashcard-backup.json'; a.click();
+    });
+    document.getElementById('import-btn').addEventListener('click', () => {
+      const fileInput = document.getElementById('import-file');
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (StorageManager.importAll(e.target.result)) {
+            alert('Nhập thành công!');
+            location.reload();
+          } else alert('File không hợp lệ');
+        };
+        reader.readAsText(file);
+      }
+    });
+  }
+  renderCustomWords() {
+    const list = document.getElementById('custom-word-list');
+    const words = StorageManager.getCustomVocab();
+    list.innerHTML = words.map(w => `<div>${w.korean} - ${w.meaning} <button onclick="StorageManager.removeCustomWord(${w.id});location.reload()">Xóa</button></div>`).join('');
+  }
+}
+document.addEventListener('DOMContentLoaded', () => new AddWord().init());
