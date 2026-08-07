@@ -68,8 +68,8 @@
 
     <div class="flashcard-wrapper">
         <div class="card" id="flashcard">
-            <!-- Nút Nghe phát âm gắn trên thẻ -->
-            <button class="btn-speak" onclick="event.stopPropagation(); playAudio()"><i class="fas fa-volume-up"></i></button>
+            <!-- Nút Nghe phát âm -->
+            <button class="btn-speak" onclick="event.stopPropagation(); playAudio();"><i class="fas fa-volume-up"></i></button>
             
             <div class="card-face card-front">
                 <div class="word-wrap">
@@ -108,7 +108,6 @@
     <div class="footer">© 2024 Korean Flashcard Hub</div>
 
     <script>
-        // 1. Danh sách 60 từ tiếng Hàn kèm phiên âm (Romaja)
         const flashcards = [
             { front: "안녕하세요", roman: "annyeonghaseyo", back: "Xin chào", fav: false, learnt: false, hard: false },
             { front: "감사합니다", roman: "gamsahamnida", back: "Cảm ơn", fav: false, learnt: false, hard: false },
@@ -173,7 +172,6 @@
             { front: "모르다", roman: "moreuda", back: "Không biết", fav: false, learnt: false, hard: false }
         ];
 
-        // 2. Logic cốt lõi
         let currentIndex = 0;
         const card = document.getElementById('flashcard');
         const frontText = document.getElementById('front-text');
@@ -183,6 +181,14 @@
         const currentIdxSpan = document.getElementById('current-idx');
         const totalIdxSpan = document.getElementById('total-idx');
         const progressFill = document.getElementById('progress-fill');
+
+        // Đợi trình duyệt tải các giọng nói
+        let voicesReady = false;
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                voicesReady = true;
+            };
+        }
 
         function updateCard() {
             card.classList.remove('is-flipped');
@@ -196,7 +202,6 @@
             totalIdxSpan.innerText = flashcards.length;
             progressFill.style.width = ((currentIndex + 1) / flashcards.length) * 100 + '%';
 
-            // Cập nhật nút trạng thái
             const btnFav = document.getElementById('btn-fav');
             const btnLearnt = document.getElementById('btn-learnt');
             const btnHard = document.getElementById('btn-hard');
@@ -220,30 +225,31 @@
             updateCard(); 
         }
 
-        // 3. Chức năng Phát âm bằng Text-to-Speech của trình duyệt
+        // Hàm phát âm thanh đã cải tiến
         function playAudio() {
-            const text = flashcards[currentIndex].front; // Đọc từ tiếng Hàn
             if (window.speechSynthesis) {
-                // Huỷ bỏ giọng nói cũ nếu đang đọc dở
-                window.speechSynthesis.cancel();
+                window.speechSynthesis.cancel(); // Tắt âm thanh cũ đang chạy
                 
+                const text = flashcards[currentIndex].front;
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ko-KR';  // Cài đặt ngôn ngữ tiếng Hàn
-                utterance.rate = 0.75;     // Tốc độ chậm rãi để dễ nghe theo
-                utterance.pitch = 1.0;
-                
-                // Thử chọn giọng nói Hàn Quốc có sẵn
+                utterance.lang = 'ko-KR'; // Cài ngôn ngữ Hàn
+                utterance.rate = 0.75; // Tốc độ chậm để dễ nghe
+
+                // Cố gắng tìm giọng Hàn Quốc
                 const voices = window.speechSynthesis.getVoices();
                 const koVoice = voices.find(voice => voice.lang === 'ko-KR');
-                if (koVoice) utterance.voice = koVoice;
+                if (koVoice) {
+                    utterance.voice = koVoice;
+                }
 
+                // Bắt đầu đọc
                 window.speechSynthesis.speak(utterance);
             } else {
-                alert('Trình duyệt hiện tại chưa hỗ trợ công nghệ đọc văn bản.');
+                alert('Trình duyệt không hỗ trợ đọc văn bản.');
             }
         }
 
-        updateCard(); // Chạy lần đầu
+        updateCard();
     </script>
 </body>
 </html>
