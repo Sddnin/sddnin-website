@@ -3,84 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Korean Flashcard Hub - Học tiếng Hàn hiệu quả</title>
+    <title>SDDNIN 2.0 - Học Tiếng Hàn</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/animation.css">
-    <link rel="stylesheet" href="assets/css/responsive.css">
 </head>
 <body>
-    <header class="main-header">
-        <div class="logo">
-            <h1>🇰🇷 Korean Flashcard Hub</h1>
-        </div>
-        <nav class="main-nav">
-            <ul>
-                <li><a href="index.html" class="active">Trang chủ</a></li>
-                <li><a href="pages/flashcard.html">Flashcard</a></li>
-                <li><a href="pages/review.html">Ôn tập</a></li>
-                <li><a href="pages/hanja.html">Hanja</a></li>
-                <li><a href="pages/grammar.html">Ngữ pháp</a></li>
+    <header class="navbar">
+        <a href="index.html" class="logo">SDDNIN 2.0</a>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="pages/flashcard.html">Từ Vựng</a></li>
+                <li><a href="pages/grammar.html">Ngữ Pháp</a></li>
+                <li><a href="pages/hanja.html">Hán Tự</a></li>
+                <li><a href="pages/review.html">Ôn Tập</a></li>
             </ul>
         </nav>
-        <button id="theme-toggle" class="theme-btn">🌙</button>
+        <div class="user-stats">
+            <span id="user-streak">🔥 0 ngày</span>
+            <span id="user-learned-count">✅ 0 từ</span>
+        </div>
     </header>
 
-    <main>
-        <section class="hero fade-in">
-            <div class="hero-content">
-                <h2>Chinh phục tiếng Hàn cùng Flashcard</h2>
-                <p>Học từ vựng, Hanja và ngữ pháp tiếng Hàn một cách hiệu quả với phương pháp Flashcard thông minh.</p>
-                <a href="pages/flashcard.html" class="cta-button floating">Bắt đầu học ngay</a>
-            </div>
-            <div class="hero-stats">
-                <div class="stat-item slide-up">
-                    <span class="stat-number">500+</span>
-                    <span class="stat-label">Từ vựng</span>
-                </div>
-                <div class="stat-item slide-up" style="animation-delay: 0.2s">
-                    <span class="stat-number">100+</span>
-                    <span class="stat-label">Hanja</span>
-                </div>
-                <div class="stat-item slide-up" style="animation-delay: 0.4s">
-                    <span class="stat-number">50+</span>
-                    <span class="stat-label">Mẫu ngữ pháp</span>
-                </div>
-            </div>
+    <main class="container">
+        <section class="hero" style="text-align: center; margin-bottom: 3rem;">
+            <h1>Chào mừng bạn trở lại! 👋</h1>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Hôm nay bạn muốn luyện tập kỹ năng nào?</p>
         </section>
 
-        <section class="features fade-in">
-            <h3>Tính năng nổi bật</h3>
-            <div class="features-grid">
-                <div class="feature-card hover-float">
-                    <div class="feature-icon">🔄</div>
-                    <h4>Flashcard 3D</h4>
-                    <p>Thẻ học 3D với hiệu ứng lật thẻ sinh động, giúp ghi nhớ từ vựng dễ dàng hơn.</p>
-                </div>
-                <div class="feature-card hover-float">
-                    <div class="feature-icon">📊</div>
-                    <h4>Theo dõi tiến độ</h4>
-                    <p>Lưu trữ tiến độ học tập, đánh dấu từ đã thuộc và từ khó để ôn tập hiệu quả.</p>
-                </div>
-                <div class="feature-card hover-float">
-                    <div class="feature-icon">🔍</div>
-                    <h4>Tìm kiếm thông minh</h4>
-                    <p>Tìm kiếm từ vựng theo Hangul, phiên âm hoặc nghĩa tiếng Việt.</p>
-                </div>
-                <div class="feature-card hover-float">
-                    <div class="feature-icon">🌙</div>
-                    <h4>Dark Mode</h4>
-                    <p>Hỗ trợ chế độ tối giúp bảo vệ mắt khi học vào ban đêm.</p>
-                </div>
+        <section class="grid">
+            <div class="card-item">
+                <h2>🎴 Từ Vựng (Flashcard)</h2>
+                <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem 0;">Luyện từ vựng TOPIK 1 với audio phát âm chuẩn và thuật toán lặp lại ngắt quãng.</p>
+                <a href="pages/flashcard.html" class="btn" style="text-decoration: none; display: inline-block;">Học ngay</a>
+            </div>
+
+            <div class="card-item">
+                <h2>📚 Ngữ Pháp (Grammar)</h2>
+                <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem 0;">Tổng hợp cấu trúc ngữ pháp thông dụng kèm giải thích chi tiết và ví dụ.</p>
+                <a href="pages/grammar.html" class="btn" style="text-decoration: none; display: inline-block;">Khám phá</a>
+            </div>
+
+            <div class="card-item">
+                <h2>🈳 Hán Tự (Hanja)</h2>
+                <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem 0;">Ghi nhớ từ vựng tiếng Hàn nhanh gấp 2 lần qua gốc từ Hán Việt.</p>
+                <a href="pages/hanja.html" class="btn" style="text-decoration: none; display: inline-block;">Luyện tập</a>
+            </div>
+
+            <div class="card-item">
+                <h2>📝 Bài Kiểm Tra (Quiz)</h2>
+                <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem 0;">Kiểm tra kiến thức trắc nghiệm 4 lựa chọn và chấm điểm trực tiếp.</p>
+                <a href="pages/review.html" class="btn" style="text-decoration: none; display: inline-block;">Thử sức</a>
             </div>
         </section>
     </main>
 
-    <footer class="main-footer">
-        <p>&copy; 2024 Korean Flashcard Hub. Học tiếng Hàn mỗi ngày.</p>
-    </footer>
-
     <script src="assets/js/storage.js"></script>
-    <script src="assets/js/theme.js"></script>
     <script src="assets/js/app.js"></script>
 </body>
 </html>
