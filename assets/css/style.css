@@ -1,0 +1,584 @@
+/* === CSS Variables & Reset === */
+:root {
+    --primary-color: #4A90D9;
+    --secondary-color: #F5A623;
+    --background-light: #FFFFFF;
+    --background-dark: #1A1A2E;
+    --text-light: #333333;
+    --text-dark: #E0E0E0;
+    --card-light: #F8F9FA;
+    --card-dark: #16213E;
+    --border-light: #DDDDDD;
+    --border-dark: #2A2A4A;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 8px 15px rgba(0, 0, 0, 0.2);
+    --transition: all 0.3s ease;
+}
+
+[data-theme="dark"] {
+    --background-light: #1A1A2E;
+    --text-light: #E0E0E0;
+    --card-light: #16213E;
+    --border-light: #2A2A4A;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Noto Sans KR', sans-serif;
+    background-color: var(--background-light);
+    color: var(--text-light);
+    transition: var(--transition);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* === Header === */
+.main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 30px;
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.main-nav ul {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+}
+
+.main-nav a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.main-nav a:hover,
+.main-nav a.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.theme-btn {
+    background: none;
+    border: 2px solid white;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.theme-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* === Main Content === */
+main {
+    flex: 1;
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* === Hero Section === */
+.hero {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.hero-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    opacity: 0.8;
+}
+
+.cta-button {
+    display: inline-block;
+    padding: 15px 40px;
+    background: linear-gradient(135deg, var(--primary-color), #357ABD);
+    color: white;
+    text-decoration: none;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* === Hero Stats === */
+.hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 50px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px;
+    background-color: var(--card-light);
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    min-width: 150px;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+/* === Features === */
+.features {
+    padding: 60px 20px;
+}
+
+.features h3 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 40px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+.feature-card {
+    background-color: var(--card-light);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border: 1px solid var(--border-light);
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.feature-card h4 {
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+/* === Mode Cards === */
+.welcome-section {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.welcome-section h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.welcome-section p {
+    margin-bottom: 40px;
+    opacity: 0.8;
+}
+
+.mode-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 25px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.mode-card {
+    display: block;
+    background-color: var(--card-light);
+    padding: 30px 20px;
+    border-radius: 15px;
+    text-decoration: none;
+    color: var(--text-light);
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border: 1px solid var(--border-light);
+}
+
+.mode-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-color);
+}
+
+.mode-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.mode-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+/* === Search === */
+.search-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.search-input {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid var(--border-light);
+    border-radius: 25px;
+    font-size: 1rem;
+    background-color: var(--card-light);
+    color: var(--text-light);
+    transition: var(--transition);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.search-btn {
+    padding: 12px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.search-btn:hover {
+    background-color: #357ABD;
+}
+
+/* === Footer === */
+.main-footer {
+    text-align: center;
+    padding: 20px;
+    background-color: var(--card-light);
+    border-top: 1px solid var(--border-light);
+    margin-top: auto;
+}
+
+/* === Review Page === */
+.review-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.tab-btn {
+    padding: 10px 25px;
+    border: 2px solid var(--border-light);
+    background-color: var(--card-light);
+    color: var(--text-light);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.95rem;
+}
+
+.tab-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.tab-btn:hover {
+    border-color: var(--primary-color);
+}
+
+.review-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.stat-box {
+    background-color: var(--card-light);
+    padding: 20px 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-light);
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* === Hanja Page === */
+.hanja-header,
+.grammar-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.hanja-header h2,
+.grammar-header h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.hanja-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.hanja-card {
+    background-color: var(--card-light);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow);
+}
+
+.hanja-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-color);
+}
+
+.hanja-char {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.hanja-card .hangul {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.hanja-card .meaning {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* === Hanja Detail Modal === */
+.hanja-detail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.detail-card {
+    background-color: var(--background-light);
+    padding: 40px;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    box-shadow: var(--shadow-hover);
+}
+
+.close-detail {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+.hanja-character {
+    font-size: 5rem;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.hanja-info p {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.hanja-words {
+    margin-top: 20px;
+}
+
+.hanja-words h4 {
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.hanja-words ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.hanja-words li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* === Grammar Page === */
+.grammar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.grammar-item {
+    background-color: var(--card-light);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-light);
+    transition: var(--transition);
+}
+
+.grammar-item:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+.grammar-pattern {
+    font-size: 1.3rem;
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.grammar-meaning {
+    margin-bottom: 10px;
+}
+
+.grammar-structure {
+    background-color: rgba(74, 144, 217, 0.1);
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-family: monospace;
+}
+
+.grammar-examples {
+    list-style: none;
+}
+
+.grammar-examples li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.example-ko {
+    font-weight: 600;
+}
+
+.example-vi {
+    opacity: 0.7;
+    font-style: italic;
+}
+
+/* === Review Word List === */
+.review-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.review-word-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--card-light);
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-light);
+    transition: var(--transition);
+}
+
+.review-word-item:hover {
+    border-color: var(--primary-color);
+}
+
+.review-word-item .word-korean {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.review-word-item .word-meaning {
+    opacity: 0.8;
+}
+
+.review-word-item .word-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin-left: 10px;
+    transition: var(--transition);
+}
+
+.review-word-item .word-actions button:hover {
+    transform: scale(1.2);
+}
