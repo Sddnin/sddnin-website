@@ -1,112 +1,148 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>120 Từ Vựng Tiếng Hàn Flashcard & Mini Game</title>
+    <title>Từ Điển, Flashcard & Mini Games Tiếng Hàn</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary-blue: #4a90e2; --shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        :root { --primary-blue: #4a90e2; --success-green: #2e7d32; --danger-red: #c0392b; --shadow: 0 10px 20px rgba(0,0,0,0.1); }
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #f8f9fa; padding: 20px; }
-        .header { width: 100%; max-width: 600px; text-align: center; margin-bottom: 15px; font-size: 24px; font-weight: 600; color: var(--primary-blue); }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #f8f9fa; padding: 15px; }
+        .header { width: 100%; max-width: 480px; text-align: center; margin-bottom: 15px; font-size: 22px; font-weight: 700; color: var(--primary-blue); }
         
-        /* Chuyển đổi chế độ Học / Chơi */
-        .mode-switcher { display: flex; background: #e9ecef; border-radius: 25px; padding: 4px; margin-bottom: 20px; width: 100%; max-width: 320px; }
-        .mode-switcher button { flex: 1; border: none; background: transparent; padding: 8px 15px; border-radius: 20px; font-weight: 600; cursor: pointer; color: #666; transition: 0.3s; font-size: 14px; }
+        /* Chuyển đổi Chế Độ Chính */
+        .mode-switcher { display: flex; background: #e9ecef; border-radius: 25px; padding: 4px; margin-bottom: 15px; width: 100%; max-width: 480px; }
+        .mode-switcher button { flex: 1; border: none; background: transparent; padding: 8px 5px; border-radius: 20px; font-weight: 600; cursor: pointer; color: #666; transition: 0.3s; font-size: 12px; }
         .mode-switcher button.active-mode { background: white; color: var(--primary-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
-        .search-container { width: 100%; max-width: 400px; display: flex; gap: 10px; margin-bottom: 20px; position: relative; }
-        .search-container input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; font-size: 14px; }
-        .search-container button { width: 40px; border: none; background: var(--primary-blue); color: white; border-radius: 50%; cursor: pointer; transition: 0.2s; }
-        .search-container button:hover { background: #357abd; }
+        /* Mode 1: Từ Điển API */
+        #dict-container { width: 100%; max-width: 450px; background: white; border-radius: 15px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .dict-search-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        .dict-search-box input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; font-size: 14px; }
+        .dict-search-box button { padding: 10px 18px; border: none; background: var(--primary-blue); color: white; border-radius: 20px; cursor: pointer; font-weight: 600; }
+        .dict-result { border: 1px dashed #4a90e2; background: #f0f7ff; border-radius: 12px; padding: 15px; text-align: center; display: none; margin-top: 10px; }
+        .dict-word-kr { font-size: 28px; font-weight: 700; color: #333; margin-bottom: 5px; }
+        .dict-word-vi { font-size: 20px; font-weight: 600; color: var(--primary-blue); margin-bottom: 10px; }
+        .btn-add-deck { background: var(--success-green); color: white; border: none; padding: 8px 16px; border-radius: 15px; font-size: 13px; cursor: pointer; font-weight: 600; margin-top: 10px; }
 
-        /* Flashcard */
-        .flashcard-wrapper { perspective: 1000px; width: 100%; max-width: 400px; height: 240px; margin-bottom: 20px; position: relative; }
+        /* Mode 2: Flashcard */
+        .search-container { width: 100%; max-width: 450px; display: flex; gap: 10px; margin-bottom: 15px; }
+        .search-container input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; font-size: 14px; }
+        .search-container button { width: 40px; border: none; background: var(--primary-blue); color: white; border-radius: 50%; cursor: pointer; }
+        
+        .flashcard-wrapper { perspective: 1000px; width: 100%; max-width: 450px; height: 230px; margin-bottom: 15px; }
         .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); cursor: pointer; border-radius: 15px; box-shadow: var(--shadow); }
         .card.is-flipped { transform: rotateY(180deg); }
-        
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; padding: 30px; text-align: center; }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; padding: 25px; text-align: center; }
         .card-back { transform: rotateY(180deg); background: #ffffff; color: #333; border: 1px solid #eee; }
-        
-        .word-wrap { display: flex; flex-direction: column; gap: 8px; }
-        .korean { font-size: 32px; font-weight: 600; letter-spacing: 1px; }
-        .vietnamese { font-size: 28px; font-weight: 500; color: var(--primary-blue); }
-        .roman { font-size: 16px; color: rgba(255,255,255,0.75); }
+        .korean { font-size: 32px; font-weight: 700; letter-spacing: 1px; }
+        .vietnamese { font-size: 26px; font-weight: 600; color: var(--primary-blue); }
+        .roman { font-size: 15px; color: rgba(255,255,255,0.8); margin-top: 4px; }
         .card-back .roman { color: #888; }
-        
-        .flip-icon-center { margin-top: 20px; font-size: 14px; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px; display: flex; align-items: center; gap: 5px; }
+        .flip-icon-center { margin-top: 15px; font-size: 13px; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px; }
         .card-back .flip-icon-center { background: #f0f0f0; color: #555; }
-
-        .btn-speak { position: absolute; top: 15px; right: 15px; border: none; background: rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 16px; z-index: 10; transition: 0.2s; }
-        .card-back .btn-speak { background: #e3f2fd; color: #4a90e2; }
-        .btn-speak:hover { transform: scale(1.1); background: #fff; color: #4a90e2; }
-        .card-back .btn-speak:hover { background: var(--primary-blue); color: white; }
-
-        .controls { display: flex; gap: 15px; margin-bottom: 15px; }
-        .controls button { padding: 8px 20px; border: 1px solid var(--primary-blue); background: white; color: var(--primary-blue); border-radius: 20px; cursor: pointer; transition: 0.2s; }
-        .controls button:hover, .controls button.active-btn { background: var(--primary-blue); color: white; }
         
-        .action-buttons { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
-        .action-buttons button { padding: 6px 15px; border: none; background: white; color: #555; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; font-size: 13px; }
-        .action-buttons button i { margin-right: 5px; }
+        .btn-speak { position: absolute; top: 15px; right: 15px; border: none; background: rgba(255,255,255,0.25); color: white; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-size: 16px; z-index: 10; }
+        .card-back .btn-speak { background: #e3f2fd; color: #4a90e2; }
+
+        .controls { display: flex; gap: 12px; margin-bottom: 12px; }
+        .controls button { padding: 8px 18px; border: 1px solid var(--primary-blue); background: white; color: var(--primary-blue); border-radius: 20px; cursor: pointer; }
+        .controls button.active-btn { background: var(--primary-blue); color: white; }
+
+        .action-buttons { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
+        .action-buttons button { padding: 6px 14px; border: none; background: white; color: #555; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; font-size: 12px; }
         .action-buttons button.active-love { background: #ffeaea; color: #e74c3c; }
         .action-buttons button.active-learnt { background: #e8f5e9; color: #2e7d32; }
         .action-buttons button.active-hard { background: #fff3e0; color: #f39c12; }
 
-        .progress-container { width: 100%; max-width: 300px; text-align: center; font-size: 14px; color: #777; margin-top: 10px; }
+        .progress-container { width: 100%; max-width: 300px; text-align: center; font-size: 13px; color: #777; margin-top: 5px; }
         .progress-bar { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 5px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--primary-blue); transition: width 0.3s; width: 0%; }
 
-        /* Giao diện Mini Game Trắc Nghiệm */
-        #game-container { width: 100%; max-width: 400px; background: white; border-radius: 15px; padding: 20px; box-shadow: var(--shadow); }
-        .game-stats { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 15px; color: #444; font-size: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .quiz-card { background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; border-radius: 12px; padding: 25px 15px; text-align: center; margin-bottom: 15px; position: relative; }
-        .quiz-question { font-size: 28px; font-weight: 700; margin-bottom: 5px; }
-        .quiz-roman { font-size: 14px; opacity: 0.85; }
-        .btn-quiz-speak { border: none; background: rgba(255,255,255,0.25); color: white; padding: 5px 12px; border-radius: 15px; cursor: pointer; font-size: 13px; margin-top: 10px; transition: 0.2s; }
-        .btn-quiz-speak:hover { background: white; color: var(--primary-blue); }
-        
+        /* Sub-menu Mini Games */
+        .game-selector { display: flex; gap: 6px; width: 100%; max-width: 450px; margin-bottom: 15px; }
+        .game-selector button { flex: 1; padding: 8px 4px; border: 1px solid #ddd; background: white; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; color: #555; }
+        .game-selector button.active-subgame { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+
+        .game-box { width: 100%; max-width: 450px; background: white; border-radius: 15px; padding: 20px; box-shadow: var(--shadow); display: none; }
+        .game-stats { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 12px; color: #444; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+
+        /* Game 1: Trắc Nghiệm */
+        .quiz-card { background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 12px; }
         .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .quiz-opt-btn { background: #f8f9fa; border: 1px solid #ddd; padding: 12px 10px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; color: #333; transition: 0.2s; text-align: center; word-break: break-word; }
-        .quiz-opt-btn:hover { background: #e3f2fd; border-color: #4a90e2; color: #4a90e2; }
-        .quiz-opt-btn.correct { background: #2e7d32 !important; color: white !important; border-color: #2e7d32 !important; }
-        .quiz-opt-btn.wrong { background: #c0392b !important; color: white !important; border-color: #c0392b !important; }
-        
-        .quiz-feedback { text-align: center; min-height: 24px; font-weight: 600; margin-top: 12px; font-size: 14px; }
-        
-        .footer { margin-top: 25px; font-size: 12px; color: #aaa; }
+        .quiz-opt-btn { background: #f8f9fa; border: 1px solid #ddd; padding: 12px 8px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: #333; text-align: center; }
+        .quiz-opt-btn.correct { background: var(--success-green) !important; color: white !important; }
+        .quiz-opt-btn.wrong { background: var(--danger-red) !important; color: white !important; }
+
+        /* Game 2: Nối Từ (Match Cards) */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .match-card { background: #f8f9fa; border: 2px solid #e0e0e0; padding: 14px 8px; border-radius: 10px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .match-card.selected { border-color: var(--primary-blue); background: #e3f2fd; color: var(--primary-blue); }
+        .match-card.matched { visibility: hidden; opacity: 0; }
+
+        /* Game 3: Luyện Gõ (Typing Test) */
+        .typing-card { background: #e3f2fd; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; color: #1976d2; }
+        .typing-input-wrap { display: flex; gap: 8px; }
+        .typing-input-wrap input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; font-size: 15px; text-align: center; }
+        .typing-input-wrap button { padding: 10px 20px; border: none; background: var(--primary-blue); color: white; border-radius: 20px; cursor: pointer; font-weight: 600; }
+
+        /* Game 4: Luyện Nói (Speaking Test) */
+        .speak-card { background: linear-gradient(145deg, #ab47bc, #8e24aa); color: white; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; }
+        .mic-btn-large { width: 65px; height: 65px; border-radius: 50%; border: none; background: #e1bee7; color: #4a148c; font-size: 26px; cursor: pointer; margin: 10px auto; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .mic-btn-large.recording { background: #ff1744; color: white; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .game-feedback { text-align: center; min-height: 24px; font-weight: 600; margin-top: 10px; font-size: 13px; }
+        .footer { margin-top: 20px; font-size: 12px; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <div class="header"><i class="fas fa-language"></i> 120 Từ vựng Hàn Quốc</div>
+    <div class="header"><i class="fas fa-language"></i> Học Tiếng Hàn Đa Năng</div>
     
-    <!-- Nút chuyển chế độ -->
+    <!-- Thanh Chuyển Chế Độ Chính -->
     <div class="mode-switcher">
-        <button id="mode-flashcard" class="active-mode" onclick="switchMode('flashcard')"><i class="fas fa-clone"></i> Flashcard</button>
-        <button id="mode-game" onclick="switchMode('game')"><i class="fas fa-gamepad"></i> Mini Game</button>
+        <button id="mode-dict" onclick="switchMode('dict')"><i class="fas fa-search"></i> Tra Từ Điển</button>
+        <button id="mode-flashcard" class="active-mode" onclick="switchMode('flashcard')"><i class="fas fa-clone"></i> Flashcard (<span id="count-badge">120</span>)</button>
+        <button id="mode-game" onclick="switchMode('game')"><i class="fas fa-gamepad"></i> Mini Games</button>
     </div>
 
-    <!-- Chế độ Flashcard -->
-    <div class="search-container">
-        <input type="text" id="search-input" placeholder="Tìm kiếm (Tiếng Hàn, Tiếng Việt không dấu/có dấu)..." onkeyup="if(event.key==='Enter') searchWord()">
+    <!-- MODE 1: TRA TỪ ĐIỂN API -->
+    <div id="dict-container" style="display: none;">
+        <div style="font-size: 13px; color: #666; margin-bottom: 10px; text-align: center;">Tra cứu trực tuyến tiếng Hàn / Việt bất kỳ:</div>
+        <div class="dict-search-box">
+            <input type="text" id="dict-input" placeholder="Nhập từ (Ví dụ: 고양이, Con mèo)..." onkeyup="if(event.key==='Enter') lookupDictionary()">
+            <button onclick="lookupDictionary()"><i class="fas fa-search"></i> Tra từ</button>
+        </div>
+        <div id="dict-result" class="dict-result">
+            <div class="dict-word-kr" id="res-kr">---</div>
+            <div class="dict-word-vi" id="res-vi">---</div>
+            <button class="controls button" style="background: var(--primary-blue); color: white;" onclick="speakText(document.getElementById('res-kr').innerText)"><i class="fas fa-volume-up"></i> Phát âm</button>
+            <br>
+            <button class="btn-add-deck" onclick="addDictResultToDeck()"><i class="fas fa-plus-circle"></i> Thêm vào bộ Flashcard & Mini Games</button>
+        </div>
+    </div>
+
+    <!-- MODE 2: FLASHCARD -->
+    <div class="search-container" id="fc-search">
+        <input type="text" id="search-input" placeholder="Tìm kiếm từ trong bộ thẻ..." onkeyup="if(event.key==='Enter') searchWord()">
         <button onclick="searchWord()"><i class="fas fa-search"></i></button>
     </div>
 
-    <div class="flashcard-wrapper">
+    <div class="flashcard-wrapper" id="fc-wrapper">
         <div class="card" id="flashcard" onclick="flipCard()">
             <button class="btn-speak" onclick="event.stopPropagation(); playAudio();"><i class="fas fa-volume-up"></i></button>
             
             <div class="card-face card-front">
-                <div class="word-wrap">
+                <div style="display:flex; flex-direction:column; gap:6px;">
                     <div class="korean" id="front-text">안녕하세요</div>
                     <div class="roman" id="front-roman">annyeonghaseyo</div>
                 </div>
                 <div class="flip-icon-center"><i class="fas fa-sync-alt"></i> Lật thẻ</div>
             </div>
             <div class="card-face card-back">
-                <div class="word-wrap">
+                <div style="display:flex; flex-direction:column; gap:6px;">
                     <div class="vietnamese" id="back-text">Xin chào</div>
                     <div class="roman" id="back-roman">annyeonghaseyo</div>
                 </div>
@@ -115,39 +151,91 @@
         </div>
     </div>
 
-    <div class="controls">
+    <div class="controls" id="fc-controls">
         <button onclick="prevCard()"><i class="fas fa-chevron-left"></i> Trước</button>
         <button class="active-btn" onclick="flipCard()"><i class="fas fa-sync-alt"></i> Lật thẻ</button>
         <button onclick="nextCard()">Sau <i class="fas fa-chevron-right"></i></button>
     </div>
 
-    <div class="action-buttons">
+    <div class="action-buttons" id="fc-actions">
         <button id="btn-fav" onclick="toggleStatus('fav')"><i class="far fa-heart"></i> Yêu thích</button>
         <button id="btn-learnt" onclick="toggleStatus('learnt')"><i class="far fa-check-circle"></i> Đã thuộc</button>
         <button id="btn-hard" onclick="toggleStatus('hard')"><i class="fas fa-exclamation-triangle"></i> Từ khó</button>
     </div>
 
-    <div class="progress-container">
+    <div class="progress-container" id="fc-progress">
         <span id="current-idx">1</span> / <span id="total-idx">120</span>
         <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
 
-    <!-- Chế độ Mini Game Trắc Nghiệm -->
-    <div id="game-container" style="display: none;">
-        <div class="game-stats">
-            <span><i class="fas fa-star" style="color: #f1c40f;"></i> Điểm: <strong id="game-score">0</strong></span>
-            <span><i class="fas fa-fire" style="color: #e74c3c;"></i> Chuỗi: <strong id="game-streak">0</strong></span>
+    <!-- MODE 3: MINI GAMES -->
+    <div id="game-main-container" style="display: none; width: 100%; max-width: 450px;">
+        <!-- Menu chọn trò chơi -->
+        <div class="game-selector">
+            <button id="sg-quiz" class="active-subgame" onclick="switchSubGame('quiz')"><i class="fas fa-list-ul"></i> Trắc Nghiệm</button>
+            <button id="sg-match" onclick="switchSubGame('match')"><i class="fas fa-puzzle-piece"></i> Nối Từ</button>
+            <button id="sg-typing" onclick="switchSubGame('typing')"><i class="fas fa-keyboard"></i> Luyện Gõ</button>
+            <button id="sg-speaking" onclick="switchSubGame('speaking')"><i class="fas fa-microphone"></i> Luyện Nói</button>
         </div>
-        <div class="quiz-card">
-            <div class="quiz-question" id="quiz-question">안녕하세요</div>
-            <div class="quiz-roman" id="quiz-roman">annyeonghaseyo</div>
-            <button class="btn-quiz-speak" onclick="playQuizAudio()"><i class="fas fa-volume-up"></i> Nghe phát âm</button>
+
+        <!-- 1. Trắc Nghiệm -->
+        <div id="game-quiz" class="game-box">
+            <div class="game-stats">
+                <span><i class="fas fa-star" style="color:#f1c40f;"></i> Điểm: <strong id="quiz-score">0</strong></span>
+                <span><i class="fas fa-fire" style="color:#e74c3c;"></i> Chuỗi: <strong id="quiz-streak">0</strong></span>
+            </div>
+            <div class="quiz-card">
+                <div style="font-size: 26px; font-weight:700;" id="quiz-kr">안녕하세요</div>
+                <div style="font-size: 13px; opacity:0.8;" id="quiz-rm">annyeonghaseyo</div>
+                <button class="controls button" style="margin-top:10px; padding:4px 12px; font-size:12px;" onclick="speakText(document.getElementById('quiz-kr').innerText)"><i class="fas fa-volume-up"></i> Nghe</button>
+            </div>
+            <div class="quiz-options" id="quiz-opts"></div>
+            <div id="quiz-fb" class="game-feedback"></div>
         </div>
-        <div class="quiz-options" id="quiz-options"></div>
-        <div id="quiz-feedback" class="quiz-feedback"></div>
+
+        <!-- 2. Nối Từ (Matching) -->
+        <div id="game-match" class="game-box">
+            <div class="game-stats">
+                <span>Ghép các cặp từ Hàn - Việt tương ứng:</span>
+                <button onclick="startMatchGame()" style="border:none; background:none; color:var(--primary-blue); cursor:pointer; font-weight:600;"><i class="fas fa-redo"></i> Ván mới</button>
+            </div>
+            <div class="match-grid" id="match-grid"></div>
+            <div id="match-fb" class="game-feedback"></div>
+        </div>
+
+        <!-- 3. Luyện Gõ (Typing) -->
+        <div id="game-typing" class="game-box">
+            <div class="game-stats">
+                <span><i class="fas fa-star" style="color:#f1c40f;"></i> Điểm: <strong id="typing-score">0</strong></span>
+            </div>
+            <div class="typing-card">
+                <div style="font-size: 13px; color:#555;">Gõ từ tiếng Hàn cho nghĩa sau:</div>
+                <div style="font-size: 24px; font-weight:700; margin: 8px 0;" id="typing-vi">Xin chào</div>
+                <button class="controls button" style="padding:3px 10px; font-size:12px;" onclick="playTypingAudio()"><i class="fas fa-volume-up"></i> Gợi ý âm thanh</button>
+            </div>
+            <div class="typing-input-wrap">
+                <input type="text" id="typing-input" placeholder="Gõ tiếng Hàn..." onkeyup="if(event.key==='Enter') checkTyping()">
+                <button onclick="checkTyping()">Gửi</button>
+            </div>
+            <div id="typing-fb" class="game-feedback"></div>
+        </div>
+
+        <!-- 4. Luyện Nói (Speaking) -->
+        <div id="game-speaking" class="game-box">
+            <div class="game-stats">
+                <span>Nhấn Micro và phát âm câu tiếng Hàn:</span>
+            </div>
+            <div class="speak-card">
+                <div style="font-size: 26px; font-weight:700;" id="speak-target">안녕하세요</div>
+                <div style="font-size: 14px; opacity:0.8; margin-top:4px;" id="speak-vi">Xin chào</div>
+                <button class="mic-btn-large" id="btn-mic" onclick="toggleSpeechRecognition()"><i class="fas fa-microphone"></i></button>
+                <div style="font-size:12px; opacity:0.8;" id="mic-status">Nhấn mic để bắt đầu nói</div>
+            </div>
+            <div id="speak-fb" class="game-feedback"></div>
+        </div>
     </div>
 
-    <div class="footer">© 2026 Korean Flashcard Hub</div>
+    <div class="footer">© 2026 Korean Dictionary & Learning Engine</div>
 
     <script>
         const flashcards = [
@@ -157,135 +245,25 @@
             { front: "사랑해요", roman: "saranghaeyo", back: "Tôi yêu bạn", fav: false, learnt: false, hard: false },
             { front: "안녕", roman: "annyeong", back: "Chào (thân mật)", fav: false, learnt: false, hard: false },
             { front: "맛있어요", roman: "masisseoyo", back: "Ngon quá", fav: false, learnt: false, hard: false },
-            { front: "어서 오세요", roman: "eoseo oseyo", back: "Xin mời vào", fav: false, learnt: false, hard: false },
-            { front: "잠시만요", roman: "jamsimanyo", back: "Chờ một chút", fav: false, learnt: false, hard: false },
-            { front: "도와주세요", roman: "dowajuseyo", back: "Xin hãy giúp tôi", fav: false, learnt: false, hard: false },
-            { front: "미안해요", roman: "mianhaeyo", back: "Xin lỗi (nhẹ nhàng)", fav: false, learnt: false, hard: false },
             { front: "네", roman: "ne", back: "Vâng / Đúng", fav: false, learnt: false, hard: false },
             { front: "아니요", roman: "aniyo", back: "Không", fav: false, learnt: false, hard: false },
-            { front: "좋아요", roman: "johayo", back: "Tốt / Thích", fav: false, learnt: false, hard: false },
-            { front: "괜찮아요", roman: "gwaenchanayo", back: "Không sao / Ổn thôi", fav: false, learnt: false, hard: false },
-            { front: "어떻게 지내요?", roman: "eotteoke jinaeyo", back: "Bạn khỏe không?", fav: false, learnt: false, hard: false },
-            { front: "잘 지내요", roman: "jal jinaeyo", back: "Tôi khỏe", fav: false, learnt: false, hard: false },
-            { front: "오늘", roman: "oneul", back: "Hôm nay", fav: false, learnt: false, hard: false },
-            { front: "내일", roman: "naeil", back: "Ngày mai", fav: false, learnt: false, hard: false },
-            { front: "어제", roman: "eoje", back: "Hôm qua", fav: false, learnt: false, hard: false },
-            { front: "그럼", roman: "geureom", back: "Vậy thì", fav: false, learnt: false, hard: false },
-            { front: "맞아요", roman: "majayo", back: "Đúng vậy", fav: false, learnt: false, hard: false },
-            { front: "아니에요", roman: "anieyo", back: "Không phải đâu", fav: false, learnt: false, hard: false },
             { front: "물", roman: "mul", back: "Nước", fav: false, learnt: false, hard: false },
             { front: "밥", roman: "bap", back: "Cơm", fav: false, learnt: false, hard: false },
             { front: "친구", roman: "chingu", back: "Bạn bè", fav: false, learnt: false, hard: false },
-            { front: "가족", roman: "gajok", back: "Gia đình", fav: false, learnt: false, hard: false },
-            { front: "사람", roman: "saram", back: "Người", fav: false, learnt: false, hard: false },
-            { front: "한국", roman: "hanguk", back: "Hàn Quốc", fav: false, learnt: false, hard: false },
-            { front: "영어", roman: "yeong-eo", back: "Tiếng Anh", fav: false, learnt: false, hard: false },
             { front: "학교", roman: "hakgyo", back: "Trường học", fav: false, learnt: false, hard: false },
-            { front: "선생님", roman: "seonsaengnim", back: "Giáo viên", fav: false, learnt: false, hard: false },
-            { front: "학생", roman: "haksaeng", back: "Học sinh", fav: false, learnt: false, hard: false },
-            { front: "음식", roman: "eumsik", back: "Đồ ăn", fav: false, learnt: false, hard: false },
-            { front: "맥주", roman: "maekju", back: "Bia", fav: false, learnt: false, hard: false },
-            { front: "커피", roman: "keopi", back: "Cà phê", fav: false, learnt: false, hard: false },
-            { front: "차", roman: "cha", back: "Trà", fav: false, learnt: false, hard: false },
-            { front: "나무", roman: "namu", back: "Cái cây", fav: false, learnt: false, hard: false },
-            { front: "꽃", roman: "kkot", back: "Hoa", fav: false, learnt: false, hard: false },
-            { front: "하늘", roman: "haneul", back: "Bầu trời", fav: false, learnt: false, hard: false },
-            { front: "별", roman: "byeol", back: "Ngôi sao", fav: false, learnt: false, hard: false },
-            { front: "달", roman: "dal", back: "Mặt trăng", fav: false, learnt: false, hard: false },
-            { front: "해", roman: "hae", back: "Mặt trời", fav: false, learnt: false, hard: false },
-            { front: "따뜻하다", roman: "ttatteuthada", back: "Ấm áp", fav: false, learnt: false, hard: false },
-            { front: "춥다", roman: "chupda", back: "Lạnh", fav: false, learnt: false, hard: false },
-            { front: "덥다", roman: "deopda", back: "Nóng (thời tiết)", fav: false, learnt: false, hard: false },
-            { front: "좋다", roman: "jota", back: "Tốt", fav: false, learnt: false, hard: false },
-            { front: "예쁘다", roman: "yeppeuda", back: "Đẹp (người/vật)", fav: false, learnt: false, hard: false },
-            { front: "멋지다", roman: "meotjida", back: "Đẹp trai / Phong cách", fav: false, learnt: false, hard: false },
-            { front: "크다", roman: "keuda", back: "To, lớn", fav: false, learnt: false, hard: false },
-            { front: "작다", roman: "jakda", back: "Nhỏ", fav: false, learnt: false, hard: false },
-            { front: "빠르다", roman: "ppareuda", back: "Nhanh", fav: false, learnt: false, hard: false },
-            { front: "느리다", roman: "neurida", back: "Chậm", fav: false, learnt: false, hard: false },
-            { front: "가다", roman: "gada", back: "Đi", fav: false, learnt: false, hard: false },
-            { front: "오다", roman: "oda", back: "Đến", fav: false, learnt: false, hard: false },
-            { front: "먹다", roman: "meokda", back: "Ăn", fav: false, learnt: false, hard: false },
-            { front: "마시다", roman: "masida", back: "Uống", fav: false, learnt: false, hard: false },
-            { front: "보다", roman: "boda", back: "Xem / Nhìn", fav: false, learnt: false, hard: false },
-            { front: "듣다", roman: "deutda", back: "Nghe", fav: false, learnt: false, hard: false },
-            { front: "말하다", roman: "malhada", back: "Nói", fav: false, learnt: false, hard: false },
-            { front: "알다", roman: "alda", back: "Biết", fav: false, learnt: false, hard: false },
-            { front: "모르다", roman: "moreuda", back: "Không biết", fav: false, learnt: false, hard: false },
             { front: "집", roman: "jip", back: "Nhà", fav: false, learnt: false, hard: false },
-            { front: "방", roman: "bang", back: "Phòng", fav: false, learnt: false, hard: false },
-            { front: "화장실", roman: "hwajangsil", back: "Nhà vệ sinh", fav: false, learnt: false, hard: false },
-            { front: "식당", roman: "sikdang", back: "Nhà hàng / Quán ăn", fav: false, learnt: false, hard: false },
-            { front: "병원", roman: "byeongwon", back: "Bệnh viện", fav: false, learnt: false, hard: false },
-            { front: "약국", roman: "yakguk", back: "Nhà thuốc", fav: false, learnt: false, hard: false },
-            { front: "공원", roman: "gongwon", back: "Công viên", fav: false, learnt: false, hard: false },
-            { front: "공항", roman: "gonghang", back: "Sân bay", fav: false, learnt: false, hard: false },
-            { front: "지하철", roman: "jihacheol", back: "Tàu điện ngầm", fav: false, learnt: false, hard: false },
-            { front: "버스", roman: "beoseu", back: "Xe buýt", fav: false, learnt: false, hard: false },
-            { front: "택시", roman: "taeksi", back: "Xe taxi", fav: false, learnt: false, hard: false },
-            { front: "비행기", roman: "bihaenggi", back: "Máy bay", fav: false, learnt: false, hard: false },
-            { front: "책", roman: "chaek", back: "Sách", fav: false, learnt: false, hard: false },
-            { front: "옷", roman: "ot", back: "Quần áo", fav: false, learnt: false, hard: false },
-            { front: "신발", roman: "sinbal", back: "Giày dép", fav: false, learnt: false, hard: false },
             { front: "돈", roman: "don", back: "Tiền", fav: false, learnt: false, hard: false },
-            { front: "지갑", roman: "jigap", back: "Ví tiền", fav: false, learnt: false, hard: false },
-            { front: "가방", roman: "gabang", back: "Túi xách / Balo", fav: false, learnt: false, hard: false },
-            { front: "전화", roman: "jeonhwa", back: "Điện thoại", fav: false, learnt: false, hard: false },
-            { front: "핸드폰", roman: "haendeupon", back: "Điện thoại di động", fav: false, learnt: false, hard: false },
-            { front: "시간", roman: "sigan", back: "Thời gian", fav: false, learnt: false, hard: false },
-            { front: "주말", roman: "jumal", back: "Cuối tuần", fav: false, learnt: false, hard: false },
-            { front: "아침", roman: "achim", back: "Buổi sáng / Bữa sáng", fav: false, learnt: false, hard: false },
-            { front: "점심", roman: "jeomsim", back: "Buổi trưa / Bữa trưa", fav: false, learnt: false, hard: false },
-            { front: "저녁", roman: "jeonyeok", back: "Buổi tối / Bữa tối", fav: false, learnt: false, hard: false },
-            { front: "밤", roman: "bam", back: "Ban đêm", fav: false, learnt: false, hard: false },
-            { front: "바다", roman: "bada", back: "Biển", fav: false, learnt: false, hard: false },
-            { front: "산", roman: "san", back: "Núi", fav: false, learnt: false, hard: false },
-            { front: "비", roman: "bi", back: "Mưa", fav: false, learnt: false, hard: false },
-            { front: "눈", roman: "nun", back: "Tuyết / Mắt", fav: false, learnt: false, hard: false },
-            { front: "바람", roman: "baram", back: "Gió", fav: false, learnt: false, hard: false },
-            { front: "구름", roman: "gureum", back: "Mây", fav: false, learnt: false, hard: false },
-            { front: "아버지", roman: "abeoji", back: "Bố", fav: false, learnt: false, hard: false },
-            { front: "어머니", roman: "eomeoni", back: "Mẹ", fav: false, learnt: false, hard: false },
-            { front: "형", roman: "hyeong", back: "Anh trai (nam gọi)", fav: false, learnt: false, hard: false },
-            { front: "누나", roman: "nuna", back: "Chị gái (nam gọi)", fav: false, learnt: false, hard: false },
-            { front: "오빠", roman: "oppa", back: "Anh trai (nữ gọi)", fav: false, learnt: false, hard: false },
-            { front: "언니", roman: "eonni", back: "Chị gái (nữ gọi)", fav: false, learnt: false, hard: false },
-            { front: "동생", roman: "dongsaeng", back: "Em", fav: false, learnt: false, hard: false },
-            { front: "공부하다", roman: "gongbuhada", back: "Học tập", fav: false, learnt: false, hard: false },
-            { front: "일하다", roman: "ilhada", back: "Làm việc", fav: false, learnt: false, hard: false },
-            { front: "쉬다", roman: "swida", back: "Nghỉ ngơi", fav: false, learnt: false, hard: false },
-            { front: "자다", roman: "jada", back: "Ngủ", fav: false, learnt: false, hard: false },
-            { front: "일어나다", roman: "ireonada", back: "Thức dậy", fav: false, learnt: false, hard: false },
-            { front: "사다", roman: "sada", back: "Mua", fav: false, learnt: false, hard: false },
-            { front: "팔다", roman: "palda", back: "Bán", fav: false, learnt: false, hard: false },
-            { front: "만나다", roman: "mannada", back: "Gặp gỡ", fav: false, learnt: false, hard: false },
-            { front: "웃다", roman: "utda", back: "Cười", fav: false, learnt: false, hard: false },
-            { front: "울다", roman: "ulda", back: "Khóc", fav: false, learnt: false, hard: false },
-            { front: "비싸다", roman: "bissada", back: "Đắt", fav: false, learnt: false, hard: false },
-            { front: "싸다", roman: "ssada", back: "Rẻ", fav: false, learnt: false, hard: false },
-            { front: "어렵다", roman: "eoryeopda", back: "Khó", fav: false, learnt: false, hard: false },
-            { front: "쉽다", roman: "swipda", back: "Dễ", fav: false, learnt: false, hard: false },
-            { front: "재미있다", roman: "jaemiitda", back: "Thú vị / Hay", fav: false, learnt: false, hard: false },
-            { front: "재미없다", roman: "jaemieoptda", back: "Chán / Không hay", fav: false, learnt: false, hard: false },
-            { front: "머리", roman: "meori", back: "Đầu / Tóc", fav: false, learnt: false, hard: false },
-            { front: "손", roman: "son", back: "Bàn tay", fav: false, learnt: false, hard: false },
-            { front: "발", roman: "bal", back: "Bàn chân", fav: false, learnt: false, hard: false },
-            { front: "마음", roman: "maeum", back: "Tấm lòng / Tâm trí", fav: false, learnt: false, hard: false }
+            { front: "책", roman: "chaek", back: "Sách", fav: false, learnt: false, hard: false }
         ];
 
         let currentIndex = 0;
+        let lastDictResult = null;
+
         const card = document.getElementById('flashcard');
         const frontText = document.getElementById('front-text');
         const backText = document.getElementById('back-text');
         const frontRoman = document.getElementById('front-roman');
         const backRoman = document.getElementById('back-roman');
-        const currentIdxSpan = document.getElementById('current-idx');
-        const totalIdxSpan = document.getElementById('total-idx');
-        const progressFill = document.getElementById('progress-fill');
-
-        if (window.speechSynthesis) {
-            window.speechSynthesis.onvoiceschanged = () => {};
-        }
 
         function updateCard() {
             card.classList.remove('is-flipped');
@@ -295,37 +273,22 @@
             frontRoman.innerText = currentCard.roman;
             backRoman.innerText = currentCard.roman;
 
-            currentIdxSpan.innerText = currentIndex + 1;
-            totalIdxSpan.innerText = flashcards.length;
-            progressFill.style.width = ((currentIndex + 1) / flashcards.length) * 100 + '%';
-
-            const btnFav = document.getElementById('btn-fav');
-            const btnLearnt = document.getElementById('btn-learnt');
-            const btnHard = document.getElementById('btn-hard');
-
-            btnFav.innerHTML = (currentCard.fav ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>') + ' Yêu thích';
-            btnFav.className = currentCard.fav ? 'active-love' : '';
-            
-            btnLearnt.innerHTML = (currentCard.learnt ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-check-circle"></i>') + ' Đã thuộc';
-            btnLearnt.className = currentCard.learnt ? 'active-learnt' : '';
-
-            btnHard.innerHTML = (currentCard.hard ? '<i class="fas fa-exclamation-triangle"></i>' : '<i class="fas fa-exclamation-triangle"></i>') + ' Từ khó';
-            btnHard.className = currentCard.hard ? 'active-hard' : '';
+            document.getElementById('current-idx').innerText = currentIndex + 1;
+            document.getElementById('total-idx').innerText = flashcards.length;
+            document.getElementById('count-badge').innerText = flashcards.length;
+            document.getElementById('progress-fill').style.width = ((currentIndex + 1) / flashcards.length) * 100 + '%';
         }
 
         function flipCard() { card.classList.toggle('is-flipped'); }
-        function prevCard() { if (currentIndex > 0) { currentIndex--; updateCard(); } else alert("Bạn đang ở thẻ đầu tiên!"); }
-        function nextCard() { if (currentIndex < flashcards.length - 1) { currentIndex++; updateCard(); } else alert("Chúc mừng! Bạn đã hoàn thành tất cả từ vựng!"); }
-        function toggleStatus(type) { 
-            const c = flashcards[currentIndex];
-            if (type === 'fav') c.fav = !c.fav; 
-            if (type === 'learnt') c.learnt = !c.learnt; 
-            if (type === 'hard') c.hard = !c.hard;
-            updateCard(); 
-        }
+        function prevCard() { if (currentIndex > 0) { currentIndex--; updateCard(); } }
+        function nextCard() { if (currentIndex < flashcards.length - 1) { currentIndex++; updateCard(); } }
 
-        function playAudio() {
-            speakText(flashcards[currentIndex].front);
+        function toggleStatus(type) {
+            const c = flashcards[currentIndex];
+            if (type === 'fav') c.fav = !c.fav;
+            if (type === 'learnt') c.learnt = !c.learnt;
+            if (type === 'hard') c.hard = !c.hard;
+            updateCard();
         }
 
         function speakText(text) {
@@ -334,144 +297,264 @@
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'ko-KR';
                 utterance.rate = 0.75;
-                const voices = window.speechSynthesis.getVoices();
-                const koVoice = voices.find(voice => voice.lang === 'ko-KR');
-                if (koVoice) utterance.voice = koVoice;
                 window.speechSynthesis.speak(utterance);
             }
         }
+        function playAudio() { speakText(flashcards[currentIndex].front); }
 
-        function cleanString(str) {
-            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().trim();
+        /* TRA TỪ ĐIỂN API */
+        async function lookupDictionary() {
+            const query = document.getElementById('dict-input').value.trim();
+            if (!query) return;
+            const resDiv = document.getElementById('dict-result');
+            const resKr = document.getElementById('res-kr');
+            const resVi = document.getElementById('res-vi');
+
+            resDiv.style.display = 'block';
+            resKr.innerText = 'Đang tra cứu...';
+            resVi.innerText = '';
+
+            try {
+                const isKoreanInput = /[\u3131-\u318E\uAC00-\uD7A3]/.test(query);
+                const sl = isKoreanInput ? 'ko' : 'vi';
+                const tl = isKoreanInput ? 'vi' : 'ko';
+
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(query)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const translation = data[0][0][0];
+                const original = data[0][0][1];
+
+                const krWord = isKoreanInput ? original : translation;
+                const viWord = isKoreanInput ? translation : original;
+
+                resKr.innerText = krWord;
+                resVi.innerText = viWord;
+                lastDictResult = { front: krWord, roman: 'Từ tra cứu', back: viWord, fav: false, learnt: false, hard: false };
+            } catch (e) {
+                resKr.innerText = 'Lỗi tra cứu!';
+                resVi.innerText = 'Vui lòng thử lại sau.';
+            }
         }
 
-        function isMatch(cardItem, queryRaw) {
-            const queryClean = cleanString(queryRaw);
-            const queryOriginal = queryRaw.toLowerCase().trim();
-            return cardItem.front.toLowerCase().includes(queryOriginal) ||
-                   cardItem.back.toLowerCase().includes(queryOriginal) ||
-                   cleanString(cardItem.front).includes(queryClean) ||
-                   cleanString(cardItem.back).includes(queryClean) ||
-                   cleanString(cardItem.roman).includes(queryClean);
+        function addDictResultToDeck() {
+            if (!lastDictResult) return;
+            if (flashcards.some(c => c.front === lastDictResult.front)) {
+                alert('Từ này đã tồn tại trong bộ Flashcard!');
+                return;
+            }
+            flashcards.push(lastDictResult);
+            alert(`Đã thêm từ "${lastDictResult.front}" vào bộ thẻ!`);
+            currentIndex = flashcards.length - 1;
+            updateCard();
+        }
+
+        /* CHUYỂN CHẾ ĐỘ CHÍNH */
+        function switchMode(mode) {
+            const fcElems = [document.getElementById('fc-search'), document.getElementById('fc-wrapper'), document.getElementById('fc-controls'), document.getElementById('fc-actions'), document.getElementById('fc-progress')];
+            const dictElem = document.getElementById('dict-container');
+            const gameMainElem = document.getElementById('game-main-container');
+
+            document.getElementById('mode-dict').className = mode === 'dict' ? 'active-mode' : '';
+            document.getElementById('mode-flashcard').className = mode === 'flashcard' ? 'active-mode' : '';
+            document.getElementById('mode-game').className = mode === 'game' ? 'active-mode' : '';
+
+            dictElem.style.display = mode === 'dict' ? 'block' : 'none';
+            gameMainElem.style.display = mode === 'game' ? 'block' : 'none';
+            fcElems.forEach(el => el.style.display = mode === 'flashcard' ? '' : 'none');
+
+            if (mode === 'game') switchSubGame('quiz');
+        }
+
+        /* CHUYỂN SUB-GAMES */
+        function switchSubGame(sub) {
+            const games = ['quiz', 'match', 'typing', 'speaking'];
+            games.forEach(g => {
+                document.getElementById('game-' + g).style.display = g === sub ? 'block' : 'none';
+                document.getElementById('sg-' + g).className = g === sub ? 'active-subgame' : '';
+            });
+
+            if (sub === 'quiz') startQuizGame();
+            if (sub === 'match') startMatchGame();
+            if (sub === 'typing') startTypingGame();
+            if (sub === 'speaking') startSpeakingGame();
+        }
+
+        /* MINI GAME 1: TRẮC NGHIỆM */
+        let quizScore = 0, quizStreak = 0, currentQuiz = null;
+        function startQuizGame() {
+            document.getElementById('quiz-fb').innerText = '';
+            currentQuiz = flashcards[Math.floor(Math.random() * flashcards.length)];
+            document.getElementById('quiz-kr').innerText = currentQuiz.front;
+            document.getElementById('quiz-rm').innerText = currentQuiz.roman;
+
+            const opts = [currentQuiz.back];
+            while(opts.length < Math.min(4, flashcards.length)) {
+                const r = flashcards[Math.floor(Math.random() * flashcards.length)].back;
+                if(!opts.includes(r)) opts.push(r);
+            }
+            opts.sort(() => Math.random() - 0.5);
+
+            const container = document.getElementById('quiz-opts');
+            container.innerHTML = '';
+            opts.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-opt-btn';
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if(opt === currentQuiz.back) {
+                        btn.classList.add('correct');
+                        quizScore += 10; quizStreak++;
+                        document.getElementById('quiz-fb').innerHTML = '<span style="color:var(--success-green);">Chính xác! (+10đ)</span>';
+                    } else {
+                        btn.classList.add('wrong'); quizStreak = 0;
+                        document.getElementById('quiz-fb').innerHTML = `<span style="color:var(--danger-red);">Sai! Đáp án: ${currentQuiz.back}</span>`;
+                    }
+                    document.getElementById('quiz-score').innerText = quizScore;
+                    document.getElementById('quiz-streak').innerText = quizStreak;
+                    setTimeout(startQuizGame, 1400);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        /* MINI GAME 2: NỐI TỪ */
+        let firstMatchCard = null;
+        function startMatchGame() {
+            document.getElementById('match-fb').innerText = '';
+            firstMatchCard = null;
+            const grid = document.getElementById('match-grid');
+            grid.innerHTML = '';
+
+            const selectedWords = [...flashcards].sort(() => Math.random() - 0.5).slice(0, 4);
+            const cardsData = [];
+            selectedWords.forEach(w => {
+                cardsData.push({ id: w.front, text: w.front, type: 'kr' });
+                cardsData.push({ id: w.front, text: w.back, type: 'vi' });
+            });
+            cardsData.sort(() => Math.random() - 0.5);
+
+            cardsData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'match-card';
+                div.innerText = item.text;
+                div.dataset.id = item.id;
+                div.onclick = () => {
+                    if (div.classList.contains('matched') || div === firstMatchCard) return;
+                    div.classList.add('selected');
+
+                    if (!firstMatchCard) {
+                        firstMatchCard = div;
+                    } else {
+                        if (firstMatchCard.dataset.id === div.dataset.id) {
+                            firstMatchCard.classList.add('matched');
+                            div.classList.add('matched');
+                            firstMatchCard = null;
+                            if (document.querySelectorAll('.match-card:not(.matched)').length === 0) {
+                                document.getElementById('match-fb').innerHTML = '<span style="color:var(--success-green);">Chúc mừng! Bạn đã ghép thành công tất cả! 🎉</span>';
+                            }
+                        } else {
+                            const prev = firstMatchCard;
+                            firstMatchCard = null;
+                            setTimeout(() => {
+                                prev.classList.remove('selected');
+                                div.classList.remove('selected');
+                            }, 500);
+                        }
+                    }
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        /* MINI GAME 3: LUYỆN GÕ TỪ */
+        let typingScore = 0, currentTyping = null;
+        function startTypingGame() {
+            document.getElementById('typing-fb').innerText = '';
+            document.getElementById('typing-input').value = '';
+            currentTyping = flashcards[Math.floor(Math.random() * flashcards.length)];
+            document.getElementById('typing-vi').innerText = currentTyping.back;
+        }
+        function playTypingAudio() { if (currentTyping) speakText(currentTyping.front); }
+        function checkTyping() {
+            const val = document.getElementById('typing-input').value.trim();
+            if (!val) return;
+            if (val === currentTyping.front) {
+                typingScore += 10;
+                document.getElementById('typing-score').innerText = typingScore;
+                document.getElementById('typing-fb').innerHTML = '<span style="color:var(--success-green);">Chính xác tuyệt đối! (+10đ)</span>';
+                setTimeout(startTypingGame, 1200);
+            } else {
+                document.getElementById('typing-fb').innerHTML = `<span style="color:var(--danger-red);">Chưa đúng! Đáp án đúng: <strong>${currentTyping.front}</strong></span>`;
+            }
+        }
+
+        /* MINI GAME 4: LUYỆN NÓI (VOICE RECOGNITION) */
+        let currentSpeaking = null;
+        let isRecording = false;
+        let recognition = null;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ko-KR';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                document.getElementById('btn-mic').classList.add('recording');
+                document.getElementById('mic-status').innerText = 'Đang lắng nghe... Hãy nói tiếng Hàn!';
+            };
+
+            recognition.onresult = (event) => {
+                const speechResult = event.results[0][0].transcript.trim().toLowerCase();
+                const targetText = currentSpeaking.front.trim().toLowerCase();
+
+                if (speechResult === targetText || speechResult.includes(targetText) || targetText.includes(speechResult)) {
+                    document.getElementById('speak-fb').innerHTML = `<span style="color:var(--success-green);"><i class="fas fa-check-circle"></i> Chuẩn xác! Nhận diện được: "${speechResult}"</span>`;
+                    setTimeout(startSpeakingGame, 2000);
+                } else {
+                    document.getElementById('speak-fb').innerHTML = `<span style="color:var(--danger-red);"><i class="fas fa-times-circle"></i> Chưa chính xác. Nghe được: "${speechResult}"</span>`;
+                }
+            };
+
+            recognition.onerror = () => {
+                document.getElementById('mic-status').innerText = 'Lỗi nhận diện âm thanh. Thử lại!';
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                document.getElementById('btn-mic').classList.remove('recording');
+                document.getElementById('mic-status').innerText = 'Nhấn mic để bắt đầu nói';
+            };
+        }
+
+        function startSpeakingGame() {
+            document.getElementById('speak-fb').innerText = '';
+            currentSpeaking = flashcards[Math.floor(Math.random() * flashcards.length)];
+            document.getElementById('speak-target').innerText = currentSpeaking.front;
+            document.getElementById('speak-vi').innerText = currentSpeaking.back;
+        }
+
+        function toggleSpeechRecognition() {
+            if (!recognition) {
+                alert('Trình duyệt của bạn không hỗ trợ tính năng Luyện Nói (Speech Recognition). Vui lòng dùng Chrome hoặc Edge.');
+                return;
+            }
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
         }
 
         function searchWord() {
-            const inputVal = document.getElementById('search-input').value;
-            if (!inputVal.trim()) return;
-
-            let foundIndex = -1;
-            for (let i = currentIndex + 1; i < flashcards.length; i++) {
-                if (isMatch(flashcards[i], inputVal)) { foundIndex = i; break; }
-            }
-            if (foundIndex === -1) {
-                for (let i = 0; i <= currentIndex; i++) {
-                    if (isMatch(flashcards[i], inputVal)) { foundIndex = i; break; }
-                }
-            }
-            if (foundIndex !== -1) {
-                currentIndex = foundIndex;
-                updateCard();
-            } else {
-                alert("Không tìm thấy từ vựng phù hợp!");
-            }
-        }
-
-        // --- MINI GAME LOGIC ---
-        let gameScore = 0;
-        let gameStreak = 0;
-        let currentQuizWord = null;
-        let canAnswer = true;
-
-        function switchMode(mode) {
-            const flashcardElems = [
-                document.querySelector('.search-container'),
-                document.querySelector('.flashcard-wrapper'),
-                document.querySelector('.controls'),
-                document.querySelector('.action-buttons'),
-                document.querySelector('.progress-container')
-            ];
-            const gameElem = document.getElementById('game-container');
-            const btnFlashcard = document.getElementById('mode-flashcard');
-            const btnGame = document.getElementById('mode-game');
-
-            if (mode === 'flashcard') {
-                flashcardElems.forEach(el => el.style.display = '');
-                gameElem.style.display = 'none';
-                btnFlashcard.classList.add('active-mode');
-                btnGame.classList.remove('active-mode');
-            } else {
-                flashcardElems.forEach(el => el.style.display = 'none');
-                gameElem.style.display = 'block';
-                btnGame.classList.add('active-mode');
-                btnFlashcard.classList.remove('active-mode');
-                startNewQuiz();
-            }
-        }
-
-        function startNewQuiz() {
-            canAnswer = true;
-            document.getElementById('quiz-feedback').innerHTML = '';
-            
-            const randIdx = Math.floor(Math.random() * flashcards.length);
-            currentQuizWord = flashcards[randIdx];
-
-            document.getElementById('quiz-question').innerText = currentQuizWord.front;
-            document.getElementById('quiz-roman').innerText = currentQuizWord.roman;
-
-            const options = [currentQuizWord.back];
-            while (options.length < 4) {
-                const randomOpt = flashcards[Math.floor(Math.random() * flashcards.length)].back;
-                if (!options.includes(randomOpt)) {
-                    options.push(randomOpt);
-                }
-            }
-
-            options.sort(() => Math.random() - 0.5);
-
-            const optionsContainer = document.getElementById('quiz-options');
-            optionsContainer.innerHTML = '';
-            options.forEach(optText => {
-                const btn = document.createElement('button');
-                btn.className = 'quiz-opt-btn';
-                btn.innerText = optText;
-                btn.onclick = () => checkQuizAnswer(optText, btn);
-                optionsContainer.appendChild(btn);
-            });
-            
-            playQuizAudio();
-        }
-
-        function checkQuizAnswer(selectedOpt, btnElement) {
-            if (!canAnswer) return;
-            canAnswer = false;
-
-            const allBtns = document.querySelectorAll('.quiz-opt-btn');
-            if (selectedOpt === currentQuizWord.back) {
-                btnElement.classList.add('correct');
-                gameScore += 10;
-                gameStreak++;
-                document.getElementById('quiz-feedback').innerHTML = '<span style="color: #2e7d32;"><i class="fas fa-check-circle"></i> Chính xác! (+10 điểm)</span>';
-            } else {
-                btnElement.classList.add('wrong');
-                gameStreak = 0;
-                allBtns.forEach(b => {
-                    if (b.innerText === currentQuizWord.back) b.classList.add('correct');
-                });
-                document.getElementById('quiz-feedback').innerHTML = '<span style="color: #c0392b;"><i class="fas fa-times-circle"></i> Sai rồi! Đáp án: ' + currentQuizWord.back + '</span>';
-            }
-
-            document.getElementById('game-score').innerText = gameScore;
-            document.getElementById('game-streak').innerText = gameStreak;
-
-            setTimeout(() => {
-                startNewQuiz();
-            }, 1500);
-        }
-
-        function playQuizAudio() {
-            if (currentQuizWord) {
-                speakText(currentQuizWord.front);
-            }
+            const val = document.getElementById('search-input').value.toLowerCase().trim();
+            if (!val) return;
+            const idx = flashcards.findIndex(c => c.front.toLowerCase().includes(val) || c.back.toLowerCase().includes(val));
+            if (idx !== -1) { currentIndex = idx; updateCard(); }
+            else alert("Không tìm thấy!");
         }
 
         updateCard();
