@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hanja - Korean Flashcard Hub</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/animation.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo">
+            <h1>🇰🇷 Hanja</h1>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="home.html">Trang chủ</a></li>
+                <li><a href="flashcard.html">Flashcard</a></li>
+                <li><a href="review.html">Ôn tập</a></li>
+                <li><a href="hanja.html" class="active">Hanja</a></li>
+                <li><a href="grammar.html">Ngữ pháp</a></li>
+            </ul>
+        </nav>
+        <button id="theme-toggle" class="theme-btn">🌙</button>
+    </header>
+
+    <main class="hanja-main">
+        <div class="hanja-header">
+            <h2>Học Hanja cơ bản</h2>
+            <p>Chữ Hán trong tiếng Hàn</p>
+        </div>
+
+        <div class="hanja-grid" id="hanja-grid">
+            <!-- Hanja cards sẽ được tạo động -->
+        </div>
+
+        <div class="hanja-detail" id="hanja-detail" style="display: none;">
+            <div class="detail-card">
+                <span class="close-detail" id="close-detail">✕</span>
+                <div class="hanja-character" id="detail-character">學</div>
+                <div class="hanja-info">
+                    <p><strong>Hangul:</strong> <span id="detail-hangul">학</span></p>
+                    <p><strong>Âm Hán Việt:</strong> <span id="detail-sino">Học</span></p>
+                    <p><strong>Nghĩa:</strong> <span id="detail-meaning">Học tập</span></p>
+                </div>
+                <div class="hanja-words">
+                    <h4>Từ liên quan:</h4>
+                    <ul id="detail-words"></ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2024 Korean Flashcard Hub</p>
+    </footer>
+
+    <script src="../assets/js/storage.js"></script>
+    <script src="../assets/js/theme.js"></script>
+    <script src="../assets/js/hanja.js"></script>
+    <script src="../assets/js/app.js"></script>
+</body>
+</html>
