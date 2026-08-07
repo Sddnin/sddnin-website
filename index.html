@@ -2,67 +2,73 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Flashcard Hàn - Học & Chơi Game</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary-blue: #4a90e2; --shadow: 0 10px 20px rgba(0,0,0,0.1); --card-color: #ffffff; }
+        :root { --primary-blue: #4a90e2; --shadow: 0 10px 20px rgba(0,0,0,0.1); }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
-        body { display: flex; flex-direction: column; align-items: center; min-height: 100vh; background: #f8f9fa; padding: 20px; }
-        .header { width: 100%; max-width: 600px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: 600; color: var(--primary-blue); display: flex; justify-content: center; align-items: center; gap: 15px; }
+        body { display: flex; flex-direction: column; align-items: center; min-height: 100vh; background: #f8f9fa; padding: 15px; }
+        .header { width: 100%; max-width: 600px; text-align: center; margin: 15px 0; font-size: 22px; font-weight: 600; color: var(--primary-blue); display: flex; justify-content: center; align-items: center; gap: 15px; }
         
-        /* Nút chuyển đổi chế độ */
         .mode-switch { padding: 6px 15px; border: 2px solid var(--primary-blue); background: white; color: var(--primary-blue); border-radius: 20px; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px;}
         .mode-switch.active { background: var(--primary-blue); color: white; }
-        .mode-switch:hover { transform: scale(1.05); }
 
-        .config-section { width: 100%; max-width: 600px; display: flex; gap: 10px; margin-bottom: 15px; }
-        .config-section input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
-        .config-section button { background: var(--primary-blue); color: white; border: none; padding: 10px 15px; border-radius: 20px; cursor: pointer; }
+        .config-section { width: 100%; max-width: 600px; display: flex; gap: 8px; margin-bottom: 15px; }
+        .config-section input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; outline: none; font-size: 14px;}
+        .config-section button { background: var(--primary-blue); color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
 
         /* === CHẾ ĐỘ HỌC === */
         #study-section { display: flex; flex-direction: column; align-items: center; width: 100%; }
-        .card-wrapper { perspective: 1000px; width: 100%; max-width: 400px; height: 240px; margin-bottom: 20px; position: relative; }
+        .card-wrapper { perspective: 1000px; width: 100%; max-width: 380px; height: 220px; margin-bottom: 20px; position: relative; }
         .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer; border-radius: 15px; box-shadow: var(--shadow); }
         .card.is-flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; padding: 30px; text-align: center; }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; padding: 20px; text-align: center; }
         .card-back { transform: rotateY(180deg); background: #ffffff; color: #333; border: 1px solid #eee; }
-        .korean { font-size: 32px; font-weight: 600; margin-bottom: 5px; }
-        .vietnamese { font-size: 28px; font-weight: 500; color: var(--primary-blue); }
-        .roman { font-size: 16px; color: rgba(255,255,255,0.85); }
+        .korean { font-size: 30px; font-weight: 600; margin-bottom: 5px; }
+        .vietnamese { font-size: 24px; font-weight: 500; color: var(--primary-blue); }
+        .roman { font-size: 14px; color: rgba(255,255,255,0.85); }
         .card-back .roman { color: #888; }
-        .flip-icon { margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px; }
+        .flip-icon { margin-top: 15px; font-size: 13px; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px; }
         
-        .controls { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; justify-content: center; }
+        .controls { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; justify-content: center; }
         .controls button { padding: 8px 20px; border: 1px solid var(--primary-blue); background: white; color: var(--primary-blue); border-radius: 20px; cursor: pointer; }
-        .action-buttons { display: flex; gap: 15px; margin-bottom: 10px; justify-content: center; flex-wrap: wrap; }
-        .action-buttons button { padding: 8px 20px; border: none; border-radius: 20px; cursor: pointer; color: white; font-weight: bold; }
+        
+        .action-buttons { display: flex; gap: 10px; margin-bottom: 10px; justify-content: center; flex-wrap: wrap; }
+        .action-buttons button { padding: 8px 18px; border: none; border-radius: 20px; cursor: pointer; color: white; font-weight: bold; font-size: 14px;}
         .btn-speak { background: #e67e22; }
         .btn-practice { background: #27ae60; }
         .btn-ai { background: #9b59b6; }
-        #ai-result, #speech-result { display: none; width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 15px; white-space: pre-wrap; line-height: 1.6; }
+        #ai-result, #speech-result { display: none; width: 100%; max-width: 500px; background: white; padding: 15px; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 15px; white-space: pre-wrap; line-height: 1.6; font-size: 14px;}
         #speech-result { text-align: center; }
-        .progress-container { width: 100%; max-width: 300px; text-align: center; font-size: 14px; color: #777; margin-top: 10px; }
-        .progress-bar { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 5px; overflow: hidden; }
+        
+        .progress-container { width: 100%; max-width: 250px; text-align: center; font-size: 13px; color: #777; margin-top: 10px; }
+        .progress-bar { width: 100%; height: 5px; background: #e9ecef; border-radius: 3px; margin-top: 5px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--primary-blue); transition: width 0.3s; }
 
-        /* === CHẾ ĐỘ CHƠI (MEMORY GAME) === */
-        #game-section { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; }
-        .game-header { width: 100%; display: flex; justify-content: space-between; padding: 10px 20px; background: white; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 15px; font-weight: bold; color: #555; }
-        .game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; max-width: 500px; margin-bottom: 15px; }
-        .game-card { aspect-ratio: 1 / 1; background: #ff9800; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); user-select: none; padding: 5px; text-align: center; word-break: keep-all; }
-        .game-card.matched { background: #2ecc71; cursor: default; transform: scale(0.95); }
-        .game-card.matched:hover { transform: scale(0.95); }
-        .game-card.flipped { background: white; color: #333; cursor: default; transform: rotateY(180deg); }
-        .game-card:hover:not(.matched):not(.flipped) { transform: scale(1.05); }
-        .reset-game-btn { background: #e74c3c; color: white; border: none; padding: 10px 25px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        /* === CHẾ ĐỘ CHƠI (GAME LẬT BÀI) === */
+        #game-section { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 500px; }
+        .game-header { width: 100%; display: flex; justify-content: space-between; padding: 10px 15px; background: white; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 15px; font-weight: bold; color: #555; font-size: 15px; }
+        
+        .game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 450px; margin-bottom: 15px; }
+        @media (max-width: 500px) { .game-board { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
 
-        @media (max-width: 500px) {
-            .game-board { grid-template-columns: repeat(3, 1fr); }
-            .game-card { font-size: 12px; }
-        }
+        .game-card { aspect-ratio: 1 / 1; perspective: 600px; cursor: pointer; position: relative; }
+        .game-card .front, .game-card .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: transform 0.4s; padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .game-card .front { background: #ff9800; color: white; font-size: 28px; transform: rotateY(0deg); }
+        .game-card .back { background: white; color: #333; border: 1px solid #ddd; transform: rotateY(180deg); font-size: 14px; word-break: keep-all; text-align: center; }
+        
+        .game-card.flipped .front { transform: rotateY(180deg); }
+        .game-card.flipped .back { transform: rotateY(0deg); }
+        .game-card.matched { cursor: default; }
+        .game-card.matched .front { background: #2ecc71; transform: rotateY(180deg); }
+        .game-card.matched .back { background: #2ecc71; color: white; border: none; transform: rotateY(0deg); }
+        
+        .reset-game-btn { background: #e74c3c; color: white; border: none; padding: 10px 25px; border-radius: 20px; cursor: pointer; font-weight: bold; }
     </style>
     
+    <!-- Load Gemini SDK -->
     <script type="importmap">
       { "imports": { "@google/generative-ai": "https://cdn.jsdelivr.net/npm/@google/generative-ai@0.21.0/dist/index.js" } }
     </script>
@@ -119,13 +125,14 @@
     <!-- === PHẦN CHẾ ĐỘ CHƠI (GAME) === -->
     <div id="game-section">
         <div class="game-header">
-            <span><i class="fas fa-clock"></i> Lượt chơi: <span id="game-attempts">0</span></span>
-            <span><i class="fas fa-check-circle"></i> Cặp đã tìm: <span id="game-matches">0</span>/6</span>
+            <span><i class="fas fa-clock"></i> Lượt: <span id="game-attempts">0</span></span>
+            <span><i class="fas fa-check-circle"></i> Cặp: <span id="game-matches">0</span>/6</span>
         </div>
         <div class="game-board" id="game-board"></div>
         <button class="reset-game-btn" onclick="startNewGame()"><i class="fas fa-redo-alt"></i> Chơi lại</button>
     </div>
 
+    <!-- === PHẦN LOGIC JAVASCRIPT (Dùng Module) === -->
     <script type="module">
         import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -151,9 +158,14 @@
             { front: "그럼", roman: "geureom", back: "Vậy thì" },
             { front: "맞아요", roman: "majayo", back: "Đúng vậy" },
             { front: "아니에요", roman: "anieyo", back: "Không phải đâu" },
+            { front: "물", roman: "mul", back: "Nước" },
+            { front: "밥", roman: "bap", back: "Cơm" },
+            { front: "친구", roman: "chingu", back: "Bạn bè" },
+            { front: "가족", roman: "gajok", back: "Gia đình" },
+            { front: "사람", roman: "saram", back: "Người" },
         ];
 
-        // === PHẦN CHẾ ĐỘ HỌC ===
+        // === CHẾ ĐỘ HỌC ===
         let currentIndex = 0;
         const card = document.getElementById('flashcard');
         const frontText = document.getElementById('front-text');
@@ -177,17 +189,17 @@
             document.getElementById('ai-result').style.display = 'none';
             document.getElementById('speech-result').style.display = 'none';
         }
-
         card.onclick = () => card.classList.toggle('is-flipped');
-        window.prevCard = () => { if (currentIndex > 0) { currentIndex--; updateCard(); } }
-        window.nextCard = () => { if (currentIndex < flashcards.length - 1) { currentIndex++; updateCard(); } }
+
+        window.prevCard = function() { if (currentIndex > 0) { currentIndex--; updateCard(); } }
+        window.nextCard = function() { if (currentIndex < flashcards.length - 1) { currentIndex++; updateCard(); } }
 
         window.playAudio = function() {
             if (window.speechSynthesis) {
                 window.speechSynthesis.cancel();
                 const text = flashcards[currentIndex].front;
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ko-KR'; utterance.rate = 0.7;
+                utterance.lang = 'ko-KR'; utterance.rate = 0.75;
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -196,7 +208,7 @@
             const targetWord = flashcards[currentIndex].front;
             const resultDiv = document.getElementById('speech-result');
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Đang nghe... Đọc to từ này vào micro!`;
+            resultDiv.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Đang nghe... Đọc từ này vào micro!`;
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                 return resultDiv.innerHTML = "❌ Dùng Chrome trên PC để xài tính năng này.";
             }
@@ -206,7 +218,7 @@
             recognition.onresult = function(event) {
                 const transcript = event.results[0][0].transcript.trim();
                 if (transcript.replace(/\s/g, '') === targetWord.replace(/\s/g, '')) {
-                    resultDiv.innerHTML = `<span style="color:#27ae60; font-size:18px;">🎉 Tuyệt vời! Bạn phát âm đúng!</span><br><br>Máy nghe bạn nói: <b>${transcript}</b>`;
+                    resultDiv.innerHTML = `<span style="color:#27ae60; font-size:18px;">🎉 Tuyệt vời!</span><br><br>Máy nghe bạn nói: <b>${transcript}</b>`;
                 } else {
                     resultDiv.innerHTML = `<span style="color:#e74c3c;">😅 Chưa chuẩn!<br><br>Máy nghe: <b>${transcript}</b><br>Cần đọc: <b>${targetWord}</b></span>`;
                 }
@@ -226,7 +238,7 @@
             if(!apiKey) return alert("Chưa có API Key Gemini!");
             const resultDiv = document.getElementById('ai-result');
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<div style="text-align:center"><i class="fas fa-circle-notch fa-spin"></i> AI đang giảng bài...</div>';
+            resultDiv.innerHTML = '<div style="text-align:center"><i class="fas fa-circle-notch fa-spin"></i> AI đang phân tích...</div>';
             try {
                 const genAI = new GoogleGenerativeAI(apiKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -236,18 +248,17 @@
                 const response = await result.response;
                 resultDiv.innerHTML = response.text().replace(/\n/g, '<br>');
             } catch (e) {
-                resultDiv.innerHTML = `<span style="color:red">Lỗi AI: Sai API Key rồi!</span>`;
+                resultDiv.innerHTML = `<span style="color:red">Lỗi AI: Sai API Key hoặc hết hạn!</span>`;
             }
         }
 
-
-        // === PHẦN CHẾ ĐỘ CHƠI GAME LẬT BÀI ===
+        // === CHẾ ĐỘ GAME LẬT BÀI (Đã viết lại) ===
         window.toggleMode = function() {
             const btn = document.getElementById('mode-switch-btn');
             const study = document.getElementById('study-section');
             const game = document.getElementById('game-section');
 
-            if (study.style.display === 'none' || study.style.display === '') {
+            if (study.style.display === 'none') {
                 study.style.display = 'flex';
                 game.style.display = 'none';
                 btn.innerHTML = '<i class="fas fa-gamepad"></i> Chơi Game';
@@ -256,27 +267,16 @@
             } else {
                 study.style.display = 'none';
                 game.style.display = 'flex';
-                btn.innerHTML = '<i class="fas fa-book"></i> Về học bài';
+                btn.innerHTML = '<i class="fas fa-book"></i> Học bài';
                 btn.classList.add('active');
-                startNewGame(); // Tự động tạo game mới khi bấm vào
+                startNewGame(); 
             }
         }
 
-        // Logic lõi game
-        let gameCards = [];
-        let hasFlippedCard = false;
-        let lockBoard = false;
-        let firstCard, secondCard;
-        let matches = 0;
-        let attempts = 0;
+        let gameCardsData = [];
+        let firstCard = null, secondCard = null, lockBoard = false, matches = 0, attempts = 0;
 
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
+        function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
 
         window.startNewGame = function() {
             const board = document.getElementById('game-board');
@@ -284,75 +284,60 @@
             matches = 0; attempts = 0;
             document.getElementById('game-matches').innerText = '0';
             document.getElementById('game-attempts').innerText = '0';
+            firstCard = null; secondCard = null; lockBoard = false;
 
-            // Lấy ngẫu nhiên 6 từ từ flashcards
             const shuffledVocab = shuffle([...flashcards]).slice(0, 6);
-            
-            // Tạo 12 thẻ (mỗi thẻ gồm Hàn và Việt)
             let cardData = [];
             shuffledVocab.forEach((word, index) => {
-                cardData.push({ id: index, text: word.front, type: 'han' });
-                cardData.push({ id: index, text: word.back, type: 'viet' });
+                cardData.push({ id: index, front: word.front, back: '?' });
+                cardData.push({ id: index, front: word.back, back: '?' });
             });
-            
-            shuffle(cardData); // Xáo trộn 12 thẻ lại
-            gameCards = cardData;
+            shuffle(cardData);
+            gameCardsData = cardData;
 
-            // Render ra màn hình
-            cardData.forEach((data, idx) => {
+            // Dùng HTML có sẵn front/back để khỏi dùng textContent trong JS
+            cardData.forEach((data) => {
                 const cardEl = document.createElement('div');
                 cardEl.classList.add('game-card');
                 cardEl.dataset.id = data.id;
-                cardEl.textContent = data.text; 
-                // Chỉ hiện nội dung khi lật! Ở đây hiện nội dung luôn -> phải giấu đi
-                cardEl.textContent = '❓'; 
+                cardEl.innerHTML = `
+                    <div class="front">❓</div>
+                    <div class="back">${data.front}</div>
+                `;
                 cardEl.addEventListener('click', flipGameCard);
                 board.appendChild(cardEl);
             });
-            lockBoard = false;
-            hasFlippedCard = false;
         }
 
         function flipGameCard() {
             if (lockBoard) return;
-            if (this === firstCard) return;
-            if (this.classList.contains('flipped')) return;
+            if (this.classList.contains('flipped') || this.classList.contains('matched')) return;
 
             this.classList.add('flipped');
-            // Hiện nội dung thật
-            this.textContent = gameCards[Array.from(this.parentNode.children).indexOf(this)].text;
-
-            if (!hasFlippedCard) {
-                hasFlippedCard = true;
+            if (!firstCard) {
                 firstCard = this;
                 return;
             }
-
+            
             secondCard = this;
+            attempts++;
+            document.getElementById('game-attempts').innerText = attempts;
             checkForMatch();
         }
 
         function checkForMatch() {
             let isMatch = firstCard.dataset.id === secondCard.dataset.id;
-            attempts++;
-            document.getElementById('game-attempts').innerText = attempts;
-
             isMatch ? disableCards() : unflipCards();
         }
 
         function disableCards() {
-            firstCard.removeEventListener('click', flipGameCard);
-            secondCard.removeEventListener('click', flipGameCard);
             firstCard.classList.add('matched');
             secondCard.classList.add('matched');
             matches++;
             document.getElementById('game-matches').innerText = matches;
             resetBoard();
-
             if (matches === 6) {
-                setTimeout(() => {
-                    alert(`🎉 Bạn đã tìm hết 6 cặp từ vựng chỉ trong ${attempts} lượt! Giỏi quá!`);
-                }, 500);
+                setTimeout(() => alert(`🎉 Bạn đã thắng sau ${attempts} lượt! Tài quá!`), 300);
             }
         }
 
@@ -361,20 +346,13 @@
             setTimeout(() => {
                 firstCard.classList.remove('flipped');
                 secondCard.classList.remove('flipped');
-                firstCard.textContent = '❓';
-                secondCard.textContent = '❓';
                 resetBoard();
-            }, 1000);
+            }, 800);
         }
 
-        function resetBoard() {
-            [hasFlippedCard, lockBoard] = [false, false];
-            [firstCard, secondCard] = [null, null];
-        }
+        function resetBoard() { firstCard = null; secondCard = null; lockBoard = false; }
 
-        // Khởi chạy mặc định chế độ học
         updateCard();
-        window.startNewGame = startNewGame; // Bind ra global
     </script>
 </body>
 </html>
