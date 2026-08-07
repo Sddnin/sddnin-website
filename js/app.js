@@ -593,7 +593,7 @@ function evaluatePronunciation(transcript) {
 }
 
 /* ==========================================================================
-   GEMINI AI CHAT INTEGRATION (GỌI QUA CLOUDFLARE PROXY)
+   GEMINI AI CHAT INTEGRATION (GỌI QUA CLOUDFLARE PROXY VỚI GỠ LỖI CONSOLE)
    ========================================================================== */
 function renderChatSuggestions() {
     const sugBox = document.getElementById('chat-sug');
@@ -645,16 +645,19 @@ async function callGeminiAPI(promptText) {
         body: JSON.stringify(requestBody)
     });
 
+    const data = await response.json();
+
+    // DÒNG NÀY SẼ IN KẾT QUẢ CHI TIẾT RA CONSOLE (F12) ĐỂ GỠ LỖI
+    console.log("Dữ liệu nhận từ Cloudflare Worker:", data);
+
     if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `Lỗi máy chủ Proxy: ${response.status}`);
+        throw new Error(data.error?.message || `Lỗi máy chủ Proxy: ${response.status}`);
     }
 
-    const data = await response.json();
     if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
         return data.candidates[0].content.parts[0].text;
     } else {
-        throw new Error("Phản hồi từ Gemini bị rỗng.");
+        throw new Error(data.error?.message || "Phản hồi từ Gemini bị rỗng hoặc gặp lỗi.");
     }
 }
 
