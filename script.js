@@ -1,0 +1,1 @@
+console.log('Korean Study Hub v1.0');
