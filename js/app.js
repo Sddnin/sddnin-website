@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     updateCard();
     initTheme();
+    renderChatSuggestions();
 });
 
 /* ==========================================================================
@@ -160,6 +161,21 @@ function filterCategory(cat) {
     } else {
         filteredDeck = masterDeck.filter(item => item.category === cat);
     }
+    currentIndex = 0;
+    updateCard();
+}
+
+function searchFlashcards() {
+    const query = document.getElementById('search-input')?.value.trim().toLowerCase() || '';
+    if (!query) {
+        filterCategory(currentCategory);
+        return;
+    }
+    filteredDeck = masterDeck.filter(item => 
+        item.front.toLowerCase().includes(query) || 
+        item.back.toLowerCase().includes(query) ||
+        (item.roman && item.roman.toLowerCase().includes(query))
+    );
     currentIndex = 0;
     updateCard();
 }
@@ -512,7 +528,7 @@ function startSpeakingGame() {
     setElementText('speak-vi', currentSpeakingWord.back);
 }
 
-function startMicRecognition() {
+function startMicRecognition(targetInputId = null) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
         alert("Trình duyệt của bạn không hỗ trợ Nhận diện giọng nói.");
@@ -523,23 +539,31 @@ function startMicRecognition() {
     recognition.lang = 'ko-KR';
     recognition.interimResults = false;
 
-    const btnMic = document.getElementById('btn-mic');
+    const btnMic = targetInputId ? document.getElementById('btn-chat-mic') : document.getElementById('btn-mic');
     if (btnMic) btnMic.classList.add('recording');
-    setElementText('mic-status', 'Đang nghe... Bắt đầu đọc!');
+
+    if (!targetInputId) {
+        setElementText('mic-status', 'Đang nghe... Bắt đầu đọc!');
+    }
 
     recognition.start();
 
     recognition.onresult = (event) => {
         if (btnMic) btnMic.classList.remove('recording');
-        setElementText('mic-status', 'Nhấn micro và đọc');
-
         const transcript = event.results[0][0].transcript.trim();
-        evaluatePronunciation(transcript);
+
+        if (targetInputId) {
+            const inputEl = document.getElementById(targetInputId);
+            if (inputEl) inputEl.value = transcript;
+        } else {
+            setElementText('mic-status', 'Nhấn micro và đọc');
+            evaluatePronunciation(transcript);
+        }
     };
 
     recognition.onerror = () => {
         if (btnMic) btnMic.classList.remove('recording');
-        setElementText('mic-status', 'Không thể nhận diện. Thử lại!');
+        if (!targetInputId) setElementText('mic-status', 'Không thể nhận diện. Thử lại!');
     };
 
     recognition.onend = () => {
@@ -569,8 +593,36 @@ function evaluatePronunciation(transcript) {
 }
 
 /* ==========================================================================
-   GEMINI AI INTEGRATION
+   GEMINI AI CHAT INTEGRATION
    ========================================================================== */
+function renderChatSuggestions() {
+    const sugBox = document.getElementById('chat-sug');
+    if (!sugBox) return;
+
+    const suggestions = {
+        free: ['안녕하세요', '이거 얼마예요?', '한국어 공부해요'],
+        food: ['메뉴판 주세요', '이거 하나 주세요', '매워요?'],
+        taxi: ['홍대로 가주세요', '얼마나 걸려요?', '여기서 내려주세요'],
+        hotel: ['체크인 하고 싶어요', '와이파이 비번이 뭐예요?', '수건 더 주세요']
+    };
+
+    const list = suggestions[currentScenario] || suggestions.free;
+    sugBox.innerHTML = '';
+    list.forEach(text => {
+        const chip = document.createElement('span');
+        chip.className = 'sug-chip';
+        chip.innerText = text;
+        chip.onclick = () => {
+            const input = document.getElementById('chat-input');
+            if (input) {
+                input.value = text;
+                sendChatMessage();
+            }
+        };
+        sugBox.appendChild(chip);
+    });
+}
+
 async function callGeminiAPI(promptText) {
     const apiKey = localStorage.getItem('gemini_api_key');
     if (!apiKey) {
@@ -585,7 +637,7 @@ async function callGeminiAPI(promptText) {
     else if (currentScenario === 'hotel') scenarioPrompt = "Bạn là lễ tân khách sạn. Hãy giao tiếp tiếng Hàn ngắn gọn.";
     else scenarioPrompt = "Bạn là trợ lý học tiếng Hàn thông minh. Trả lời ngắn gọn bằng tiếng Hàn và kèm dịch nghĩa tiếng Việt.";
 
-    const fullPrompt = `${scenarioPrompt}\nNgười học nói: "${promptText}". Trả lời câu trên. Trả lời bằng định dạng:\nTiếng Hàn: <câu tiếng Hàn>\nTiếng Việt: <dịch tiếng Việt>`;
+    const fullPrompt = `${scenarioPrompt}\nNgười học nói: "${promptText}". Trả lời ngắn gọn bằng tiếng Hàn và tiếng Việt.`;
 
     const requestBody = {
         contents: [{ parts: [{ text: fullPrompt }] }]
@@ -621,7 +673,7 @@ async function sendChatMessage() {
     const chatBox = document.getElementById('chat-box');
     const loadingMsg = document.createElement('div');
     loadingMsg.className = 'chat-msg system';
-    loadingMsg.innerText = 'AI đang trả lời...';
+    loadingMsg.innerText = 'AI đang suy nghĩ...';
     chatBox.appendChild(loadingMsg);
     chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -650,7 +702,7 @@ function appendChatMessage(role, text) {
    DOM & EVENT LISTENERS
    ========================================================================== */
 function setupEventListeners() {
-    // Mode Switcher (Tab chính)
+    // 1. Chuyển đổi tab chính (Mode Switcher)
     document.querySelectorAll('.mode-switcher button').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const mode = e.currentTarget.dataset.mode;
@@ -661,7 +713,6 @@ function setupEventListeners() {
 
             document.getElementById('dict-container').style.display = mode === 'dict' ? 'block' : 'none';
             document.getElementById('fc-main-wrapper').style.display = mode === 'flashcard' ? 'block' : 'none';
-            document.getElementById('game-main-container').style.display = mode === 'game' ? 'none' : 'none';
             document.getElementById('game-main-container').style.display = mode === 'game' ? 'block' : 'none';
             document.getElementById('aichat-main-container').style.display = mode === 'aichat' ? 'block' : 'none';
 
@@ -674,7 +725,7 @@ function setupEventListeners() {
         });
     });
 
-    // Category chips
+    // 2. Lọc danh mục (Category Bar)
     document.querySelectorAll('.category-bar .cat-chip').forEach(chip => {
         chip.addEventListener('click', (e) => {
             document.querySelectorAll('.category-bar .cat-chip').forEach(c => c.classList.remove('active'));
@@ -683,14 +734,14 @@ function setupEventListeners() {
         });
     });
 
-    // Subgame buttons
+    // 3. Chuyển Mini Game
     document.querySelectorAll('.game-selector button').forEach(btn => {
         btn.addEventListener('click', (e) => {
             switchSubGame(e.currentTarget.dataset.sub);
         });
     });
 
-    // Flashcard events
+    // 4. Thẻ Flashcard
     const fc = document.getElementById('flashcard');
     if (fc) fc.addEventListener('click', flipCard);
 
@@ -700,12 +751,20 @@ function setupEventListeners() {
     document.getElementById('btn-fav')?.addEventListener('click', toggleFavCard);
     document.getElementById('btn-hard')?.addEventListener('click', toggleHardCard);
     document.getElementById('btn-delete-word')?.addEventListener('click', deleteCurrentCard);
+    
+    // Nút nghe phát âm trên thẻ bài (Ngăn không cho bị lật thẻ khi bấm)
     document.getElementById('btn-card-audio')?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (filteredDeck[currentIndex]) speakKorean(filteredDeck[currentIndex].front);
     });
 
-    // Tra từ events
+    // Tìm kiếm trong Flashcard
+    document.getElementById('btn-search-word')?.addEventListener('click', searchFlashcards);
+    document.getElementById('search-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchFlashcards();
+    });
+
+    // 5. Tra Từ
     document.getElementById('btn-dict-search')?.addEventListener('click', searchDictionary);
     document.getElementById('dict-input')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') searchDictionary();
@@ -716,7 +775,7 @@ function setupEventListeners() {
     });
     document.getElementById('btn-dict-add')?.addEventListener('click', addDictToDeck);
 
-    // Mini game typing events
+    // 6. Mini Game Typing & Speaking
     document.getElementById('btn-typing-submit')?.addEventListener('click', checkTypingAnswer);
     document.getElementById('typing-input')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') checkTypingAnswer();
@@ -725,15 +784,14 @@ function setupEventListeners() {
         if (currentTypingWord) speakKorean(currentTypingWord.front);
     });
 
-    // Speaking game events
     document.getElementById('btn-speak-sample')?.addEventListener('click', () => {
         if (currentSpeakingWord) speakKorean(currentSpeakingWord.front);
     });
     document.getElementById('btn-next-speak')?.addEventListener('click', startSpeakingGame);
-    document.getElementById('btn-mic')?.addEventListener('click', startMicRecognition);
+    document.getElementById('btn-mic')?.addEventListener('click', () => startMicRecognition());
     document.getElementById('btn-refresh-match')?.addEventListener('click', startMatchGame);
 
-    // AI Chat events
+    // 7. AI Chat & Voice
     document.getElementById('btn-save-key')?.addEventListener('click', () => {
         const key = document.getElementById('gemini-api-key').value.trim();
         if (key) {
@@ -745,18 +803,20 @@ function setupEventListeners() {
     document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendChatMessage();
     });
+    document.getElementById('btn-chat-mic')?.addEventListener('click', () => startMicRecognition('chat-input'));
 
-    // Scenario chips
+    // Kịch bản AI Chat (Scenario)
     document.querySelectorAll('.ai-scenario-bar .scen-chip').forEach(chip => {
         chip.addEventListener('click', (e) => {
             document.querySelectorAll('.ai-scenario-bar .scen-chip').forEach(c => c.classList.remove('active'));
             e.currentTarget.classList.add('active');
             currentScenario = e.currentTarget.dataset.scen;
-            appendChatMessage('system', `Đã đổi kịch bản sang: ${e.currentTarget.innerText}`);
+            renderChatSuggestions();
+            appendChatMessage('system', `Đã chuyển kịch bản: ${e.currentTarget.innerText}`);
         });
     });
 
-    // Theme & Modal & Import/Export
+    // 8. Theme, Modal, Import/Export
     document.getElementById('btn-toggle-theme')?.addEventListener('click', toggleTheme);
     document.getElementById('btn-open-add')?.addEventListener('click', () => {
         document.getElementById('add-modal').style.display = 'flex';
@@ -800,7 +860,7 @@ function setupEventListeners() {
 
     document.getElementById('import-file')?.addEventListener('change', importData);
 
-    // Keyboard navigation cho Flashcard
+    // Điều khiển bằng bàn phím ở chế độ Flashcard
     document.addEventListener('keydown', (e) => {
         if (activeMode !== 'flashcard') return;
         if (e.key === 'ArrowRight') nextCard();
