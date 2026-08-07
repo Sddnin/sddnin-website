@@ -3,17 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ứng Dụng Luyện Nói Tiếng Anh</title>
+  <title>Ứng Dụng Luyện Nói Tiếng Anh Toàn Diện</title>
+  
+  <!-- SDK Azure Speech Services (Cần thiết nếu dùng Azure) -->
+  <script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@latest/dist/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
 
     body {
-      background: #f4f6f9;
+      background: #f0f2f5;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -21,19 +25,20 @@
       padding: 20px;
     }
 
-    .app-card {
+    .app-container {
       background: #ffffff;
       padding: 28px;
       border-radius: 20px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      max-width: 520px;
       width: 100%;
     }
 
+    /* Thanh tiến trình */
     .progress-bar {
-      height: 6px;
+      height: 8px;
       background: #e9ecef;
-      border-radius: 3px;
+      border-radius: 4px;
       margin-bottom: 20px;
       overflow: hidden;
     }
@@ -41,39 +46,79 @@
     .progress-fill {
       height: 100%;
       background: #0d6efd;
-      width: 20%;
+      width: 0%;
       transition: width 0.3s ease;
     }
 
-    .header-info {
+    /* Chọn chủ đề và chế độ */
+    .header-tools {
       display: flex;
       justify-content: space-between;
-      color: #6c757d;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+
+    .select-input {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #ced4da;
       font-size: 14px;
-      margin-bottom: 16px;
       font-weight: 600;
+      color: #495057;
+      outline: none;
+      background: #fff;
     }
 
-    .practice-box {
-      text-align: center;
-      margin-bottom: 24px;
-      padding: 20px;
+    /* Cấu hình Azure Key (Ẩn/Hiện) */
+    .azure-config {
       background: #f8f9fa;
-      border-radius: 12px;
+      padding: 12px;
+      border-radius: 10px;
       border: 1px solid #e9ecef;
+      margin-bottom: 20px;
+      font-size: 13px;
     }
 
-    .target-sentence {
-      font-size: 22px;
-      font-weight: 700;
-      color: #212529;
+    .azure-config input {
+      width: 100%;
+      padding: 6px 10px;
+      margin-top: 4px;
       margin-bottom: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    /* Khối câu luyện nói */
+    .card-content {
+      text-align: center;
+      padding: 24px;
+      background: #f8f9fa;
+      border-radius: 16px;
+      border: 1px solid #e9ecef;
+      margin-bottom: 20px;
+    }
+
+    .target-word {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1a1d20;
+      line-height: 1.3;
+    }
+
+    .ipa {
+      font-size: 16px;
+      color: #6c757d;
+      font-style: italic;
+      margin-top: 6px;
+      font-weight: 500;
     }
 
     .translation {
-      font-size: 15px;
-      color: #6c757d;
-      margin-bottom: 12px;
+      font-size: 14px;
+      color: #0d6efd;
+      margin-top: 6px;
+      font-weight: 600;
     }
 
     .audio-btn {
@@ -83,9 +128,18 @@
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
+      margin-top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .action-area {
+    .audio-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Nút Micro */
+    .mic-area {
       text-align: center;
       margin-bottom: 20px;
     }
@@ -99,18 +153,20 @@
       color: white;
       font-size: 28px;
       cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+      transition: all 0.25s ease;
+      box-shadow: 0 6px 16px rgba(13, 110, 253, 0.3);
+      outline: none;
     }
 
     .mic-btn.recording {
       background: #dc3545;
       animation: pulse 1.4s infinite;
+      box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
     }
 
     @keyframes pulse {
       0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.6); }
-      70% { box-shadow: 0 0 0 16px rgba(220, 53, 69, 0); }
+      70% { box-shadow: 0 0 0 18px rgba(220, 53, 69, 0); }
       100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
     }
 
@@ -120,25 +176,73 @@
       margin-top: 10px;
     }
 
+    /* Kết quả chấm điểm */
     .result-card {
-      padding: 16px;
+      background: #fff;
       border-radius: 12px;
-      background: #f1f3f5;
+      padding: 16px;
+      border: 1px solid #e9ecef;
       display: none;
       margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
     }
 
-    .score-title {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 6px;
+    .score-badge {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 800;
+      padding: 8px;
+      border-radius: 8px;
+      margin-bottom: 12px;
     }
 
-    .spoken-text {
+    .score-good { background: #d1e7dd; color: #0f5132; }
+    .score-medium { background: #fff3cd; color: #664d03; }
+    .score-bad { background: #f8d7da; color: #842029; }
+
+    .detail-item {
       font-size: 14px;
       color: #495057;
+      margin-top: 6px;
     }
 
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .metric-box {
+      background: #f8f9fa;
+      padding: 6px;
+      border-radius: 6px;
+      text-align: center;
+      border: 1px solid #dee2e6;
+    }
+
+    .metric-box .val { font-size: 16px; font-weight: bold; color: #0d6efd; }
+    .metric-box .lbl { font-size: 10px; color: #6c757d; }
+
+    .phonemes-container {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .phoneme-tag {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .phoneme-good { background: #d1e7dd; color: #0f5132; }
+    .phoneme-bad { background: #f8d7da; color: #842029; }
+
+    /* Điều hướng */
     .nav-btns {
       display: flex;
       gap: 12px;
@@ -147,109 +251,172 @@
     .nav-btn {
       flex: 1;
       padding: 12px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid #ced4da;
       background: #fff;
       font-weight: 600;
       cursor: pointer;
+      color: #495057;
+      transition: all 0.2s;
     }
+
+    .nav-btn:hover { background: #e9ecef; }
 
     .nav-btn.primary {
       background: #0d6efd;
       color: white;
       border: none;
     }
+
+    .nav-btn.primary:hover { background: #0b5ed7; }
   </style>
 </head>
 <body>
 
-  <div class="app-card">
+  <div class="app-container">
     <div class="progress-bar">
       <div class="progress-fill" id="progressFill"></div>
     </div>
 
-    <div class="header-info">
-      <span>Bài luyện nói</span>
-      <span id="counter">Câu 1/5</span>
+    <div class="header-tools">
+      <select class="select-input" id="topicSelect" onchange="changeTopic()">
+        <option value="giao_tiep">🗣️ Giao tiếp hàng ngày</option>
+        <option value="du_lich">✈️ Du lịch & Khách sạn</option>
+        <option value="cong_viec">💼 Công sở & Công việc</option>
+      </select>
+      
+      <select class="select-input" id="engineSelect" onchange="toggleEngine()">
+        <option value="web">Trình duyệt (Miễn phí)</option>
+        <option value="azure">Azure Speech (Chuẩn AI)</option>
+      </select>
     </div>
 
-    <!-- Khối câu hỏi -->
-    <div class="practice-box">
-      <div class="target-sentence" id="targetText">How are you doing today?</div>
-      <div class="translation" id="translationText">Hôm nay bạn thế nào?</div>
+    <!-- Cấu hình Azure Key (Mặc định ẩn) -->
+    <div class="azure-config" id="azureConfigBlock" style="display: none;">
+      <label>Azure Speech Key:</label>
+      <input type="password" id="azureKey" placeholder="Nhập Key Azure...">
+      <label>Region:</label>
+      <input type="text" id="azureRegion" value="southeastasia" placeholder="vùng (ví dụ: southeastasia)">
+    </div>
+
+    <!-- Khối từ/câu luyện tập -->
+    <div class="card-content">
+      <div class="target-word" id="targetText">Hello, how are you?</div>
+      <div class="ipa" id="targetIpa">/həˈloʊ haʊ ɑːr juː/</div>
+      <div class="translation" id="targetTranslation">Xin chào, bạn khỏe không?</div>
       <button class="audio-btn" onclick="playStandardAudio()">🔊 Nghe phát âm mẫu</button>
     </div>
 
-    <!-- Khối thao tác thu âm -->
-    <div class="action-area">
+    <!-- Micro -->
+    <div class="mic-area">
       <button class="mic-btn" id="micBtn" onclick="toggleRecording()">🎤</button>
-      <div class="status-text" id="statusText">Bấm micro và đọc to câu trên</div>
+      <div class="status-text" id="statusText">Nhấn micro và đọc to câu trên</div>
     </div>
 
-    <!-- Khối kết quả chấm điểm -->
+    <!-- Kết quả -->
     <div class="result-card" id="resultCard">
-      <div class="score-title" id="scoreTitle">Kết quả: 0%</div>
-      <div class="spoken-text">Bạn đã nói: <i id="spokenText">-</i></div>
+      <div class="score-badge" id="scoreBadge">0%</div>
+      <div class="detail-item">Máy nghe được: <strong id="heardText">-</strong></div>
+      <div class="detail-item" id="feedbackText">Đánh giá: -</div>
+
+      <!-- Khối điểm chi tiết của Azure (nếu bật) -->
+      <div id="azureMetrics" style="display: none;">
+        <div class="metrics-grid">
+          <div class="metric-box"><div class="val" id="scorePron">-</div><div class="lbl">Tổng thể</div></div>
+          <div class="metric-box"><div class="val" id="scoreAcc">-</div><div class="lbl">Chính xác</div></div>
+          <div class="metric-box"><div class="val" id="scoreFlu">-</div><div class="lbl">Lưu khoát</div></div>
+          <div class="metric-box"><div class="val" id="scoreComp">-</div><div class="lbl">Tròn âm</div></div>
+        </div>
+        <div class="phonemes-container" id="phonemesContainer"></div>
+      </div>
     </div>
 
-    <!-- Nút điều hướng -->
+    <!-- Điều hướng -->
     <div class="nav-btns">
-      <button class="nav-btn" onclick="prevSentence()">Câu trước</button>
-      <button class="nav-btn primary" onclick="nextSentence()">Câu tiếp theo</button>
+      <button class="nav-btn" onclick="prevSentence()">⬅️ Câu trước</button>
+      <button class="nav-btn primary" onclick="nextSentence()">Câu tiếp ➡️</button>
     </div>
   </div>
 
   <script>
-    // Danh sách câu luyện nói
-    const practiceList = [
-      { en: "How are you doing today?", vi: "Hôm nay bạn thế nào?" },
-      { en: "Nice to meet you.", vi: "Rất vui được gặp bạn." },
-      { en: "Where are you from?", vi: "Bạn đến từ đâu?" },
-      { en: "Can you help me, please?", vi: "Bạn có thể giúp tôi được không?" },
-      { en: "Have a great day!", vi: "Chúc bạn một ngày tuyệt vời!" }
-    ];
+    // Kho dữ liệu câu luyện nói theo chủ đề + IPA + Dịch
+    const datasets = {
+      giao_tiep: [
+        { en: "Hello, how are you?", ipa: "/həˈloʊ haʊ ɑːr juː/", vi: "Xin chào, bạn khỏe không?" },
+        { en: "Nice to meet you.", ipa: "/naɪs tuː miːt juː/", vi: "Rất vui được gặp bạn." },
+        { en: "Where are you from?", ipa: "/weər ɑːr juː frɒm/", vi: "Bạn đến từ đâu?" },
+        { en: "Have a great day!", ipa: "/hæv ə ɡreɪt deɪ/", vi: "Chúc bạn một ngày tuyệt vời!" }
+      ],
+      du_lich: [
+        { en: "Where is the train station?", ipa: "/weər ɪz ðə treɪn ˈsteɪ.ʃən/", vi: "Ga tàu ở đâu?" },
+        { en: "How much is this ticket?", ipa: "/haʊ mʌtʃ ɪz ðɪs ˈtɪk.ɪt/", vi: "Vé này bao nhiêu tiền?" },
+        { en: "I need a hotel room.", ipa: "/aɪ niːd ə hoʊˈtel ruːm/", vi: "Tôi cần một phòng khách sạn." }
+      ],
+      cong_viec: [
+        { en: "Let's start the meeting.", ipa: "/lets stɑːrt ðə ˈmiː.tɪŋ/", vi: "Hãy bắt đầu cuộc họp." },
+        { en: "Could you send me the report?", ipa: "/kʊd juː send miː ðə rɪˈpɔːrt/", vi: "Bạn gửi cho tôi báo cáo được không?" },
+        { en: "Thank you for your help.", ipa: "/θæŋk juː fɔːr jɔːr help/", vi: "Cảm ơn sự giúp đỡ của bạn." }
+      ]
+    };
 
+    let currentTopic = 'giao_tiep';
     let currentIndex = 0;
-    let recognition = null;
     let isRecording = false;
+    let recognition = null;
 
-    // Khởi tạo Speech Recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    // Khởi tạo ứng dụng
+    window.onload = () => {
+      initWebSpeech();
+      updateCard();
+    };
 
-    if (SpeechRecognition) {
-      recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
+    // 1. Cấu hình Trình duyệt (Web Speech API)
+    function initWebSpeech() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
 
-      recognition.onstart = () => {
-        isRecording = true;
-        document.getElementById('micBtn').classList.add('recording');
-        document.getElementById('statusText').innerText = "Đang nghe... Nói ngay nhé!";
-      };
+        recognition.onstart = () => {
+          isRecording = true;
+          document.getElementById('micBtn').classList.add('recording');
+          document.getElementById('statusText').innerText = "Đang nghe... Hãy nói ngay!";
+        };
 
-      recognition.onresult = (event) => {
-        const spoken = event.results[0][0].transcript;
-        evaluateSpeaking(spoken, practiceList[currentIndex].en);
-      };
+        recognition.onresult = (event) => {
+          const spoken = event.results[0][0].transcript;
+          evaluateWebSpeech(spoken, getCurrentItem().en);
+        };
 
-      recognition.onerror = () => {
-        resetMic();
-        document.getElementById('statusText').innerText = "Chưa nghe rõ, hãy thử lại!";
-      };
+        recognition.onerror = (e) => {
+          resetMic();
+          document.getElementById('statusText').innerText = "Chưa nhận diện được. Bấm mic thử lại!";
+        };
 
-      recognition.onend = () => {
-        resetMic();
-      };
-    } else {
-      document.getElementById('statusText').innerText = "Trình duyệt không hỗ trợ Mic. Hãy dùng Chrome/Edge.";
+        recognition.onend = () => { resetMic(); };
+      }
+    }
+
+    function toggleEngine() {
+      const engine = document.getElementById('engineSelect').value;
+      document.getElementById('azureConfigBlock').style.display = (engine === 'azure') ? 'block' : 'none';
     }
 
     function toggleRecording() {
-      if (!recognition) return;
-      if (isRecording) {
-        recognition.stop();
+      const engine = document.getElementById('engineSelect').value;
+      if (engine === 'azure') {
+        startAzureAssessment();
       } else {
-        recognition.start();
+        if (!recognition) {
+          alert("Trình duyệt không hỗ trợ Web Speech API. Hãy chọn Chrome/Edge.");
+          return;
+        }
+        if (isRecording) {
+          recognition.stop();
+        } else {
+          recognition.start();
+        }
       }
     }
 
@@ -258,31 +425,32 @@
       document.getElementById('micBtn').classList.remove('recording');
     }
 
-    // Đánh giá phát âm câu
-    function evaluateSpeaking(spoken, target) {
-      const score = calculateSimilarity(spoken, target);
+    // 2. Chấm điểm Web Speech API (Dựa trên Levenshtein Distance)
+    function evaluateWebSpeech(spokenText, targetText) {
+      const score = calculateSimilarity(spokenText, targetText);
       const resultCard = document.getElementById('resultCard');
-      const scoreTitle = document.getElementById('scoreTitle');
-      const spokenText = document.getElementById('spokenText');
-
-      resultCard.style.display = 'block';
-      spokenText.innerText = `"${spoken}"`;
+      const scoreBadge = document.getElementById('scoreBadge');
       
+      document.getElementById('azureMetrics').style.display = 'none';
+      resultCard.style.display = 'block';
+      document.getElementById('heardText').innerText = `"${spokenText}"`;
+      scoreBadge.innerText = `${score}%`;
+
+      scoreBadge.className = 'score-badge ';
       if (score >= 80) {
-        scoreTitle.innerText = `Xuất sắc! (${score}%)`;
-        scoreTitle.style.color = "#0f5132";
+        scoreBadge.classList.add('score-good');
+        document.getElementById('feedbackText').innerText = "Đánh giá: Rất xuất sắc! Phát âm rất chuẩn.";
       } else if (score >= 50) {
-        scoreTitle.innerText = `Khá tốt! (${score}%)`;
-        scoreTitle.style.color = "#664d03";
+        scoreBadge.classList.add('score-medium');
+        document.getElementById('feedbackText').innerText = "Đánh giá: Khá tốt, cần chú ý phát âm rõ chữ hơn.";
       } else {
-        scoreTitle.innerText = `Thử lại nhé! (${score}%)`;
-        scoreTitle.style.color = "#842029";
+        scoreBadge.classList.add('score-bad');
+        document.getElementById('feedbackText').innerText = "Đánh giá: Thử lại nhé, nghe mẫu trước khi nói.";
       }
 
-      document.getElementById('statusText').innerText = "Đã hoàn thành!";
+      document.getElementById('statusText').innerText = "Đã hoàn thành đánh giá!";
     }
 
-    // Thuật toán so sánh độ chính xác phát âm câu
     function calculateSimilarity(str1, str2) {
       const s1 = str1.toLowerCase().replace(/[^\w\s]/gi, '').trim();
       const s2 = str2.toLowerCase().replace(/[^\w\s]/gi, '').trim();
@@ -292,35 +460,140 @@
       const words2 = s2.split(/\s+/);
       let matches = 0;
 
-      words1.forEach(word => {
-        if (words2.includes(word)) matches++;
-      });
-
+      words1.forEach(w => { if (words2.includes(w)) matches++; });
       return Math.round((matches / Math.max(words1.length, words2.length)) * 100);
     }
 
-    // Đọc mẫu
+    // 3. Chấm điểm bằng Azure Speech Assessment
+    async function startAzureAssessment() {
+      const key = document.getElementById('azureKey').value.trim();
+      const region = document.getElementById('azureRegion').value.trim();
+
+      if (!key) {
+        alert("Vui lòng nhập Azure Speech Key!");
+        return;
+      }
+
+      if (isRecording) return;
+
+      const micBtn = document.getElementById('micBtn');
+      const statusText = document.getElementById('statusText');
+      const currentItem = getCurrentItem();
+
+      micBtn.classList.add('recording');
+      statusText.innerText = "Azure đang lắng nghe... Nói ngay!";
+      isRecording = true;
+
+      try {
+        const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(key, region);
+        speechConfig.speechRecognitionLanguage = "en-US";
+        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+
+        const pronConfig = new SpeechSDK.PronunciationAssessmentConfig(
+          currentItem.en,
+          SpeechSDK.PronunciationAssessmentGradingSystem.HundredMark,
+          SpeechSDK.PronunciationAssessmentGranularity.Phoneme,
+          true
+        );
+
+        const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+        pronConfig.applyTo(recognizer);
+
+        recognizer.recognizeOnceAsync(result => {
+          resetMic();
+          if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+            statusText.innerText = "Phân tích Azure hoàn tất!";
+            const pronResult = SpeechSDK.PronunciationAssessmentResult.fromResult(result);
+            displayAzureResult(pronResult, result);
+          } else {
+            statusText.innerText = "Lỗi nhận diện. Hãy thử lại!";
+          }
+          recognizer.close();
+        }, err => {
+          resetMic();
+          statusText.innerText = "Lỗi kết nối Azure!";
+          recognizer.close();
+        });
+      } catch (e) {
+        resetMic();
+        alert("Lỗi: " + e.message);
+      }
+    }
+
+    function displayAzureResult(pronResult, speechResult) {
+      const resultCard = document.getElementById('resultCard');
+      const scoreBadge = document.getElementById('scoreBadge');
+      const score = Math.round(pronResult.pronunciationScore);
+
+      resultCard.style.display = 'block';
+      document.getElementById('azureMetrics').style.display = 'block';
+      document.getElementById('heardText').innerText = `"${speechResult.text}"`;
+
+      scoreBadge.innerText = `${score}%`;
+      scoreBadge.className = 'score-badge ' + (score >= 80 ? 'score-good' : score >= 50 ? 'score-medium' : 'score-bad');
+
+      document.getElementById('scorePron').innerText = score;
+      document.getElementById('scoreAcc').innerText = Math.round(pronResult.accuracyScore);
+      document.getElementById('scoreFlu').innerText = Math.round(pronResult.fluencyScore);
+      document.getElementById('scoreComp').innerText = Math.round(pronResult.completenessScore);
+
+      const phonemesContainer = document.getElementById('phonemesContainer');
+      phonemesContainer.innerHTML = '';
+      const jResult = JSON.parse(speechResult.properties.getProperty(SpeechSDK.PropertyId.SpeechServiceResponse_JsonResult));
+
+      if (jResult.NBest && jResult.NBest[0] && jResult.NBest[0].Words) {
+        jResult.NBest[0].Words.forEach(w => {
+          if (w.Phonemes) {
+            w.Phonemes.forEach(p => {
+              const tag = document.createElement('span');
+              const pScore = p.PronunciationAssessment.AccuracyScore;
+              tag.className = 'phoneme-tag ' + (pScore >= 70 ? 'phoneme-good' : 'phoneme-bad');
+              tag.innerText = `${p.Phoneme} (${Math.round(pScore)})`;
+              phonemesContainer.appendChild(tag);
+            });
+          }
+        });
+      }
+    }
+
+    // 4. Đọc mẫu (Text-To-Speech)
     function playStandardAudio() {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(practiceList[currentIndex].en);
+      const item = getCurrentItem();
+      const utterance = new SpeechSynthesisUtterance(item.en);
       utterance.lang = 'en-US';
       utterance.rate = 0.85;
       window.speechSynthesis.speak(utterance);
     }
 
-    // Chuyển câu
+    // 5. Chuyển bài & Đổi chủ đề
+    function getCurrentItem() {
+      return datasets[currentTopic][currentIndex];
+    }
+
     function updateCard() {
-      const item = practiceList[currentIndex];
+      const list = datasets[currentTopic];
+      const item = list[currentIndex];
+
       document.getElementById('targetText').innerText = item.en;
-      document.getElementById('translationText').innerText = item.vi;
-      document.getElementById('counter').innerText = `Câu ${currentIndex + 1}/${practiceList.length}`;
-      document.getElementById('progressFill').style.width = `${((currentIndex + 1) / practiceList.length) * 100}%`;
+      document.getElementById('targetIpa').innerText = item.ipa;
+      document.getElementById('targetTranslation').innerText = item.vi;
       document.getElementById('resultCard').style.display = 'none';
-      document.getElementById('statusText').innerText = "Bấm micro và đọc to câu trên";
+      document.getElementById('statusText').innerText = "Nhấn micro và đọc to câu trên";
+
+      // Cập nhật thanh tiến trình
+      const progress = ((currentIndex + 1) / list.length) * 100;
+      document.getElementById('progressFill').style.width = `${progress}%`;
+    }
+
+    function changeTopic() {
+      currentTopic = document.getElementById('topicSelect').value;
+      currentIndex = 0;
+      updateCard();
     }
 
     function nextSentence() {
-      if (currentIndex < practiceList.length - 1) {
+      if (currentIndex < datasets[currentTopic].length - 1) {
         currentIndex++;
         updateCard();
       }
