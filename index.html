@@ -3,18 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcard Hàn - Nghe, Nói, AI</title>
+    <title>Flashcard Hàn - Học & Chơi Game</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary-blue: #4a90e2; --shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        :root { --primary-blue: #4a90e2; --shadow: 0 10px 20px rgba(0,0,0,0.1); --card-color: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
         body { display: flex; flex-direction: column; align-items: center; min-height: 100vh; background: #f8f9fa; padding: 20px; }
-        .header { width: 100%; max-width: 600px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: 600; color: var(--primary-blue); }
+        .header { width: 100%; max-width: 600px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: 600; color: var(--primary-blue); display: flex; justify-content: center; align-items: center; gap: 15px; }
         
+        /* Nút chuyển đổi chế độ */
+        .mode-switch { padding: 6px 15px; border: 2px solid var(--primary-blue); background: white; color: var(--primary-blue); border-radius: 20px; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px;}
+        .mode-switch.active { background: var(--primary-blue); color: white; }
+        .mode-switch:hover { transform: scale(1.05); }
+
         .config-section { width: 100%; max-width: 600px; display: flex; gap: 10px; margin-bottom: 15px; }
         .config-section input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
         .config-section button { background: var(--primary-blue); color: white; border: none; padding: 10px 15px; border-radius: 20px; cursor: pointer; }
 
+        /* === CHẾ ĐỘ HỌC === */
+        #study-section { display: flex; flex-direction: column; align-items: center; width: 100%; }
         .card-wrapper { perspective: 1000px; width: 100%; max-width: 400px; height: 240px; margin-bottom: 20px; position: relative; }
         .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer; border-radius: 15px; box-shadow: var(--shadow); }
         .card.is-flipped { transform: rotateY(180deg); }
@@ -25,23 +32,35 @@
         .roman { font-size: 16px; color: rgba(255,255,255,0.85); }
         .card-back .roman { color: #888; }
         .flip-icon { margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px; }
-
+        
         .controls { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; justify-content: center; }
         .controls button { padding: 8px 20px; border: 1px solid var(--primary-blue); background: white; color: var(--primary-blue); border-radius: 20px; cursor: pointer; }
-
-        /* 3 Nút hành động: Nghe - Luyện nói - Hỏi AI */
         .action-buttons { display: flex; gap: 15px; margin-bottom: 10px; justify-content: center; flex-wrap: wrap; }
         .action-buttons button { padding: 8px 20px; border: none; border-radius: 20px; cursor: pointer; color: white; font-weight: bold; }
         .btn-speak { background: #e67e22; }
-        .btn-practice { background: #27ae60; } /* Nút Luyện nói màu xanh lá */
+        .btn-practice { background: #27ae60; }
         .btn-ai { background: #9b59b6; }
-        
         #ai-result, #speech-result { display: none; width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 15px; white-space: pre-wrap; line-height: 1.6; }
         #speech-result { text-align: center; }
-
         .progress-container { width: 100%; max-width: 300px; text-align: center; font-size: 14px; color: #777; margin-top: 10px; }
         .progress-bar { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 5px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--primary-blue); transition: width 0.3s; }
+
+        /* === CHẾ ĐỘ CHƠI (MEMORY GAME) === */
+        #game-section { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; }
+        .game-header { width: 100%; display: flex; justify-content: space-between; padding: 10px 20px; background: white; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 15px; font-weight: bold; color: #555; }
+        .game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; max-width: 500px; margin-bottom: 15px; }
+        .game-card { aspect-ratio: 1 / 1; background: #ff9800; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); user-select: none; padding: 5px; text-align: center; word-break: keep-all; }
+        .game-card.matched { background: #2ecc71; cursor: default; transform: scale(0.95); }
+        .game-card.matched:hover { transform: scale(0.95); }
+        .game-card.flipped { background: white; color: #333; cursor: default; transform: rotateY(180deg); }
+        .game-card:hover:not(.matched):not(.flipped) { transform: scale(1.05); }
+        .reset-game-btn { background: #e74c3c; color: white; border: none; padding: 10px 25px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+
+        @media (max-width: 500px) {
+            .game-board { grid-template-columns: repeat(3, 1fr); }
+            .game-card { font-size: 12px; }
+        }
     </style>
     
     <script type="importmap">
@@ -50,54 +69,67 @@
 </head>
 <body>
 
-    <div class="header">📚 Flashcard Hàn - Nghe & Nói</div>
+    <div class="header">
+        📚 Học Tiếng Hàn
+        <button class="mode-switch" id="mode-switch-btn" onclick="toggleMode()"><i class="fas fa-gamepad"></i> Chơi Game</button>
+    </div>
 
     <div class="config-section">
         <input type="text" id="api-key-input" placeholder="Gemini API Key (để dùng AI giải thích)...">
         <button onclick="saveAPIKey()">Lưu Key</button>
     </div>
 
-    <div class="card-wrapper">
-        <div class="card" id="flashcard">
-            <div class="card-face card-front">
-                <div class="korean" id="front-text">안녕하세요</div>
-                <div class="roman" id="front-roman">annyeonghaseyo</div>
-                <div class="flip-icon"><i class="fas fa-sync-alt"></i> Lật xem nghĩa</div>
+    <!-- === PHẦN CHẾ ĐỘ HỌC === -->
+    <div id="study-section">
+        <div class="card-wrapper">
+            <div class="card" id="flashcard">
+                <div class="card-face card-front">
+                    <div class="korean" id="front-text">안녕하세요</div>
+                    <div class="roman" id="front-roman">annyeonghaseyo</div>
+                    <div class="flip-icon"><i class="fas fa-sync-alt"></i> Lật xem nghĩa</div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="vietnamese" id="back-text">Xin chào</div>
+                    <div class="roman" id="back-roman">annyeonghaseyo</div>
+                    <div class="flip-icon" style="background:#f0f0f0; color:#555;"><i class="fas fa-sync-alt"></i> Lật lại</div>
+                </div>
             </div>
-            <div class="card-face card-back">
-                <div class="vietnamese" id="back-text">Xin chào</div>
-                <div class="roman" id="back-roman">annyeonghaseyo</div>
-                <div class="flip-icon" style="background:#f0f0f0; color:#555;"><i class="fas fa-sync-alt"></i> Lật lại</div>
-            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="prevCard()">◀ Trước</button>
+            <button onclick="nextCard()">Sau ▶</button>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-speak" onclick="playAudio()"><i class="fas fa-volume-up"></i> Nghe phát âm</button>
+            <button class="btn-practice" onclick="practiceSpeaking()"><i class="fas fa-microphone"></i> Luyện nói</button>
+            <button class="btn-ai" onclick="askAIContext()"><i class="fas fa-robot"></i> Hỏi AI giải thích</button>
+        </div>
+
+        <div id="speech-result"></div>
+        <div id="ai-result"></div>
+
+        <div class="progress-container">
+            <span id="current-idx">1</span> / <span id="total-idx">60</span>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
         </div>
     </div>
 
-    <div class="controls">
-        <button onclick="prevCard()">◀ Trước</button>
-        <button onclick="nextCard()">Sau ▶</button>
-    </div>
-
-    <!-- 3 Nút chức năng: Nghe, Luyện nói, AI -->
-    <div class="action-buttons">
-        <button class="btn-speak" onclick="playAudio()"><i class="fas fa-volume-up"></i> Nghe phát âm</button>
-        <button class="btn-practice" onclick="practiceSpeaking()"><i class="fas fa-microphone"></i> Luyện nói</button>
-        <button class="btn-ai" onclick="askAIContext()"><i class="fas fa-robot"></i> Hỏi AI giải thích</button>
-    </div>
-
-    <!-- Kết quả của Luyện nói -->
-    <div id="speech-result"></div>
-
-    <!-- Kết quả của AI -->
-    <div id="ai-result"></div>
-
-    <div class="progress-container">
-        <span id="current-idx">1</span> / <span id="total-idx">60</span>
-        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <!-- === PHẦN CHẾ ĐỘ CHƠI (GAME) === -->
+    <div id="game-section">
+        <div class="game-header">
+            <span><i class="fas fa-clock"></i> Lượt chơi: <span id="game-attempts">0</span></span>
+            <span><i class="fas fa-check-circle"></i> Cặp đã tìm: <span id="game-matches">0</span>/6</span>
+        </div>
+        <div class="game-board" id="game-board"></div>
+        <button class="reset-game-btn" onclick="startNewGame()"><i class="fas fa-redo-alt"></i> Chơi lại</button>
     </div>
 
     <script type="module">
         import { GoogleGenerativeAI } from "@google/generative-ai";
 
+        // 1. Dữ liệu từ vựng
         const flashcards = [
             { front: "안녕하세요", roman: "annyeonghaseyo", back: "Xin chào" },
             { front: "감사합니다", roman: "gamsahamnida", back: "Cảm ơn" },
@@ -105,12 +137,23 @@
             { front: "사랑해요", roman: "saranghaeyo", back: "Tôi yêu bạn" },
             { front: "안녕", roman: "annyeong", back: "Chào (thân mật)" },
             { front: "괜찮아요", roman: "gwaenchanayo", back: "Không sao" },
+            { front: "맛있어요", roman: "masisseoyo", back: "Ngon quá" },
             { front: "네", roman: "ne", back: "Vâng / Đúng" },
             { front: "아니요", roman: "aniyo", back: "Không" },
             { front: "좋아요", roman: "johayo", back: "Thích / Tốt" },
-            // Bạn copy các từ còn lại vào đây
+            { front: "어서 오세요", roman: "eoseo oseyo", back: "Xin mời vào" },
+            { front: "잠시만요", roman: "jamsimanyo", back: "Chờ một chút" },
+            { front: "도와주세요", roman: "dowajuseyo", back: "Xin hãy giúp tôi" },
+            { front: "미안해요", roman: "mianhaeyo", back: "Xin lỗi (nhẹ)" },
+            { front: "오늘", roman: "oneul", back: "Hôm nay" },
+            { front: "내일", roman: "naeil", back: "Ngày mai" },
+            { front: "어제", roman: "eoje", back: "Hôm qua" },
+            { front: "그럼", roman: "geureom", back: "Vậy thì" },
+            { front: "맞아요", roman: "majayo", back: "Đúng vậy" },
+            { front: "아니에요", roman: "anieyo", back: "Không phải đâu" },
         ];
 
+        // === PHẦN CHẾ ĐỘ HỌC ===
         let currentIndex = 0;
         const card = document.getElementById('flashcard');
         const frontText = document.getElementById('front-text');
@@ -139,69 +182,48 @@
         window.prevCard = () => { if (currentIndex > 0) { currentIndex--; updateCard(); } }
         window.nextCard = () => { if (currentIndex < flashcards.length - 1) { currentIndex++; updateCard(); } }
 
-        // 1. Nghe phát âm (TTS)
         window.playAudio = function() {
             if (window.speechSynthesis) {
                 window.speechSynthesis.cancel();
                 const text = flashcards[currentIndex].front;
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ko-KR';
-                utterance.rate = 0.7;
+                utterance.lang = 'ko-KR'; utterance.rate = 0.7;
                 window.speechSynthesis.speak(utterance);
-            } else { alert("Trình duyệt không hỗ trợ đọc văn bản!"); }
+            }
         }
 
-        // 2. Luyện nói (Speech-to-Text)
         window.practiceSpeaking = function() {
             const targetWord = flashcards[currentIndex].front;
             const resultDiv = document.getElementById('speech-result');
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Đang nghe... Hãy đọc to từ này vào micro của bạn!`;
-
-            // Kiểm tra xem trình duyệt có hỗ trợ không
+            resultDiv.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Đang nghe... Đọc to từ này vào micro!`;
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                return resultDiv.innerHTML = "❌ Trình duyệt hiện tại không hỗ trợ nhận diện giọng nói. Hãy dùng Google Chrome trên máy tính.";
+                return resultDiv.innerHTML = "❌ Dùng Chrome trên PC để xài tính năng này.";
             }
-
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             const recognition = new SpeechRecognition();
-            recognition.lang = 'ko-KR'; // Cài tiếng Hàn
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
+            recognition.lang = 'ko-KR';
             recognition.onresult = function(event) {
                 const transcript = event.results[0][0].transcript.trim();
-                // So sánh, bỏ qua các khoảng trắng
-                const cleanTranscript = transcript.replace(/\s/g, '');
-                const cleanTarget = targetWord.replace(/\s/g, '');
-
-                if (cleanTranscript === cleanTarget || transcript.includes(targetWord)) {
-                    resultDiv.innerHTML = `<span style="color:#27ae60; font-size: 18px; font-weight: bold;">🎉 Tuyệt vời! Bạn đã phát âm đúng rồi!</span><br><br>Máy dò thấy bạn nói: <b>${transcript}</b>`;
+                if (transcript.replace(/\s/g, '') === targetWord.replace(/\s/g, '')) {
+                    resultDiv.innerHTML = `<span style="color:#27ae60; font-size:18px;">🎉 Tuyệt vời! Bạn phát âm đúng!</span><br><br>Máy nghe bạn nói: <b>${transcript}</b>`;
                 } else {
-                    resultDiv.innerHTML = `<span style="color:#e74c3c; font-weight: bold;">😅 Chưa chuẩn, thử lại nhé!</span><br><br>Máy dò thấy bạn nói thành: <b>${transcript}</b><br>Từ đúng phải là: <b>${targetWord}</b>`;
+                    resultDiv.innerHTML = `<span style="color:#e74c3c;">😅 Chưa chuẩn!<br><br>Máy nghe: <b>${transcript}</b><br>Cần đọc: <b>${targetWord}</b></span>`;
                 }
             };
-
-            recognition.onerror = function(event) {
-                if(event.error === 'not-allowed') resultDiv.innerHTML = "❌ Bạn đã từ chối quyền truy cập Micro. Hãy bật lại trên trình duyệt.";
-                else resultDiv.innerHTML = `❌ Có lỗi xảy ra: ${event.error}`;
-            };
-
             recognition.start();
         }
 
-        // 3. AI Gemini giải thích (Giữ nguyên cũ)
         const savedKey = localStorage.getItem('gemini_api_key');
         if(savedKey) document.getElementById('api-key-input').value = savedKey;
         window.saveAPIKey = function() {
             const key = document.getElementById('api-key-input').value.trim();
-            if(key) { localStorage.setItem('gemini_api_key', key); alert("Đã lưu API Gemini!"); }
-            else alert("Chưa nhập key!");
+            if(key) { localStorage.setItem('gemini_api_key', key); alert("Đã lưu Key Gemini!"); }
         }
 
         window.askAIContext = async function() {
             const apiKey = localStorage.getItem('gemini_api_key');
-            if(!apiKey) return alert("Chưa có API Key! Hãy dán key vào ô trên cùng và bấm Lưu Key.");
+            if(!apiKey) return alert("Chưa có API Key Gemini!");
             const resultDiv = document.getElementById('ai-result');
             resultDiv.style.display = 'block';
             resultDiv.innerHTML = '<div style="text-align:center"><i class="fas fa-circle-notch fa-spin"></i> AI đang giảng bài...</div>';
@@ -209,20 +231,150 @@
                 const genAI = new GoogleGenerativeAI(apiKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                 const c = flashcards[currentIndex];
-                const prompt = `Hãy giải thích từ vựng tiếng Hàn này cho người Việt học: 
-                Từ: "${c.front}" (Phiên âm: ${c.roman})
-                Nghĩa: "${c.back}"
-                Yêu cầu: Cho biết thêm 2 ví dụ đặt câu bằng tiếng Hàn kèm dịch tiếng Việt. Viết ngắn gọn, dễ hiểu.`;
+                const prompt = `Hãy giải thích từ vựng tiếng Hàn này cho người Việt học: Từ: "${c.front}" (Phiên âm: ${c.roman}) Nghĩa: "${c.back}". Cho biết thêm 2 ví dụ đặt câu bằng tiếng Hàn kèm dịch tiếng Việt. Viết ngắn gọn.`;
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
-                const text = response.text();
-                resultDiv.innerHTML = text.replace(/\n/g, '<br>');
+                resultDiv.innerHTML = response.text().replace(/\n/g, '<br>');
             } catch (e) {
-                resultDiv.innerHTML = `<span style="color:red">Lỗi AI: ${e.message}. Sai API Key rồi!</span>`;
+                resultDiv.innerHTML = `<span style="color:red">Lỗi AI: Sai API Key rồi!</span>`;
             }
         }
 
+
+        // === PHẦN CHẾ ĐỘ CHƠI GAME LẬT BÀI ===
+        window.toggleMode = function() {
+            const btn = document.getElementById('mode-switch-btn');
+            const study = document.getElementById('study-section');
+            const game = document.getElementById('game-section');
+
+            if (study.style.display === 'none' || study.style.display === '') {
+                study.style.display = 'flex';
+                game.style.display = 'none';
+                btn.innerHTML = '<i class="fas fa-gamepad"></i> Chơi Game';
+                btn.classList.remove('active');
+                updateCard();
+            } else {
+                study.style.display = 'none';
+                game.style.display = 'flex';
+                btn.innerHTML = '<i class="fas fa-book"></i> Về học bài';
+                btn.classList.add('active');
+                startNewGame(); // Tự động tạo game mới khi bấm vào
+            }
+        }
+
+        // Logic lõi game
+        let gameCards = [];
+        let hasFlippedCard = false;
+        let lockBoard = false;
+        let firstCard, secondCard;
+        let matches = 0;
+        let attempts = 0;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        window.startNewGame = function() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            matches = 0; attempts = 0;
+            document.getElementById('game-matches').innerText = '0';
+            document.getElementById('game-attempts').innerText = '0';
+
+            // Lấy ngẫu nhiên 6 từ từ flashcards
+            const shuffledVocab = shuffle([...flashcards]).slice(0, 6);
+            
+            // Tạo 12 thẻ (mỗi thẻ gồm Hàn và Việt)
+            let cardData = [];
+            shuffledVocab.forEach((word, index) => {
+                cardData.push({ id: index, text: word.front, type: 'han' });
+                cardData.push({ id: index, text: word.back, type: 'viet' });
+            });
+            
+            shuffle(cardData); // Xáo trộn 12 thẻ lại
+            gameCards = cardData;
+
+            // Render ra màn hình
+            cardData.forEach((data, idx) => {
+                const cardEl = document.createElement('div');
+                cardEl.classList.add('game-card');
+                cardEl.dataset.id = data.id;
+                cardEl.textContent = data.text; 
+                // Chỉ hiện nội dung khi lật! Ở đây hiện nội dung luôn -> phải giấu đi
+                cardEl.textContent = '❓'; 
+                cardEl.addEventListener('click', flipGameCard);
+                board.appendChild(cardEl);
+            });
+            lockBoard = false;
+            hasFlippedCard = false;
+        }
+
+        function flipGameCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+            if (this.classList.contains('flipped')) return;
+
+            this.classList.add('flipped');
+            // Hiện nội dung thật
+            this.textContent = gameCards[Array.from(this.parentNode.children).indexOf(this)].text;
+
+            if (!hasFlippedCard) {
+                hasFlippedCard = true;
+                firstCard = this;
+                return;
+            }
+
+            secondCard = this;
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.id === secondCard.dataset.id;
+            attempts++;
+            document.getElementById('game-attempts').innerText = attempts;
+
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        function disableCards() {
+            firstCard.removeEventListener('click', flipGameCard);
+            secondCard.removeEventListener('click', flipGameCard);
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            matches++;
+            document.getElementById('game-matches').innerText = matches;
+            resetBoard();
+
+            if (matches === 6) {
+                setTimeout(() => {
+                    alert(`🎉 Bạn đã tìm hết 6 cặp từ vựng chỉ trong ${attempts} lượt! Giỏi quá!`);
+                }, 500);
+            }
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                firstCard.textContent = '❓';
+                secondCard.textContent = '❓';
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+        }
+
+        // Khởi chạy mặc định chế độ học
         updateCard();
+        window.startNewGame = startNewGame; // Bind ra global
     </script>
 </body>
 </html>
