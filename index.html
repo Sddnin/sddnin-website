@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>60 Từ Vựng Tiếng Hàn Flashcard</title>
+    <title>120 Từ Vựng Tiếng Hàn Flashcard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --primary-blue: #4a90e2; --shadow: 0 10px 20px rgba(0,0,0,0.1); }
@@ -13,7 +13,8 @@
         
         .search-container { width: 100%; max-width: 400px; display: flex; gap: 10px; margin-bottom: 25px; }
         .search-container input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
-        .search-container button { width: 40px; border: none; background: var(--primary-blue); color: white; border-radius: 50%; cursor: pointer; }
+        .search-container button { width: 40px; border: none; background: var(--primary-blue); color: white; border-radius: 50%; cursor: pointer; transition: 0.2s; }
+        .search-container button:hover { background: #357abd; }
 
         .flashcard-wrapper { perspective: 1000px; width: 100%; max-width: 400px; height: 240px; margin-bottom: 25px; position: relative; }
         .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); cursor: pointer; border-radius: 15px; box-shadow: var(--shadow); }
@@ -59,15 +60,15 @@
 </head>
 <body>
 
-    <div class="header"><i class="fas fa-language"></i> 60 Từ vựng Hàn Quốc</div>
+    <div class="header"><i class="fas fa-language"></i> 120 Từ vựng Hàn Quốc</div>
     
     <div class="search-container">
-        <input type="text" placeholder="Tìm kiếm từ vựng...">
-        <button><i class="fas fa-search"></i></button>
+        <input type="text" id="search-input" placeholder="Tìm từ vựng (Tiếng Hàn, Việt, Phiên âm)..." onkeyup="if(event.key==='Enter') searchWord()">
+        <button onclick="searchWord()"><i class="fas fa-search"></i></button>
     </div>
 
     <div class="flashcard-wrapper">
-        <div class="card" id="flashcard">
+        <div class="card" id="flashcard" onclick="flipCard()">
             <!-- Nút Nghe phát âm -->
             <button class="btn-speak" onclick="event.stopPropagation(); playAudio();"><i class="fas fa-volume-up"></i></button>
             
@@ -101,14 +102,15 @@
     </div>
 
     <div class="progress-container">
-        <span id="current-idx">1</span> / <span id="total-idx">60</span>
+        <span id="current-idx">1</span> / <span id="total-idx">120</span>
         <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
 
-    <div class="footer">© 2024 Korean Flashcard Hub</div>
+    <div class="footer">© 2026 Korean Flashcard Hub</div>
 
     <script>
         const flashcards = [
+            // --- 61 Từ cơ bản gốc ---
             { front: "안녕하세요", roman: "annyeonghaseyo", back: "Xin chào", fav: false, learnt: false, hard: false },
             { front: "감사합니다", roman: "gamsahamnida", back: "Cảm ơn", fav: false, learnt: false, hard: false },
             { front: "죄송합니다", roman: "joesonghamnida", back: "Xin lỗi", fav: false, learnt: false, hard: false },
@@ -169,7 +171,68 @@
             { front: "듣다", roman: "deutda", back: "Nghe", fav: false, learnt: false, hard: false },
             { front: "말하다", roman: "malhada", back: "Nói", fav: false, learnt: false, hard: false },
             { front: "알다", roman: "alda", back: "Biết", fav: false, learnt: false, hard: false },
-            { front: "모르다", roman: "moreuda", back: "Không biết", fav: false, learnt: false, hard: false }
+            { front: "모르다", roman: "moreuda", back: "Không biết", fav: false, learnt: false, hard: false },
+
+            // --- 59 Từ mới bổ sung ---
+            { front: "집", roman: "jip", back: "Nhà", fav: false, learnt: false, hard: false },
+            { front: "방", roman: "bang", back: "Phòng", fav: false, learnt: false, hard: false },
+            { front: "화장실", roman: "hwajangsil", back: "Nhà vệ sinh", fav: false, learnt: false, hard: false },
+            { front: "식당", roman: "sikdang", back: "Nhà hàng / Quán ăn", fav: false, learnt: false, hard: false },
+            { front: "병원", roman: "byeongwon", back: "Bệnh viện", fav: false, learnt: false, hard: false },
+            { front: "약국", roman: "yakguk", back: "Nhà thuốc", fav: false, learnt: false, hard: false },
+            { front: "공원", roman: "gongwon", back: "Công viên", fav: false, learnt: false, hard: false },
+            { front: "공항", roman: "gonghang", back: "Sân bay", fav: false, learnt: false, hard: false },
+            { front: "지하철", roman: "jihacheol", back: "Tàu điện ngầm", fav: false, learnt: false, hard: false },
+            { front: "버스", roman: "beoseu", back: "Xe buýt", fav: false, learnt: false, hard: false },
+            { front: "택시", roman: "taeksi", back: "Xe taxi", fav: false, learnt: false, hard: false },
+            { front: "비행기", roman: "bihaenggi", back: "Máy bay", fav: false, learnt: false, hard: false },
+            { front: "책", roman: "chaek", back: "Sách", fav: false, learnt: false, hard: false },
+            { front: "옷", roman: "ot", back: "Quần áo", fav: false, learnt: false, hard: false },
+            { front: "신발", roman: "sinbal", back: "Giày dép", fav: false, learnt: false, hard: false },
+            { front: "돈", roman: "don", back: "Tiền", fav: false, learnt: false, hard: false },
+            { front: "지갑", roman: "jigap", back: "Ví tiền", fav: false, learnt: false, hard: false },
+            { front: "가방", roman: "gabang", back: "Túi xách / Balo", fav: false, learnt: false, hard: false },
+            { front: "전화", roman: "jeonhwa", back: "Điện thoại", fav: false, learnt: false, hard: false },
+            { front: "핸드폰", roman: "haendeupon", back: "Điện thoại di động", fav: false, learnt: false, hard: false },
+            { front: "시간", roman: "sigan", back: "Thời gian", fav: false, learnt: false, hard: false },
+            { front: "주말", roman: "jumal", back: "Cuối tuần", fav: false, learnt: false, hard: false },
+            { front: "아침", roman: "achim", back: "Buổi sáng / Bữa sáng", fav: false, learnt: false, hard: false },
+            { front: "점심", roman: "jeomsim", back: "Buổi trưa / Bữa trưa", fav: false, learnt: false, hard: false },
+            { front: "저녁", roman: "jeonyeok", back: "Buổi tối / Bữa tối", fav: false, learnt: false, hard: false },
+            { front: "밤", roman: "bam", back: "Ban đêm", fav: false, learnt: false, hard: false },
+            { front: "바다", roman: "bada", back: "Biển", fav: false, learnt: false, hard: false },
+            { front: "산", roman: "san", back: "Núi", fav: false, learnt: false, hard: false },
+            { front: "비", roman: "bi", back: "Mưa", fav: false, learnt: false, hard: false },
+            { front: "눈", roman: "nun", back: "Tuyết / Mắt", fav: false, learnt: false, hard: false },
+            { front: "바람", roman: "baram", back: "Gió", fav: false, learnt: false, hard: false },
+            { front: "구름", roman: "gureum", back: "Mây", fav: false, learnt: false, hard: false },
+            { front: "아버지", roman: "abeoji", back: "Bố", fav: false, learnt: false, hard: false },
+            { front: "어머니", roman: "eomeoni", back: "Mẹ", fav: false, learnt: false, hard: false },
+            { front: "형", roman: "hyeong", back: "Anh trai (nam gọi)", fav: false, learnt: false, hard: false },
+            { front: "누나", roman: "nuna", back: "Chị gái (nam gọi)", fav: false, learnt: false, hard: false },
+            { front: "오빠", roman: "oppa", back: "Anh trai (nữ gọi)", fav: false, learnt: false, hard: false },
+            { front: "언니", roman: "eonni", back: "Chị gái (nữ gọi)", fav: false, learnt: false, hard: false },
+            { front: "동생", roman: "dongsaeng", back: "Em", fav: false, learnt: false, hard: false },
+            { front: "공부하다", roman: "gongbuhada", back: "Học tập", fav: false, learnt: false, hard: false },
+            { front: "일하다", roman: "ilhada", back: "Làm việc", fav: false, learnt: false, hard: false },
+            { front: "쉬다", roman: "swida", back: "Nghỉ ngơi", fav: false, learnt: false, hard: false },
+            { front: "자다", roman: "jada", back: "Ngủ", fav: false, learnt: false, hard: false },
+            { front: "일어나다", roman: "ireonada", back: "Thức dậy", fav: false, learnt: false, hard: false },
+            { front: "사다", roman: "sada", back: "Mua", fav: false, learnt: false, hard: false },
+            { front: "팔다", roman: "palda", back: "Bán", fav: false, learnt: false, hard: false },
+            { front: "만나다", roman: "mannada", back: "Gặp gỡ", fav: false, learnt: false, hard: false },
+            { front: "웃다", roman: "utda", back: "Cười", fav: false, learnt: false, hard: false },
+            { front: "울다", roman: "ulda", back: "Khóc", fav: false, learnt: false, hard: false },
+            { front: "비싸다", roman: "bissada", back: "Đắt", fav: false, learnt: false, hard: false },
+            { front: "싸다", roman: "ssada", back: "Rẻ", fav: false, learnt: false, hard: false },
+            { front: "어렵다", roman: "eoryeopda", back: "Khó", fav: false, learnt: false, hard: false },
+            { front: "쉽다", roman: "swipda", back: "Dễ", fav: false, learnt: false, hard: false },
+            { front: "재미있다", roman: "jaemiitda", back: "Thú vị / Hay", fav: false, learnt: false, hard: false },
+            { front: "재미없다", roman: "jaemieoptda", back: "Chán / Không hay", fav: false, learnt: false, hard: false },
+            { front: "머리", roman: "meori", back: "Đầu / Tóc", fav: false, learnt: false, hard: false },
+            { front: "손", roman: "son", back: "Bàn tay", fav: false, learnt: false, hard: false },
+            { front: "발", roman: "bal", back: "Bàn chân", fav: false, learnt: false, hard: false },
+            { front: "마음", roman: "maeum", back: "Tấm lòng / Tâm trí", fav: false, learnt: false, hard: false }
         ];
 
         let currentIndex = 0;
@@ -182,12 +245,8 @@
         const totalIdxSpan = document.getElementById('total-idx');
         const progressFill = document.getElementById('progress-fill');
 
-        // Đợi trình duyệt tải các giọng nói
-        let voicesReady = false;
         if (window.speechSynthesis) {
-            window.speechSynthesis.onvoiceschanged = () => {
-                voicesReady = true;
-            };
+            window.speechSynthesis.onvoiceschanged = () => {};
         }
 
         function updateCard() {
@@ -216,36 +275,72 @@
             btnHard.className = currentCard.hard ? 'active-hard' : '';
         }
 
-        function flipCard() { card.classList.toggle('is-flipped'); }
-        function prevCard() { if (currentIndex > 0) { currentIndex--; updateCard(); } else alert("Bạn đang ở thẻ đầu!"); }
-        function nextCard() { if (currentIndex < flashcards.length - 1) { currentIndex++; updateCard(); } else alert("Đã học hết 60 từ!"); }
+        function flipCard() { 
+            card.classList.toggle('is-flipped'); 
+        }
+
+        function prevCard() { 
+            if (currentIndex > 0) { 
+                currentIndex--; 
+                updateCard(); 
+            } else {
+                alert("Bạn đang ở thẻ đầu tiên!"); 
+            }
+        }
+
+        function nextCard() { 
+            if (currentIndex < flashcards.length - 1) { 
+                currentIndex++; 
+                updateCard(); 
+            } else {
+                alert("Chúc mừng! Bạn đã hoàn thành tất cả từ vựng!"); 
+            }
+        }
+
         function toggleStatus(type) { 
             const c = flashcards[currentIndex];
-            if (type === 'fav') c.fav = !c.fav; if (type === 'learnt') c.learnt = !c.learnt; if (type === 'hard') c.hard = !c.hard;
+            if (type === 'fav') c.fav = !c.fav; 
+            if (type === 'learnt') c.learnt = !c.learnt; 
+            if (type === 'hard') c.hard = !c.hard;
             updateCard(); 
         }
 
-        // Hàm phát âm thanh đã cải tiến
         function playAudio() {
             if (window.speechSynthesis) {
-                window.speechSynthesis.cancel(); // Tắt âm thanh cũ đang chạy
+                window.speechSynthesis.cancel();
                 
                 const text = flashcards[currentIndex].front;
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ko-KR'; // Cài ngôn ngữ Hàn
-                utterance.rate = 0.75; // Tốc độ chậm để dễ nghe
+                utterance.lang = 'ko-KR';
+                utterance.rate = 0.75;
 
-                // Cố gắng tìm giọng Hàn Quốc
                 const voices = window.speechSynthesis.getVoices();
                 const koVoice = voices.find(voice => voice.lang === 'ko-KR');
                 if (koVoice) {
                     utterance.voice = koVoice;
                 }
 
-                // Bắt đầu đọc
                 window.speechSynthesis.speak(utterance);
             } else {
-                alert('Trình duyệt không hỗ trợ đọc văn bản.');
+                alert('Trình duyệt không hỗ trợ tính năng phát âm.');
+            }
+        }
+
+        function searchWord() {
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            if (!query) return;
+            
+            const foundIndex = flashcards.findIndex(item => 
+                item.front.toLowerCase().includes(query) || 
+                item.back.toLowerCase().includes(query) ||
+                item.roman.toLowerCase().includes(query)
+            );
+
+            if (foundIndex !== -1) {
+                currentIndex = foundIndex;
+                updateCard();
+            } else {
+                alert("Không tìm thấy từ vựng phù hợp!");
             }
         }
 
