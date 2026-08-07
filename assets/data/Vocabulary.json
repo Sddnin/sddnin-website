@@ -1,0 +1,162 @@
+[
+    {
+        "id": 1,
+        "korean": "안녕하세요",
+        "romanization": "annyeonghaseyo",
+        "meaning": "Xin chào",
+        "example": "안녕하세요, 반갑습니다.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 2,
+        "korean": "감사합니다",
+        "romanization": "gamsahamnida",
+        "meaning": "Cảm ơn",
+        "example": "도와주셔서 감사합니다.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 3,
+        "korean": "사랑해요",
+        "romanization": "saranghaeyo",
+        "meaning": "Yêu",
+        "example": "엄마, 사랑해요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 4,
+        "korean": "미안합니다",
+        "romanization": "mianhamnida",
+        "meaning": "Xin lỗi",
+        "example": "늦어서 미안합니다.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 5,
+        "korean": "반갑습니다",
+        "romanization": "bangapseumnida",
+        "meaning": "Rất vui được gặp",
+        "example": "만나서 반갑습니다.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 6,
+        "korean": "가족",
+        "romanization": "gajok",
+        "meaning": "Gia đình",
+        "example": "가족이 몇 명이에요?",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 7,
+        "korean": "친구",
+        "romanization": "chingu",
+        "meaning": "Bạn bè",
+        "example": "제 친구를 소개합니다.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 8,
+        "korean": "학교",
+        "romanization": "hakgyo",
+        "meaning": "Trường học",
+        "example": "학교에 가요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 9,
+        "korean": "공부하다",
+        "romanization": "gongbuhada",
+        "meaning": "Học tập",
+        "example": "한국어를 공부해요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 10,
+        "korean": "먹다",
+        "romanization": "meokda",
+        "meaning": "Ăn",
+        "example": "밥을 먹어요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 11,
+        "korean": "마시다",
+        "romanization": "masida",
+        "meaning": "Uống",
+        "example": "물을 마셔요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 12,
+        "korean": "좋다",
+        "romanization": "jota",
+        "meaning": "Tốt, thích",
+        "example": "날씨가 좋아요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 13,
+        "korean": "나쁘다",
+        "romanization": "nappeuda",
+        "meaning": "Xấu, tệ",
+        "example": "기분이 나빠요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 14,
+        "korean": "크다",
+        "romanization": "keuda",
+        "meaning": "To, lớn",
+        "example": "집이 커요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 15,
+        "korean": "작다",
+        "romanization": "jakda",
+        "meaning": "Nhỏ",
+        "example": "방이 작아요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 16,
+        "korean": "예쁘다",
+        "romanization": "yeppeuda",
+        "meaning": "Đẹp",
+        "example": "꽃이 예뻐요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 17,
+        "korean": "바쁘다",
+        "romanization": "bappeuda",
+        "meaning": "Bận rộn",
+        "example": "요즘 너무 바빠요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 18,
+        "korean": "행복하다",
+        "romanization": "haengbokhada",
+        "meaning": "Hạnh phúc",
+        "example": "함께 있어서 행복해요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 19,
+        "korean": "슬프다",
+        "romanization": "seulpeuda",
+        "meaning": "Buồn",
+        "example": "이별이 슬퍼요.",
+        "level": "TOPIK 1"
+    },
+    {
+        "id": 20,
+        "korean": "재미있다",
+        "romanization": "jaemiitda",
+        "meaning": "Thú vị",
+        "example": "이 책이 재미있어요.",
+        "level": "TOPIK 1"
+    }
+]
