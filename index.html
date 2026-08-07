@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Học Tiếng Hàn 2.1 - Cross Match & Deck Manager</title>
+    <title>Học Tiếng Hàn 2.2 - Luyện Nói & Đánh Giá Phát Âm</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -33,7 +33,7 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s; }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-color); color: var(--text-color); padding: 15px; }
 
-        /* Top Bar: Dark Mode, Streak & Data Utils */
+        /* Top Bar */
         .top-bar { width: 100%; max-width: 480px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .app-title { font-size: 20px; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 8px; }
         .top-actions { display: flex; gap: 8px; align-items: center; }
@@ -46,12 +46,12 @@
         .cat-chip { padding: 6px 14px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; color: var(--text-muted); }
         .cat-chip.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
-        /* Chế độ chính */
+        /* Mode Switcher */
         .mode-switcher { display: flex; background: var(--border-color); border-radius: 25px; padding: 3px; margin-bottom: 15px; width: 100%; max-width: 480px; }
         .mode-switcher button { flex: 1; border: none; background: transparent; padding: 8px 5px; border-radius: 20px; font-weight: 600; cursor: pointer; color: var(--text-muted); font-size: 12px; }
         .mode-switcher button.active-mode { background: var(--card-bg); color: var(--primary-color); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
-        /* General Container Cards */
+        /* Cards & Content Containers */
         .content-card { width: 100%; max-width: 480px; background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); display: none; }
         
         /* Dict Mode */
@@ -102,14 +102,14 @@
 
         .game-stats { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 12px; font-size: 13px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
 
-        /* Games UI */
+        /* Mini Games UI */
         .quiz-card { background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 12px; }
         .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .quiz-opt-btn { background: var(--bg-color); border: 1px solid var(--border-color); padding: 12px 8px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-color); }
         .quiz-opt-btn.correct { background: var(--success-color) !important; color: white !important; }
         .quiz-opt-btn.wrong { background: var(--danger-color) !important; color: white !important; }
 
-        /* NỐI TỪ CHÉO 2 CỘT */
+        /* Cross Matching */
         .cross-match-container { display: flex; justify-content: space-between; gap: 15px; margin-top: 10px; }
         .cross-col { display: flex; flex-direction: column; gap: 10px; flex: 1; }
         .cross-col-header { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
@@ -118,19 +118,32 @@
         .cross-card.matched-correct { border-color: var(--success-color); background: rgba(46, 204, 113, 0.15); color: var(--success-color); pointer-events: none; opacity: 0.6; }
         .cross-card.matched-wrong { border-color: var(--danger-color); background: rgba(231, 76, 60, 0.15); color: var(--danger-color); }
 
+        /* Typing Game */
         .typing-card { background: rgba(74, 144, 226, 0.1); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; }
         .typing-input-wrap { display: flex; gap: 8px; }
         .typing-input-wrap input { flex: 1; padding: 10px 15px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); border-radius: 20px; outline: none; font-size: 15px; text-align: center; }
         .typing-input-wrap button { padding: 10px 20px; border: none; background: var(--primary-color); color: white; border-radius: 20px; cursor: pointer; font-weight: 600; }
 
-        .speak-card { background: linear-gradient(145deg, #ab47bc, #8e24aa); color: white; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; }
-        .btn-speak-listen { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; }
-        .btn-speak-listen:hover { background: rgba(255,255,255,0.35); }
-        .mic-btn-large { width: 60px; height: 60px; border-radius: 50%; border: none; background: #e1bee7; color: #4a148c; font-size: 24px; cursor: pointer; margin: 12px auto 8px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-        .mic-btn-large.recording { background: #ff1744; color: white; animation: pulse 1.2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        /* Speaking & Assessment UI (Nâng Cấp Đánh Giá Phát Âm) */
+        .speak-card { background: linear-gradient(145deg, #8e24aa, #ab47bc); color: white; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(142, 36, 170, 0.25); }
+        .speak-target-word { font-size: 32px; font-weight: 800; letter-spacing: 1px; }
+        .speak-target-vi { font-size: 15px; opacity: 0.9; margin-top: 4px; }
+        
+        .btn-speak-listen { background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
+        .btn-speak-listen:hover { background: rgba(255,255,255,0.4); }
 
-        /* MODAL THÊM TỪ MỚI & DATA MANAGER */
+        .mic-btn-large { width: 70px; height: 70px; border-radius: 50%; border: none; background: #ffffff; color: #8e24aa; font-size: 28px; cursor: pointer; margin: 15px auto 10px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(0,0,0,0.2); transition: all 0.3s; }
+        .mic-btn-large:hover { transform: scale(1.05); }
+        .mic-btn-large.recording { background: #ff1744; color: white; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 23, 68, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 23, 68, 0); } }
+
+        /* Evaluation Score Card */
+        .eval-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-top: 12px; text-align: center; }
+        .eval-score-ring { font-size: 30px; font-weight: 800; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .eval-rating { font-size: 14px; font-weight: 700; margin: 4px 0; }
+        .eval-transcript { font-size: 13px; color: var(--text-muted); background: var(--card-bg); padding: 8px 12px; border-radius: 8px; margin-top: 8px; border: 1px border-color; }
+
+        /* Modal & Utils */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal-body { background: var(--card-bg); width: 90%; max-width: 400px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); }
         .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 15px; color: var(--primary-color); display: flex; justify-content: space-between; align-items: center; }
@@ -146,7 +159,7 @@
 
     <!-- Top Bar -->
     <div class="top-bar">
-        <div class="app-title"><i class="fas fa-graduation-cap"></i> Hàn-Việt 2.1</div>
+        <div class="app-title"><i class="fas fa-graduation-cap"></i> Hàn-Việt 2.2</div>
         <div class="top-actions">
             <div class="streak-badge"><i class="fas fa-fire"></i> <span id="daily-streak">1</span> ngày</div>
             <button class="btn-icon-top" onclick="openAddModal()" title="Thêm từ mới"><i class="fas fa-plus"></i></button>
@@ -235,10 +248,10 @@
     <!-- MODE 3: MINI GAMES -->
     <div id="game-main-container" style="display: none; width: 100%; max-width: 480px;">
         <div class="game-selector">
-            <button id="sg-quiz" class="active-subgame" onclick="switchSubGame('quiz')"><i class="fas fa-list-ul"></i> Trắc Nghiệm</button>
+            <button id="sg-quiz" onclick="switchSubGame('quiz')"><i class="fas fa-list-ul"></i> Trắc Nghiệm</button>
             <button id="sg-match" onclick="switchSubGame('match')"><i class="fas fa-project-diagram"></i> Nối Từ Chéo</button>
             <button id="sg-typing" onclick="switchSubGame('typing')"><i class="fas fa-keyboard"></i> Luyện Gõ</button>
-            <button id="sg-speaking" onclick="switchSubGame('speaking')"><i class="fas fa-microphone"></i> Luyện Nói</button>
+            <button id="sg-speaking" class="active-subgame" onclick="switchSubGame('speaking')"><i class="fas fa-microphone"></i> Luyện Nói (Mic)</button>
         </div>
 
         <!-- 1. Trắc Nghiệm -->
@@ -255,10 +268,10 @@
             <div id="quiz-fb" class="game-feedback"></div>
         </div>
 
-        <!-- 2. NỐI TỪ CHÉO (2 CỘT HÀN - VIỆT) -->
+        <!-- 2. Nối Từ Chéo -->
         <div id="game-match" class="content-card">
             <div class="game-stats">
-                <span>Chọn 1 từ cột Hàn rồi chọn đáp án tương ứng ở cột Việt:</span>
+                <span>Nối từ Hàn ở cột trái với nghĩa Việt ở cột phải:</span>
                 <button onclick="startMatchGame()" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600;"><i class="fas fa-redo"></i> Đổi lượt</button>
             </div>
             <div class="cross-match-container">
@@ -291,16 +304,37 @@
             <div id="typing-fb" class="game-feedback"></div>
         </div>
 
-        <!-- 4. Luyện Nói -->
+        <!-- 4. LUYỆN NÓI & ĐÁNH GIÁ PHÁT ÂM (ENHANCED) -->
         <div id="game-speaking" class="content-card">
-            <div class="game-stats"><span>Nghe mẫu & Nhấn Mic phát âm:</span></div>
-            <div class="speak-card">
-                <div style="font-size: 26px; font-weight:700;" id="speak-target">안녕하세요</div>
-                <div style="font-size: 14px; opacity:0.8; margin-top:4px;" id="speak-vi">Xin chào</div>
-                <button class="btn-speak-listen" onclick="playSpeakingAudio()"><i class="fas fa-volume-up"></i> Nghe mẫu chuẩn</button>
-                <button class="mic-btn-large" id="btn-mic" onclick="toggleSpeechRecognition()"><i class="fas fa-microphone"></i></button>
-                <div style="font-size:12px; opacity:0.8;" id="mic-status">Nhấn mic để bắt đầu nói</div>
+            <div class="game-stats">
+                <span><i class="fas fa-bullhorn"></i> Luyện Phát Âm Chuẩn</span>
+                <button onclick="nextSpeakingWord()" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600;"><i class="fas fa-forward"></i> Từ tiếp</button>
             </div>
+
+            <div class="speak-card">
+                <div class="speak-target-word" id="speak-target">안녕하세요</div>
+                <div class="speak-target-vi" id="speak-vi">Xin chào</div>
+
+                <!-- Nút Nghe Mẫu Chuẩn -->
+                <button class="btn-speak-listen" onclick="playSpeakingAudio()">
+                    <i class="fas fa-volume-up"></i> Nghe phát âm mẫu
+                </button>
+
+                <!-- Nút Bật Micro Luyện Nói -->
+                <button class="mic-btn-large" id="btn-mic" onclick="toggleSpeechRecognition()">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <div style="font-size:12px; opacity:0.9;" id="mic-status">Nhấn micro và nói rõ từ trên</div>
+            </div>
+
+            <!-- Khung Đánh Giá Phát Âm & Chấm Điểm -->
+            <div class="eval-box" id="eval-box" style="display: none;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">KẾT QUẢ PHÁT ÂM</div>
+                <div class="eval-score-ring" id="eval-score">0%</div>
+                <div class="eval-rating" id="eval-rating">---</div>
+                <div class="eval-transcript" id="eval-transcript">Giọng nói nhận diện: ---</div>
+            </div>
+
             <div id="speak-fb" class="game-feedback"></div>
         </div>
     </div>
@@ -322,7 +356,7 @@
 
     <input type="file" id="import-file" style="display:none;" accept=".json" onchange="handleFileImport(event)">
 
-    <div class="footer">© 2026 Korean Engine 2.1 • Cross Match & Custom Deck</div>
+    <div class="footer">© 2026 Korean Engine 2.2 • Speech Evaluation System</div>
 
     <script>
         const defaultDeck = [
@@ -574,7 +608,7 @@
             document.getElementById('mode-flashcard').className = mode === 'flashcard' ? 'active-mode' : '';
             document.getElementById('mode-game').className = mode === 'game' ? 'active-mode' : '';
 
-            if (mode === 'game') switchSubGame('quiz');
+            if (mode === 'game') switchSubGame('speaking');
         }
 
         function switchSubGame(sub) {
@@ -629,31 +663,21 @@
             });
         }
 
-        // MINI GAME 2: NỐI TỪ CHÉO (CROSS MATCHING 2 CỘT)
-        let selectedKrElem = null;
-        let selectedViElem = null;
-        let matchedPairsCount = 0;
-        let totalPairsInRound = 0;
-
+        // MINI GAME 2: NỐI TỪ CHÉO
+        let selectedKrElem = null, selectedViElem = null, matchedPairsCount = 0, totalPairsInRound = 0;
         function startMatchGame() {
             document.getElementById('match-fb').innerText = '';
-            selectedKrElem = null;
-            selectedViElem = null;
-            matchedPairsCount = 0;
+            selectedKrElem = null; selectedViElem = null; matchedPairsCount = 0;
 
             const krListDiv = document.getElementById('col-kr-list');
             const viListDiv = document.getElementById('col-vi-list');
-            krListDiv.innerHTML = '';
-            viListDiv.innerHTML = '';
+            krListDiv.innerHTML = ''; viListDiv.innerHTML = '';
 
             const sampleSize = Math.min(4, masterDeck.length);
             totalPairsInRound = sampleSize;
             const roundWords = [...masterDeck].sort(() => Math.random() - 0.5).slice(0, sampleSize);
-
-            // Shuffled Vietnamese list separately
             const shuffledVi = [...roundWords].sort(() => Math.random() - 0.5);
 
-            // Render Cột Tiếng Hàn
             roundWords.forEach(w => {
                 const div = document.createElement('div');
                 div.className = 'cross-card';
@@ -663,12 +687,11 @@
                 krListDiv.appendChild(div);
             });
 
-            // Render Cột Tiếng Việt
             shuffledVi.forEach(w => {
                 const div = document.createElement('div');
                 div.className = 'cross-card';
                 div.innerText = w.back;
-                div.dataset.id = w.front; // Same match identifier
+                div.dataset.id = w.front;
                 div.onclick = () => selectCrossCard(div, 'vi');
                 viListDiv.appendChild(div);
             });
@@ -676,42 +699,29 @@
 
         function selectCrossCard(elem, colType) {
             if (elem.classList.contains('matched-correct')) return;
-
             if (colType === 'kr') {
                 if (selectedKrElem) selectedKrElem.classList.remove('selected');
-                selectedKrElem = elem;
-                selectedKrElem.classList.add('selected');
+                selectedKrElem = elem; selectedKrElem.classList.add('selected');
             } else {
                 if (selectedViElem) selectedViElem.classList.remove('selected');
-                selectedViElem = elem;
-                selectedViElem.classList.add('selected');
+                selectedViElem = elem; selectedViElem.classList.add('selected');
             }
 
-            // If both sides are selected -> Check Match!
             if (selectedKrElem && selectedViElem) {
-                const krId = selectedKrElem.dataset.id;
-                const viId = selectedViElem.dataset.id;
-
-                if (krId === viId) {
+                if (selectedKrElem.dataset.id === selectedViElem.dataset.id) {
                     playSFX('correct');
                     selectedKrElem.className = 'cross-card matched-correct';
                     selectedViElem.className = 'cross-card matched-correct';
-                    selectedKrElem = null;
-                    selectedViElem = null;
-                    matchedPairsCount++;
+                    selectedKrElem = null; selectedViElem = null; matchedPairsCount++;
 
                     if (matchedPairsCount === totalPairsInRound) {
-                        document.getElementById('match-fb').innerHTML = '<span style="color:var(--success-color);">Tuyệt vời! Bạn đã nối chính xác tất cả! 🎉</span>';
+                        document.getElementById('match-fb').innerHTML = '<span style="color:var(--success-color);">Tuyệt vời! Bạn đã nối đúng tất cả! 🎉</span>';
                     }
                 } else {
                     playSFX('wrong');
-                    const tempKr = selectedKrElem;
-                    const tempVi = selectedViElem;
-                    tempKr.classList.add('matched-wrong');
-                    tempVi.classList.add('matched-wrong');
-                    selectedKrElem = null;
-                    selectedViElem = null;
-
+                    const tempKr = selectedKrElem, tempVi = selectedViElem;
+                    tempKr.classList.add('matched-wrong'); tempVi.classList.add('matched-wrong');
+                    selectedKrElem = null; selectedViElem = null;
                     setTimeout(() => {
                         tempKr.classList.remove('selected', 'matched-wrong');
                         tempVi.classList.remove('selected', 'matched-wrong');
@@ -744,35 +754,92 @@
             }
         }
 
-        // MINI GAME 4: SPEAKING (LUYỆN NÓI)
-        let currentSpeaking = null, recognition = null;
+        // MINI GAME 4: LUYỆN NÓI & ĐÁNH GIÁ PHÁT ÂM (SPEECH EVALUATION ENGINE)
+        let currentSpeaking = null;
+        let recognition = null;
+
+        // Thuật toán tính phần trăm độ tương đồng chuỗi (Levenshtein Distance)
+        function calculateSimilarity(str1, str2) {
+            const s1 = str1.replace(/\s+/g, '').toLowerCase();
+            const s2 = str2.replace(/\s+/g, '').toLowerCase();
+            if (s1 === s2) return 100;
+            
+            const len = Math.max(s1.length, s2.length);
+            if (len === 0) return 100;
+
+            let matrix = [];
+            for (let i = 0; i <= s1.length; i++) matrix[i] = [i];
+            for (let j = 0; j <= s2.length; j++) matrix[0][j] = j;
+
+            for (let i = 1; i <= s1.length; i++) {
+                for (let j = 1; j <= s2.length; j++) {
+                    if (s1.charAt(i - 1) === s2.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            const distance = matrix[s1.length][s2.length];
+            return Math.round(Math.max(0, (1 - distance / len) * 100));
+        }
+
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SpeechRec();
             recognition.lang = 'ko-KR';
+            recognition.interimResults = false;
+
             recognition.onstart = () => {
                 document.getElementById('btn-mic').classList.add('recording');
-                document.getElementById('mic-status').innerText = 'Đang lắng nghe... Nói ngay!';
+                document.getElementById('mic-status').innerText = 'Đang lắng nghe... Hãy phát âm!';
+                document.getElementById('eval-box').style.display = 'none';
             };
+
             recognition.onresult = (e) => {
-                const res = e.results[0][0].transcript.trim().toLowerCase();
-                const target = currentSpeaking.front.trim().toLowerCase();
-                if (res === target || res.includes(target)) {
+                const transcript = e.results[0][0].transcript.trim();
+                const target = currentSpeaking.front.trim();
+
+                // Tính điểm phần trăm chính xác
+                const similarity = calculateSimilarity(target, transcript);
+                
+                // Hiển thị khung đánh giá
+                const evalBox = document.getElementById('eval-box');
+                const evalScore = document.getElementById('eval-score');
+                const evalRating = document.getElementById('eval-rating');
+                const evalTrans = document.getElementById('eval-transcript');
+                evalBox.style.display = 'block';
+
+                evalScore.innerText = `${similarity}%`;
+                evalTrans.innerText = `Máy nghe được: "${transcript}"`;
+
+                if (similarity >= 85) {
                     playSFX('correct');
-                    document.getElementById('speak-fb').innerHTML = `<span style="color:var(--success-color);">Chuẩn xác! (${res})</span>`;
-                    setTimeout(startSpeakingGame, 1800);
+                    evalScore.style.color = 'var(--success-color)';
+                    evalRating.innerHTML = '<span style="color:var(--success-color);">🌟🌟🌟 Xuất sắc! Phát âm rất chuẩn</span>';
+                } else if (similarity >= 50) {
+                    playSFX('correct');
+                    evalScore.style.color = 'var(--warning-color)';
+                    evalRating.innerHTML = '<span style="color:var(--warning-color);">🌟🌟 Khá tốt! Cần phát âm rõ hơn</span>';
                 } else {
                     playSFX('wrong');
-                    document.getElementById('speak-fb').innerHTML = `<span style="color:var(--danger-color);">Nghe được: "${res}" - Thử lại nhé!</span>`;
+                    evalScore.style.color = 'var(--danger-color)';
+                    evalRating.innerHTML = '<span style="color:var(--danger-color);">🌟 Cần luyện lại! Nghe mẫu và thử lại nhé</span>';
                 }
             };
+
             recognition.onend = () => {
                 document.getElementById('btn-mic').classList.remove('recording');
-                document.getElementById('mic-status').innerText = 'Nhấn mic để bắt đầu nói';
+                document.getElementById('mic-status').innerText = 'Nhấn micro để thử lại';
             };
+
             recognition.onerror = () => {
                 document.getElementById('btn-mic').classList.remove('recording');
-                document.getElementById('mic-status').innerText = 'Lỗi thu âm. Vui lòng thử lại';
+                document.getElementById('mic-status').innerText = 'Không nhận diện được. Thử lại nhé!';
             };
         }
 
@@ -782,13 +849,16 @@
 
         function startSpeakingGame() {
             document.getElementById('speak-fb').innerText = '';
+            document.getElementById('eval-box').style.display = 'none';
             currentSpeaking = masterDeck[Math.floor(Math.random() * masterDeck.length)];
             document.getElementById('speak-target').innerText = currentSpeaking.front;
             document.getElementById('speak-vi').innerText = currentSpeaking.back;
         }
 
+        function nextSpeakingWord() { startSpeakingGame(); }
+
         function toggleSpeechRecognition() {
-            if (!recognition) return alert('Trình duyệt không hỗ trợ nhận diện giọng nói!');
+            if (!recognition) return alert('Trình duyệt của bạn không hỗ trợ nhận diện giọng nói!');
             recognition.start();
         }
 
