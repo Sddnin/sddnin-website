@@ -1,0 +1,121 @@
+/* Flashcard page */
+.flashcard-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.flashcard-container {
+  perspective: 1200px;
+}
+
+.flashcard {
+  width: 360px;
+  height: 240px;
+  cursor: pointer;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.flashcard.flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.flashcard-front,
+.flashcard-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.flashcard-front {
+  background: linear-gradient(135deg, #4A90D9, #2C3E80);
+}
+
+.flashcard-back {
+  background: linear-gradient(135deg, #F5A623, #D97706);
+  transform: rotateY(180deg);
+}
+
+.card-text {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.card-romanization {
+  font-style: italic;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.card-example {
+  border-top: 1px solid rgba(255,255,255,0.4);
+  padding-top: 8px;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.flashcard-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.control-btn {
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 500;
+}
+
+.control-btn:hover {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.flashcard-actions .action-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.action-btn.active {
+  background: var(--color-primary);
+  color: white;
+}
