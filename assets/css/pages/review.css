@@ -1,0 +1,63 @@
+/* Review page */
+.review-main {
+  padding: 24px;
+}
+
+.review-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.tab-btn {
+  padding: 8px 20px;
+  border-radius: 20px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+  color: var(--color-text);
+}
+
+.tab-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.review-word-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--color-bg-secondary);
+  border-radius: 16px;
+  margin-bottom: 8px;
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.review-word-item:hover {
+  border-color: var(--color-primary);
+}
+
+.rating-buttons button {
+  margin-left: 6px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--color-text);
+}
+
+.rating-buttons button:hover {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
