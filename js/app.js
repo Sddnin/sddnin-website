@@ -74,7 +74,7 @@ function clearGameTimers() {
 }
 
 function playSFX(type) {
-    // Có thể tích hợp âm thanh Web Audio API hoặc Audio() tại đây
+    // Tùy chọn âm thanh nếu có
 }
 
 function stopAllSpeech() {
@@ -340,6 +340,53 @@ function startSpeakingGame() {
     currentSpeakingWord = masterDeck[Math.floor(Math.random() * masterDeck.length)];
     setElementText('speaking-word', currentSpeakingWord.front);
     setElementText('speaking-roman', currentSpeakingWord.roman || '');
+}
+
+/* ==========================================================================
+   GEMINI AI INTEGRATION (CHUẨN HÓA CHỐNG LỖI KẾT NỐI & ĐỊNH DẠNG)
+   ========================================================================== */
+async function callGeminiAPI(promptText) {
+    const apiKey = localStorage.getItem('gemini_api_key');
+    if (!apiKey) {
+        throw new Error("Chưa nhập API Key! Vui lòng cấu hình khóa trước.");
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const requestBody = {
+        contents: [{ parts: [{ text: promptText }] }]
+    };
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error?.message || `Lỗi HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Bóc tách an toàn tránh lỗi định dạng trả về
+        if (
+            data &&
+            data.candidates &&
+            data.candidates[0] &&
+            data.candidates[0].content &&
+            data.candidates[0].content.parts &&
+            data.candidates[0].content.parts[0]
+        ) {
+            return data.candidates[0].content.parts[0].text;
+        } else {
+            throw new Error("Định dạng phản hồi từ AI không hợp lệ.");
+        }
+    } catch (error) {
+        console.error("Lỗi gọi Gemini API:", error);
+        throw error;
+    }
 }
 
 /* ==========================================================================
