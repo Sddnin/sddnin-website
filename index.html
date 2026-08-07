@@ -37,31 +37,25 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s; }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-color); color: var(--text-color); padding: 15px; }
 
-        /* Nút bị vô hiệu hóa khi xử lý (Chống spam) */
         button:disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: none; }
 
-        /* Top Bar */
         .top-bar { width: 100%; max-width: 480px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .app-title { font-size: 20px; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 8px; }
         .top-actions { display: flex; gap: 8px; align-items: center; }
         .streak-badge { background: #fff3e0; color: #d35400; padding: 5px 10px; border-radius: 20px; font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 4px; border: 1px solid #ffe0b2; }
         .btn-icon-top { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
-        /* Category Selector */
         .category-bar { width: 100%; max-width: 480px; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: none; }
         .category-bar::-webkit-scrollbar { display: none; }
         .cat-chip { padding: 6px 14px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; color: var(--text-muted); }
         .cat-chip.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
-        /* Mode Switcher */
         .mode-switcher { display: flex; background: var(--border-color); border-radius: 25px; padding: 3px; margin-bottom: 15px; width: 100%; max-width: 480px; }
         .mode-switcher button { flex: 1; border: none; background: transparent; padding: 8px 3px; border-radius: 20px; font-weight: 600; cursor: pointer; color: var(--text-muted); font-size: 11px; }
         .mode-switcher button.active-mode { background: var(--card-bg); color: var(--primary-color); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
-        /* Containers */
         .content-card { width: 100%; max-width: 480px; background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); display: none; }
 
-        /* Dict Mode */
         .dict-search-box { display: flex; gap: 8px; margin-bottom: 15px; }
         .dict-search-box input { flex: 1; padding: 10px 15px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); border-radius: 20px; outline: none; font-size: 14px; }
         .dict-search-box button { padding: 10px 18px; border: none; background: var(--primary-color); color: white; border-radius: 20px; cursor: pointer; font-weight: 600; }
@@ -70,7 +64,6 @@
         .dict-word-vi { font-size: 20px; font-weight: 600; color: var(--primary-color); margin-bottom: 10px; }
         .btn-add-deck { background: var(--success-color); color: white; border: none; padding: 8px 16px; border-radius: 15px; font-size: 13px; cursor: pointer; font-weight: 600; margin-top: 10px; }
 
-        /* Flashcard Mode */
         .search-container { width: 100%; max-width: 480px; display: flex; gap: 10px; margin-bottom: 15px; }
         .search-container input { flex: 1; padding: 10px 15px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); border-radius: 20px; outline: none; font-size: 14px; }
         .search-container button { width: 40px; border: none; background: var(--primary-color); color: white; border-radius: 50%; cursor: pointer; }
@@ -102,21 +95,18 @@
         .progress-bar { width: 100%; height: 6px; background: var(--border-color); border-radius: 3px; margin-top: 5px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--primary-color); transition: width 0.3s; width: 0%; }
 
-        /* Sub-menu Mini Games */
         .game-selector { display: flex; gap: 6px; width: 100%; max-width: 480px; margin-bottom: 15px; }
         .game-selector button { flex: 1; padding: 8px 4px; border: 1px solid var(--border-color); background: var(--card-bg); border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--text-muted); }
         .game-selector button.active-subgame { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
         .game-stats { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 12px; font-size: 13px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
 
-        /* Mini Games UI */
         .quiz-card { background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 12px; }
         .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .quiz-opt-btn { background: var(--bg-color); border: 1px solid var(--border-color); padding: 12px 8px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-color); }
         .quiz-opt-btn.correct { background: var(--success-color) !important; color: white !important; border-color: var(--success-color) !important; }
         .quiz-opt-btn.wrong { background: var(--danger-color) !important; color: white !important; border-color: var(--danger-color) !important; }
 
-        /* Cross Matching */
         .cross-match-container { display: flex; justify-content: space-between; gap: 15px; margin-top: 10px; }
         .cross-col { display: flex; flex-direction: column; gap: 10px; flex: 1; }
         .cross-col-header { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
@@ -125,13 +115,11 @@
         .cross-card.matched-correct { border-color: var(--success-color); background: rgba(46, 204, 113, 0.15); color: var(--success-color); pointer-events: none; opacity: 0.6; }
         .cross-card.matched-wrong { border-color: var(--danger-color); background: rgba(231, 76, 60, 0.15); color: var(--danger-color); pointer-events: none; }
 
-        /* Typing Game */
         .typing-card { background: rgba(74, 144, 226, 0.1); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; }
         .typing-input-wrap { display: flex; gap: 8px; }
         .typing-input-wrap input { flex: 1; padding: 10px 15px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); border-radius: 20px; outline: none; font-size: 15px; text-align: center; }
         .typing-input-wrap button { padding: 10px 20px; border: none; background: var(--primary-color); color: white; border-radius: 20px; cursor: pointer; font-weight: 600; }
 
-        /* Speaking & Assessment UI */
         .speak-card { background: linear-gradient(145deg, #8e24aa, #ab47bc); color: white; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(142, 36, 170, 0.25); }
         .speak-target-word { font-size: 32px; font-weight: 800; letter-spacing: 1px; }
         .speak-target-vi { font-size: 15px; opacity: 0.9; margin-top: 4px; }
@@ -140,7 +128,6 @@
         .btn-speak-listen:hover { background: rgba(255,255,255,0.4); }
 
         .mic-btn-large { width: 70px; height: 70px; border-radius: 50%; border: none; background: #ffffff; color: #8e24aa; font-size: 28px; cursor: pointer; margin: 15px auto 10px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(0,0,0,0.2); transition: all 0.3s; }
-        .mic-btn-large:hover:not(:disabled) { transform: scale(1.05); }
         .mic-btn-large.recording { background: #ff1744; color: white; animation: pulse 1.2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 23, 68, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 23, 68, 0); } }
 
@@ -149,7 +136,6 @@
         .eval-rating { font-size: 14px; font-weight: 700; margin: 4px 0; }
         .eval-transcript { font-size: 13px; color: var(--text-muted); background: var(--card-bg); padding: 8px 12px; border-radius: 8px; margin-top: 8px; border: 1px solid var(--border-color); }
 
-        /* MODE 4: AI CHAT (TỰ DO & ROLEPLAY KỊCH BẢN) */
         .ai-scenario-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
         .ai-scenario-bar::-webkit-scrollbar { display: none; }
         .scen-chip { padding: 5px 12px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 15px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; color: var(--text-muted); }
@@ -179,7 +165,6 @@
         .api-key-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: flex; gap: 6px; align-items: center; font-size: 12px; }
         .api-key-box input { flex: 1; border: none; background: transparent; color: var(--text-color); outline: none; font-size: 12px; }
 
-        /* Modal & Utils */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal-body { background: var(--card-bg); width: 90%; max-width: 400px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); }
         .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 15px; color: var(--primary-color); display: flex; justify-content: space-between; align-items: center; }
@@ -193,7 +178,6 @@
 </head>
 <body>
 
-    <!-- Top Bar -->
     <div class="top-bar">
         <div class="app-title"><i class="fas fa-robot"></i> Hàn-Việt 3.0</div>
         <div class="top-actions">
@@ -204,7 +188,6 @@
         </div>
     </div>
 
-    <!-- Category Filter Bar -->
     <div class="category-bar">
         <button class="cat-chip active" onclick="filterCategory('ALL')">Tất cả</button>
         <button class="cat-chip" onclick="filterCategory('Giao tiếp')">Giao tiếp</button>
@@ -213,16 +196,15 @@
         <button class="cat-chip" onclick="filterCategory('Yêu thích')"><i class="fas fa-heart" style="color:var(--danger-color);"></i> Yêu thích</button>
     </div>
 
-    <!-- Main Mode Selector -->
     <div class="mode-switcher">
-        <button id="mode-dict" onclick="switchMode('dict')"><i class="fas fa-search"></i> Tra Từ</button>
+        <button id="mode-dict" class="active-mode" onclick="switchMode('dict')"><i class="fas fa-search"></i> Tra Từ</button>
         <button id="mode-flashcard" onclick="switchMode('flashcard')"><i class="fas fa-clone"></i> Thẻ Bài (<span id="count-badge">0</span>)</button>
         <button id="mode-game" onclick="switchMode('game')"><i class="fas fa-gamepad"></i> Mini Games</button>
-        <button id="mode-aichat" class="active-mode" onclick="switchMode('aichat')"><i class="fas fa-comments"></i> AI Chat</button>
+        <button id="mode-aichat" onclick="switchMode('aichat')"><i class="fas fa-comments"></i> AI Chat</button>
     </div>
 
-    <!-- MODE 1: TRA TỪ ĐIỂN API -->
-    <div id="dict-container" class="content-card">
+    <!-- MODE 1: TRA TỪ -->
+    <div id="dict-container" class="content-card" style="display: block;">
         <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px; text-align: center;">Tra từ trực tuyến & Lưu tự động:</div>
         <div class="dict-search-box">
             <input type="text" id="dict-input" placeholder="Nhập từ Hàn/Việt..." onkeyup="if(event.key==='Enter') lookupDictionary()">
@@ -291,7 +273,6 @@
             <button id="sg-speaking" class="active-subgame" onclick="switchSubGame('speaking')"><i class="fas fa-microphone"></i> Luyện Nói</button>
         </div>
 
-        <!-- 1. Trắc Nghiệm -->
         <div id="game-quiz" class="content-card">
             <div class="game-stats">
                 <span><i class="fas fa-star" style="color:#f1c40f;"></i> Điểm: <strong id="quiz-score">0</strong></span>
@@ -305,7 +286,6 @@
             <div id="quiz-fb" class="game-feedback"></div>
         </div>
 
-        <!-- 2. Nối Từ Chéo -->
         <div id="game-match" class="content-card">
             <div class="game-stats">
                 <span>Nối từ Hàn - Việt:</span>
@@ -324,7 +304,6 @@
             <div id="match-fb" class="game-feedback"></div>
         </div>
 
-        <!-- 3. Luyện Gõ -->
         <div id="game-typing" class="content-card">
             <div class="game-stats">
                 <span><i class="fas fa-star" style="color:#f1c40f;"></i> Điểm gõ: <strong id="typing-score">0</strong></span>
@@ -341,7 +320,6 @@
             <div id="typing-fb" class="game-feedback"></div>
         </div>
 
-        <!-- 4. Speech Evaluation -->
         <div id="game-speaking" class="content-card">
             <div class="game-stats">
                 <span><i class="fas fa-bullhorn"></i> Luyện Phát Âm</span>
@@ -373,9 +351,8 @@
         </div>
     </div>
 
-    <!-- MODE 4: AI CHAT HỘI THOẠI (TỰ DO & ROLEPLAY KỊCH BẢN) -->
-    <div id="aichat-main-container" class="content-card" style="display: block;">
-        
+    <!-- MODE 4: AI CHAT -->
+    <div id="aichat-main-container" class="content-card">
         <div class="api-key-box">
             <i class="fas fa-key" style="color:var(--primary-color);"></i>
             <input type="password" id="gemini-api-key" placeholder="Dán Gemini API Key vào đây..." onchange="saveApiKey()">
@@ -401,7 +378,6 @@
         </div>
     </div>
 
-    <!-- MODAL THÊM TỪ -->
     <div class="modal-overlay" id="add-modal">
         <div class="modal-body">
             <div class="modal-title">Thêm từ mới <i class="fas fa-times" style="cursor:pointer;" onclick="closeAddModal()"></i></div>
@@ -418,7 +394,7 @@
 
     <input type="file" id="import-file" style="display:none;" accept=".json" onchange="handleFileImport(event)">
 
-    <div class="footer">© 2026 Korean Engine 3.0 • Cập nhật Anti-Spam Click</div>
+    <div class="footer">© 2026 Korean Engine 3.0 • Đã sửa triệt để lỗi lặp tin nhắn khi chuyển tab</div>
 
     <script>
         const defaultDeck = [
@@ -434,9 +410,10 @@
         let filteredDeck = [...masterDeck];
         let currentIndex = 0;
         let activeCategory = 'ALL';
+        let currentMode = 'dict'; // Theo dõi tab hiện tại
         let lastDictResult = null;
 
-        // Cờ trạng thái chống Spam
+        // Cờ chống Spam Click
         let isFlipping = false;
         let isFetchingDict = false;
         let isProcessingQuiz = false;
@@ -529,9 +506,9 @@
             document.getElementById('progress-fill').style.width = filteredDeck.length ? ((currentIndex + 1) / filteredDeck.length) * 100 + '%' : '0%';
             document.getElementById('btn-fav').className = c.fav ? 'active-love' : '';
             document.getElementById('btn-hard').className = c.hard ? 'active-hard' : '';
+            document.getElementById('count-badge').innerText = masterDeck.length;
         }
 
-        // CHỐNG SPAM: Throttle lật thẻ 400ms bằng thời gian transition CSS
         function flipCard() {
             if (isFlipping) return;
             isFlipping = true;
@@ -566,7 +543,6 @@
         }
         function playAudio() { speakText(filteredDeck[currentIndex].front); }
 
-        // CHỐNG SPAM: Vô hiệu hóa nút khi đang fetch API Tra từ
         async function lookupDictionary() {
             if (isFetchingDict) return;
             const query = document.getElementById('dict-input').value.trim();
@@ -602,7 +578,6 @@
             masterDeck.push(lastDictResult); saveDeck(); alert(`Đã lưu "${lastDictResult.front}"!`);
         }
 
-        // Modal
         function openAddModal() { document.getElementById('add-modal').style.display = 'flex'; }
         function closeAddModal() { document.getElementById('add-modal').style.display = 'none'; }
         function saveCustomWord() {
@@ -635,13 +610,20 @@
             if(e.target.files[0]) reader.readAsText(e.target.files[0]);
         }
 
+        /* --- SỬA CHÍNH: KHÔNG TỰ KHỞI TẠO LẠI CHAT KHI CHUYỂN TAB --- */
         function switchMode(mode) {
+            currentMode = mode;
+            if (window.speechSynthesis) window.speechSynthesis.cancel(); // Tắt giọng đọc khi đổi tab
+
             ['dict', 'flashcard', 'game', 'aichat'].forEach(m => {
                 document.getElementById(m + (m==='dict'?'-container':(m==='aichat'?'-main-container':'-main-wrapper'))).style.display = m === mode ? 'block' : 'none';
                 document.getElementById('mode-' + m).className = m === mode ? 'active-mode' : '';
             });
-            if (mode === 'game') switchSubGame('quiz');
-            if (mode === 'aichat' && chatHistory.length === 0) initAiChat();
+
+            // Chỉ khởi tạo AI Chat LẦN ĐẦU TIÊN duy nhất
+            if (mode === 'aichat' && chatHistory.length === 0) {
+                initAiChat();
+            }
         }
 
         function switchSubGame(sub) {
@@ -655,7 +637,7 @@
             if (sub === 'speaking') startSpeakingGame();
         }
 
-        // CHỐNG SPAM: Vô hiệu hóa nút đáp án Quiz khi đang chờ qua câu mới
+        // Mini Games
         let quizScore = 0, quizStreak = 0, currentQuiz = null;
         function startQuizGame() {
             isProcessingQuiz = false;
@@ -676,7 +658,7 @@
                 btn.className = 'quiz-opt-btn'; btn.innerText = opt;
                 btn.onclick = () => {
                     if (isProcessingQuiz) return;
-                    isProcessingQuiz = true; // Khóa các nút khác
+                    isProcessingQuiz = true;
                     if(opt === currentQuiz.back) {
                         btn.classList.add('correct'); playSFX('correct');
                         quizScore += 10; quizStreak++;
@@ -694,7 +676,6 @@
             });
         }
 
-        // CHỐNG SPAM: Khóa bấm thẻ nối khi đang xử lý thẻ sai
         let selectedKrElem = null, selectedViElem = null, matchedPairsCount = 0, totalPairsInRound = 0;
         function startMatchGame() {
             document.getElementById('match-fb').innerText = '';
@@ -740,7 +721,7 @@
                     selectedKrElem = null; selectedViElem = null; matchedPairsCount++;
                     if (matchedPairsCount === totalPairsInRound) document.getElementById('match-fb').innerHTML = '<span style="color:var(--success-color);">Tuyệt vời! Hoàn thành! 🎉</span>';
                 } else {
-                    isProcessingMatch = true; // Khóa UI 500ms
+                    isProcessingMatch = true;
                     playSFX('wrong');
                     const tempKr = selectedKrElem, tempVi = selectedViElem;
                     tempKr.classList.add('matched-wrong'); tempVi.classList.add('matched-wrong');
@@ -748,13 +729,12 @@
                     setTimeout(() => {
                         tempKr.classList.remove('selected', 'matched-wrong');
                         tempVi.classList.remove('selected', 'matched-wrong');
-                        isProcessingMatch = false; // Mở lại UI
+                        isProcessingMatch = false;
                     }, 500);
                 }
             }
         }
 
-        // CHỐNG SPAM: Ngăn submit liên tục trong typing
         let typingScore = 0, currentTyping = null;
         function startTypingGame() {
             isProcessingTyping = false;
@@ -788,7 +768,6 @@
             }
         }
 
-        // Speech
         let recognition = null, currentSpeaking = null;
         function calcSim(s1, s2) {
             s1 = s1.replace(/\s+/g,'').toLowerCase(); s2 = s2.replace(/\s+/g,'').toLowerCase();
@@ -812,7 +791,7 @@
             recognition = new SpeechRec(); recognition.lang = 'ko-KR'; recognition.interimResults = false;
             recognition.onstart = () => {
                 document.getElementById('btn-mic').classList.add('recording');
-                document.getElementById('btn-mic').disabled = true; // Chống spam mic
+                document.getElementById('btn-mic').disabled = true;
                 document.getElementById('mic-status').innerText = 'Đang nghe...';
                 document.getElementById('eval-box').style.display = 'none';
             };
@@ -843,10 +822,10 @@
         function nextSpeakingWord() { startSpeakingGame(); }
         function toggleSpeechRecognition() {
             if(!recognition) return alert('Trình duyệt không hỗ trợ Mic!');
-            try { recognition.start(); } catch(e) {} // Tránh lỗi crash nếu bấm start liên tục
+            try { recognition.start(); } catch(e) {}
         }
 
-        // CHỐNG SPAM: Vô hiệu hóa nút gửi trong AI Chat khi API đang xử lý
+        /* --- XỬ LÝ CHAT AI CHỐNG TỰ ĐỘNG CHÈN TIN NHẮN KHI CHUYỂN TAB --- */
         const scenariosPrompt = {
             free: { prompt: "Giáo viên tiếng Hàn. Trò chuyện 1-2 câu.", greeting: "안녕하세요! 무슨 이야기하고 싶어요?", vi: "Xin chào! Bạn muốn nói chuyện gì?", sug: ["오늘 날씨 어때요?", "한국어 공부하고 있어요", "취미가 무엇이에요?"] },
             food: { prompt: "Phục vụ nhà hàng Hàn Quốc. Khách gọi món.", greeting: "어서 오세요! 몇 분이세요?", vi: "Chào quý khách! Đi mấy người ạ?", sug: ["비빔밥 하나 주세요", "메뉴판 좀 주세요", "이거 얼마예요?"] },
@@ -860,11 +839,15 @@
             document.querySelectorAll('.scen-chip').forEach(c => c.classList.toggle('active', c.getAttribute('onclick').includes(k)));
             initAiChat();
         }
+
         function initAiChat() {
-            document.getElementById('chat-box').innerHTML = ''; chatHistory = [];
+            document.getElementById('chat-box').innerHTML = ''; 
+            chatHistory = []; // Reset lịch sử
             const s = scenariosPrompt[currentScenario];
-            appendMessage('ai', s.greeting, s.vi); renderSuggestions(s.sug);
+            appendMessage('ai', s.greeting, s.vi); 
+            renderSuggestions(s.sug);
         }
+
         function renderSuggestions(arr) {
             const c = document.getElementById('chat-sug'); c.innerHTML = '';
             (arr||[]).forEach(t => {
@@ -873,7 +856,11 @@
                 c.appendChild(d);
             });
         }
+
         function appendMessage(sender, kr, vi, corr) {
+            // SỬA: Lưu tin nhắn vào mảng chatHistory để không bị ghi đè/tự khởi tạo lại
+            chatHistory.push({ sender, kr, vi, corr });
+
             const b = document.getElementById('chat-box'), d = document.createElement('div');
             d.className = `chat-msg ${sender}`;
             let h = `<div class="msg-kr">${kr} <button class="btn-msg-audio" onclick="speakText('${kr.replace(/'/g,"\\'")}')"><i class="fas fa-volume-up"></i></button></div>`;
@@ -881,11 +868,11 @@
             if(corr) h += `<div class="msg-correction"><i class="fas fa-magic"></i> ${corr}</div>`;
             if(sender==='system') h = kr;
             d.innerHTML = h; b.appendChild(d); b.scrollTop = b.scrollHeight;
-            if(sender==='ai') speakText(kr);
+            if(sender==='ai' && currentMode === 'aichat') speakText(kr);
         }
 
         async function sendChatMessage() {
-            if(isChatting) return; // Chống bấm nhiều lần
+            if(isChatting) return;
             const inp = document.getElementById('chat-input'), msg = inp.value.trim();
             if(!msg) return;
 
@@ -893,7 +880,9 @@
             const btn = document.getElementById('btn-chat-send');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            inp.value = ''; appendMessage('user', msg); document.getElementById('chat-sug').innerHTML = '';
+            inp.value = ''; 
+            appendMessage('user', msg); 
+            document.getElementById('chat-sug').innerHTML = '';
 
             const key = localStorage.getItem('gemini_api_key');
             if(!key) {
@@ -908,11 +897,17 @@
                 const bodyObj = { contents: [{ parts: [{ text: `Kịch bản: ${scenariosPrompt[currentScenario].prompt}. Người dùng: "${msg}". Yêu cầu JSON: {"korean":"1-2 câu tiếng Hàn","vietnamese":"nghĩa","correction":"sửa lỗi nếu có, ko thì rỗng","suggestions":["3 câu gợi ý"]}` }]}] };
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(bodyObj) });
                 const data = await res.json();
-                const clean = data.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
-                const obj = JSON.parse(clean);
-                appendMessage('ai', obj.korean, obj.vietnamese, obj.correction);
-                renderSuggestions(obj.suggestions);
-            } catch(e) { appendMessage('system', 'Lỗi kết nối AI hoặc định dạng trả về.'); }
+                
+                // Kiểm tra nếu người dùng vẫn ở tab AI thì mới render kết quả
+                if (currentMode === 'aichat') {
+                    const clean = data.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
+                    const obj = JSON.parse(clean);
+                    appendMessage('ai', obj.korean, obj.vietnamese, obj.correction);
+                    renderSuggestions(obj.suggestions);
+                }
+            } catch(e) { 
+                if (currentMode === 'aichat') appendMessage('system', 'Lỗi kết nối AI hoặc định dạng trả về.'); 
+            }
             
             isChatting = false;
             btn.disabled = false;
