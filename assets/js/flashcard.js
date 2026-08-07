@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-    let vocabulary = [];
+    let rawVocabulary = [];
+    let filteredVocabulary = [];
     let currentIndex = 0;
 
     const flashcard = document.getElementById("flashcard");
@@ -11,70 +12,126 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const prevBtn = document.getElementById("prev-btn");
     const nextBtn = document.getElementById("next-btn");
-    const flipBtn = document.getElementById("flip-btn");
+    const audioBtn = document.getElementById("audio-btn");
+    const masterBtn = document.getElementById("master-btn");
+    const shuffleBtn = document.getElementById("shuffle-btn");
+    const filterSelect = document.getElementById("filter-select");
 
-    // Tải dữ liệu từ vocabulary.json (Lấy toàn bộ từ vựng, không dùng .slice(0,3))
+    // Tải dữ liệu từ vựng
     fetch("../assets/data/vocabulary.json")
-        .then((response) => response.json())
+        .then((res) => res.json())
         .then((data) => {
-            vocabulary = data; // Load đầy đủ tất cả từ vựng
-            if (vocabulary.length > 0) {
-                renderCard(currentIndex);
-            }
+            rawVocabulary = data;
+            applyFilter();
         })
-        .catch((error) => {
-            console.error("Lỗi khi tải từ vựng:", error);
-        });
+        .catch((err) => console.error("Lỗi khi tải vocabulary.json:", err));
 
-    // Hiển thị thẻ flashcard theo chỉ số index
-    function renderCard(index) {
-        if (!vocabulary || vocabulary.length === 0) return;
-
-        const cardData = vocabulary[index];
-
-        // Đảm bảo thẻ quay lại mặt trước khi đổi từ mới
-        if (flashcard) {
-            flashcard.classList.remove("flipped");
+    function applyFilter() {
+        const filterValue = filterSelect ? filterSelect.value : 'all';
+        
+        if (filterValue === 'unlearned') {
+            filteredVocabulary = rawVocabulary.filter(item => !StorageManager.isLearned('vocab', item.id));
+        } else if (filterValue === 'learned') {
+            filteredVocabulary = rawVocabulary.filter(item => StorageManager.isLearned('vocab', item.id));
+        } else if (filterValue === 'bookmarked') {
+            filteredVocabulary = rawVocabulary.filter(item => StorageManager.isBookmarked('vocab', item.id));
+        } else {
+            filteredVocabulary = [...rawVocabulary];
         }
 
-        if (koreanText) koreanText.textContent = cardData.korean;
-        if (romanizationText) romanizationText.textContent = `[${cardData.romanization}]`;
-        if (meaningText) meaningText.textContent = cardData.meaning;
-        if (exampleText) exampleText.textContent = cardData.example || "";
+        currentIndex = 0;
+        renderCard();
+    }
+
+    function renderCard() {
+        if (!filteredVocabulary || filteredVocabulary.length === 0) {
+            if (koreanText) koreanText.textContent = "Không có dữ liệu";
+            if (meaningText) meaningText.textContent = "Hãy đổi bộ lọc khác!";
+            if (counterText) counterText.textContent = "0 / 0";
+            return;
+        }
+
+        const currentItem = filteredVocabulary[currentIndex];
+
+        if (flashcard) flashcard.classList.remove("flipped");
+
+        if (koreanText) koreanText.textContent = currentItem.korean;
+        if (romanizationText) romanizationText.textContent = `[${currentItem.romanization}]`;
+        if (meaningText) meaningText.textContent = currentItem.meaning;
+        if (exampleText) exampleText.textContent = currentItem.example || "";
 
         if (counterText) {
-            counterText.textContent = `${index + 1} / ${vocabulary.length}`;
+            counterText.textContent = `${currentIndex + 1} / ${filteredVocabulary.length}`;
+        }
+
+        // Cập nhật trạng thái nút "Đã thuộc"
+        if (masterBtn) {
+            const isLearned = StorageManager.isLearned('vocab', currentItem.id);
+            masterBtn.classList.toggle('active', isLearned);
+            masterBtn.textContent = isLearned ? "✓ Đã thuộc" : "Đánh dấu thuộc";
         }
     }
 
-    // Lật thẻ
+    // Sự kiện lật thẻ
     if (flashcard) {
-        flashcard.addEventListener("click", () => {
+        flashcard.addEventListener("click", (e) => {
+            if (e.target.closest('.no-flip')) return;
             flashcard.classList.toggle("flipped");
         });
     }
 
-    if (flipBtn) {
-        flipBtn.addEventListener("click", () => {
-            if (flashcard) flashcard.classList.toggle("flipped");
+    // Nút Phát âm
+    if (audioBtn) {
+        audioBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (filteredVocabulary[currentIndex]) {
+                App.speakKorean(filteredVocabulary[currentIndex].korean);
+            }
         });
     }
 
-    // Chuyển sang từ tiếp theo
+    // Nút Đã thuộc
+    if (masterBtn) {
+        masterBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const currentItem = filteredVocabulary[currentIndex];
+            if (currentItem) {
+                StorageManager.toggleLearned('vocab', currentItem.id);
+                App.updateHeaderStats();
+                renderCard();
+            }
+        });
+    }
+
+    // Nút Xáo trộn
+    if (shuffleBtn) {
+        shuffleBtn.addEventListener("click", () => {
+            filteredVocabulary.sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            renderCard();
+        });
+    }
+
+    // Nút Chuyển thẻ Next/Prev
     if (nextBtn) {
-        nextBtn.addEventListener("click", () => {
-            if (vocabulary.length === 0) return;
-            currentIndex = (currentIndex + 1) % vocabulary.length;
-            renderCard(currentIndex);
+        nextBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (filteredVocabulary.length === 0) return;
+            currentIndex = (currentIndex + 1) % filteredVocabulary.length;
+            renderCard();
         });
     }
 
-    // Quay lại từ trước đó
     if (prevBtn) {
-        prevBtn.addEventListener("click", () => {
-            if (vocabulary.length === 0) return;
-            currentIndex = (currentIndex - 1 + vocabulary.length) % vocabulary.length;
-            renderCard(currentIndex);
+        prevBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (filteredVocabulary.length === 0) return;
+            currentIndex = (currentIndex - 1 + filteredVocabulary.length) % filteredVocabulary.length;
+            renderCard();
         });
+    }
+
+    if (filterSelect) {
+        filterSelect.addEventListener("change", applyFilter);
     }
 });
