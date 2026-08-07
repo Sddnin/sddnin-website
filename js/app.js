@@ -4,7 +4,8 @@
 let masterDeck = [];      
 let filteredDeck = [];    
 let currentIndex = 0;     
-let activeTab = 'card';   
+let activeMode = 'dict';   
+let currentCategory = 'ALL';
 
 let gameTimers = [];
 let isProcessingQuiz = false;
@@ -12,18 +13,20 @@ let currentQuiz = null;
 let quizScore = 0;
 let quizStreak = 0;
 
-let matchScore = 0;
-let selectedMatchCards = [];
+let selectedKrCard = null;
+let selectedViCard = null;
 
 let currentTypingWord = null;
 let typingScore = 0;
 
 let currentSpeakingWord = null;
+let currentScenario = 'free';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
     setupEventListeners();
     updateCard();
+    initTheme();
 });
 
 /* ==========================================================================
@@ -41,25 +44,25 @@ function loadData() {
         masterDeck = getSampleData();
         saveData();
     }
-    filteredDeck = [...masterDeck];
+    filterCategory(currentCategory);
 }
 
 function saveData() {
     localStorage.setItem('masterDeck', JSON.stringify(masterDeck));
-    filteredDeck = [...masterDeck];
+    filterCategory(currentCategory);
 }
 
 function getSampleData() {
     return [
-        { front: '안녕하세요', back: 'Xin chào', roman: 'An-nyeong-ha-se-yo', category: 'Chào hỏi', fav: false, hard: false },
-        { front: '감사합니다', back: 'Cảm ơn', roman: 'Gam-sa-ham-ni-da', category: 'Chào hỏi', fav: false, hard: false },
-        { front: '사과', back: 'Quả táo', roman: 'Sa-gwa', category: 'Hoa quả', fav: false, hard: false },
-        { front: '물', back: 'Nước', roman: 'Mul', category: 'Đồ uống', fav: false, hard: false }
+        { front: '안녕하세요', back: 'Xin chào', roman: 'annyeonghaseyo', category: 'Giao tiếp', fav: false, hard: false },
+        { front: '감사합니다', back: 'Cảm ơn', roman: 'gamsahamnida', category: 'Giao tiếp', fav: false, hard: false },
+        { front: '비빔밥', back: 'Cơm trộn', roman: 'bibimbap', category: 'Du lịch', fav: false, hard: false },
+        { front: '학생', back: 'Học sinh', roman: 'haksaeng', category: 'TOPIK 1', fav: false, hard: false }
     ];
 }
 
 /* ==========================================================================
-   UTILITY & TIMERS
+   UTILITY & AUDIO / SPEECH
    ========================================================================== */
 function setGameTimeout(callback, delay) {
     const timer = setTimeout(callback, delay);
@@ -72,8 +75,16 @@ function clearGameTimers() {
     gameTimers = [];
 }
 
-function playSFX(type) {
-    // Tùy chọn hiệu ứng âm thanh an toàn
+function speakKorean(text) {
+    if (!('speechSynthesis' in window)) {
+        alert('Trình duyệt của bạn không hỗ trợ phát âm (TTS).');
+        return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ko-KR';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
 }
 
 function stopAllSpeech() {
@@ -82,9 +93,77 @@ function stopAllSpeech() {
     }
 }
 
+function setElementText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = text;
+}
+
+/* ==========================================================================
+   THEME & MODAL & IMPORT/EXPORT
+   ========================================================================== */
+function initTheme() {
+    const isDark = localStorage.getItem('theme_dark') === 'true';
+    if (isDark) {
+        document.body.classList.add('dark-mode');
+        const icon = document.getElementById('theme-icon');
+        if (icon) icon.className = 'fas fa-sun';
+    }
+}
+
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme_dark', isDark);
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(masterDeck, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "korean_vocab_backup.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const imported = JSON.parse(e.target.result);
+            if (Array.isArray(imported)) {
+                masterDeck = imported;
+                saveData();
+                updateCard();
+                alert('Đã nhập dữ liệu thành công!');
+            }
+        } catch (err) {
+            alert('File JSON không hợp lệ!');
+        }
+    };
+    reader.readAsText(file);
+}
+
 /* ==========================================================================
    FLASHCARD SYSTEM
    ========================================================================== */
+function filterCategory(cat) {
+    currentCategory = cat;
+    if (cat === 'ALL') {
+        filteredDeck = [...masterDeck];
+    } else if (cat === 'Yêu thích') {
+        filteredDeck = masterDeck.filter(item => item.fav);
+    } else {
+        filteredDeck = masterDeck.filter(item => item.category === cat);
+    }
+    currentIndex = 0;
+    updateCard();
+}
+
 function updateCard() {
     const card = document.getElementById('flashcard');
     if (card) card.classList.remove('is-flipped');
@@ -101,6 +180,7 @@ function updateCard() {
         
         const fill = document.getElementById('progress-fill');
         if (fill) fill.style.width = '0%';
+        setElementText('count-badge', masterDeck.length);
         return;
     }
 
@@ -145,6 +225,77 @@ function prevCard() {
 function flipCard() {
     const card = document.getElementById('flashcard');
     if (card) card.classList.toggle('is-flipped');
+}
+
+function toggleFavCard() {
+    if (!filteredDeck || filteredDeck.length === 0) return;
+    const c = filteredDeck[currentIndex];
+    c.fav = !c.fav;
+    saveData();
+    updateCard();
+}
+
+function toggleHardCard() {
+    if (!filteredDeck || filteredDeck.length === 0) return;
+    const c = filteredDeck[currentIndex];
+    c.hard = !c.hard;
+    saveData();
+    updateCard();
+}
+
+function deleteCurrentCard() {
+    if (!filteredDeck || filteredDeck.length === 0) return;
+    const c = filteredDeck[currentIndex];
+    if (confirm(`Bạn có chắc muốn xóa từ "${c.front}"?`)) {
+        masterDeck = masterDeck.filter(item => item !== c);
+        saveData();
+        updateCard();
+    }
+}
+
+/* ==========================================================================
+   TRA TỪ (DICTIONARY MODE)
+   ========================================================================== */
+function searchDictionary() {
+    const input = document.getElementById('dict-input').value.trim().toLowerCase();
+    if (!input) return;
+
+    const resBox = document.getElementById('dict-result');
+    const found = masterDeck.find(item => 
+        item.front.toLowerCase().includes(input) || item.back.toLowerCase().includes(input)
+    );
+
+    resBox.style.display = 'block';
+    if (found) {
+        setElementText('res-kr', found.front);
+        setElementText('res-vi', found.back + (found.roman ? ` (${found.roman})` : ''));
+    } else {
+        setElementText('res-kr', input);
+        setElementText('res-vi', 'Từ chưa có trong bộ thẻ. Bấm bên dưới để lưu.');
+    }
+}
+
+function addDictToDeck() {
+    const kr = document.getElementById('res-kr').innerText;
+    const vi = document.getElementById('res-vi').innerText;
+    if (!kr || kr === '---') return;
+
+    const exists = masterDeck.some(item => item.front === kr);
+    if (exists) {
+        alert('Từ này đã có trong bộ từ vựng!');
+        return;
+    }
+
+    masterDeck.push({
+        front: kr,
+        back: vi.includes('Từ chưa có') ? 'Nghĩa tự chọn' : vi,
+        roman: '',
+        category: 'Giao tiếp',
+        fav: false,
+        hard: false
+    });
+    saveData();
+    alert(`Đã thêm "${kr}" vào bộ từ vựng!`);
 }
 
 /* ==========================================================================
@@ -210,17 +361,15 @@ function startQuizGame() {
             
             if (opt === currentQuiz.back) {
                 btn.classList.add('correct'); 
-                playSFX('correct');
                 quizScore += 10; 
                 quizStreak++;
                 const fb = document.getElementById('quiz-fb');
-                if (fb) fb.innerHTML = '<span style="color:var(--success-color, green);">Chính xác!</span>';
+                if (fb) fb.innerHTML = '<span style="color:var(--success-color);">Chính xác!</span>';
             } else {
                 btn.classList.add('wrong'); 
-                playSFX('wrong');
                 quizStreak = 0;
                 const fb = document.getElementById('quiz-fb');
-                if (fb) fb.innerHTML = `<span style="color:var(--danger-color, red);">Sai! Đáp án: ${currentQuiz.back}</span>`;
+                if (fb) fb.innerHTML = `<span style="color:var(--danger-color);">Sai! Đáp án: ${currentQuiz.back}</span>`;
             }
             
             setElementText('quiz-score', quizScore);
@@ -233,62 +382,81 @@ function startQuizGame() {
 
 // 2. Nối từ Game
 function startMatchGame() {
-    selectedMatchCards = [];
-    const container = document.getElementById('match-grid');
-    if (!container) return;
-    container.innerHTML = '';
+    selectedKrCard = null;
+    selectedViCard = null;
+    setElementText('match-fb', '');
+
+    const colKr = document.getElementById('col-kr-list');
+    const colVi = document.getElementById('col-vi-list');
+    if (!colKr || !colVi) return;
+
+    colKr.innerHTML = '';
+    colVi.innerHTML = '';
 
     if (!masterDeck || masterDeck.length < 2) {
-        container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-color);">Cần ít nhất 2 từ vựng để chơi nối từ.</p>';
+        setElementText('match-fb', 'Cần ít nhất 2 từ vựng để chơi nối từ.');
         return;
     }
 
-    const gamePool = [...masterDeck].sort(() => Math.random() - 0.5).slice(0, 4);
-    let cardsData = [];
+    const pool = [...masterDeck].sort(() => Math.random() - 0.5).slice(0, 4);
+    
+    const krList = pool.map(item => ({ id: item.front, text: item.front })).sort(() => Math.random() - 0.5);
+    const viList = pool.map(item => ({ id: item.front, text: item.back })).sort(() => Math.random() - 0.5);
 
-    gamePool.forEach((item, idx) => {
-        cardsData.push({ id: idx, text: item.front, type: 'front' });
-        cardsData.push({ id: idx, text: item.back, type: 'back' });
+    krList.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'cross-card';
+        div.innerText = item.text;
+        div.onclick = () => selectMatchCard(div, item.id, 'kr');
+        colKr.appendChild(div);
     });
 
-    cardsData.sort(() => Math.random() - 0.5);
-
-    cardsData.forEach(card => {
+    viList.forEach(item => {
         const div = document.createElement('div');
-        div.className = 'match-card';
-        div.innerText = card.text;
-        div.onclick = () => handleMatchSelect(div, card);
-        container.appendChild(div);
+        div.className = 'cross-card';
+        div.innerText = item.text;
+        div.onclick = () => selectMatchCard(div, item.id, 'vi');
+        colVi.appendChild(div);
     });
 }
 
-function handleMatchSelect(element, data) {
-    if (element.classList.contains('matched') || element.classList.contains('selected')) return;
-    if (selectedMatchCards.length >= 2) return;
+function selectMatchCard(el, id, type) {
+    if (el.classList.contains('matched-correct')) return;
 
-    element.classList.add('selected');
-    selectedMatchCards.push({ element, data });
+    if (type === 'kr') {
+        if (selectedKrCard) selectedKrCard.el.classList.remove('selected');
+        selectedKrCard = { el, id };
+        el.classList.add('selected');
+    } else {
+        if (selectedViCard) selectedViCard.el.classList.remove('selected');
+        selectedViCard = { el, id };
+        el.classList.add('selected');
+    }
 
-    if (selectedMatchCards.length === 2) {
-        const [c1, c2] = selectedMatchCards;
-        if (c1.data.id === c2.data.id && c1.data.type !== c2.data.type) {
-            c1.element.classList.remove('selected');
-            c2.element.classList.remove('selected');
-            c1.element.classList.add('matched');
-            c2.element.classList.add('matched');
-            matchScore += 20;
-            setElementText('match-score', matchScore);
-            selectedMatchCards = [];
+    if (selectedKrCard && selectedViCard) {
+        if (selectedKrCard.id === selectedViCard.id) {
+            selectedKrCard.el.className = 'cross-card matched-correct';
+            selectedViCard.el.className = 'cross-card matched-correct';
+            selectedKrCard = null;
+            selectedViCard = null;
 
-            const allMatched = document.querySelectorAll('.match-card:not(.matched)').length === 0;
-            if (allMatched) {
-                setGameTimeout(startMatchGame, 1000);
+            const remaining = document.querySelectorAll('.cross-card:not(.matched-correct)');
+            if (remaining.length === 0) {
+                setElementText('match-fb', 'Xuất sắc! Đã nối hết các từ.');
+                setGameTimeout(startMatchGame, 1200);
             }
         } else {
+            const krTemp = selectedKrCard.el;
+            const viTemp = selectedViCard.el;
+            krTemp.classList.add('matched-wrong');
+            viTemp.classList.add('matched-wrong');
+            
+            selectedKrCard = null;
+            selectedViCard = null;
+
             setGameTimeout(() => {
-                c1.element.classList.remove('selected');
-                c2.element.classList.remove('selected');
-                selectedMatchCards = [];
+                krTemp.classList.remove('selected', 'matched-wrong');
+                viTemp.classList.remove('selected', 'matched-wrong');
             }, 800);
         }
     }
@@ -301,12 +469,12 @@ function startTypingGame() {
     if (input) input.value = '';
 
     if (!masterDeck || masterDeck.length === 0) {
-        setElementText('typing-hint', 'Chưa có từ vựng');
+        setElementText('typing-vi', 'Chưa có từ vựng');
         return;
     }
 
     currentTypingWord = masterDeck[Math.floor(Math.random() * masterDeck.length)];
-    setElementText('typing-hint', `Nghĩa: "${currentTypingWord.back}" (${currentTypingWord.roman || ''})`);
+    setElementText('typing-vi', currentTypingWord.back);
 }
 
 function checkTypingAnswer() {
@@ -314,96 +482,190 @@ function checkTypingAnswer() {
     const input = document.getElementById('typing-input');
     if (!input) return;
 
-    const userAns = input.value.trim().toLowerCase();
-    const correctAns = currentTypingWord.front.trim().toLowerCase();
+    const userAns = input.value.trim();
+    const correctAns = currentTypingWord.front.trim();
 
     if (userAns === correctAns) {
         typingScore += 10;
         setElementText('typing-score', typingScore);
-        setElementText('typing-fb', '<span style="color:var(--success-color, green);">Đúng rồi!</span>');
+        setElementText('typing-fb', '<span style="color:var(--success-color);">Chính xác! +10 điểm</span>');
         setGameTimeout(startTypingGame, 1000);
     } else {
-        setElementText('typing-fb', '<span style="color:var(--danger-color, red);">Chưa đúng, thử lại nhé!</span>');
+        setElementText('typing-fb', `<span style="color:var(--danger-color);">Chưa đúng! Đáp án đúng: ${correctAns}</span>`);
     }
 }
 
 // 4. Luyện phát âm Game
 function startSpeakingGame() {
-    setElementText('speaking-fb', '');
+    setElementText('speak-fb', '');
+    const evalBox = document.getElementById('eval-box');
+    if (evalBox) evalBox.style.display = 'none';
+
     if (!masterDeck || masterDeck.length === 0) {
-        setElementText('speaking-word', 'Chưa có từ vựng');
+        setElementText('speak-target', 'Chưa có từ vựng');
+        setElementText('speak-vi', '');
         return;
     }
 
     currentSpeakingWord = masterDeck[Math.floor(Math.random() * masterDeck.length)];
-    setElementText('speaking-word', currentSpeakingWord.front);
-    setElementText('speaking-roman', currentSpeakingWord.roman || '');
+    setElementText('speak-target', currentSpeakingWord.front);
+    setElementText('speak-vi', currentSpeakingWord.back);
+}
+
+function startMicRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert("Trình duyệt của bạn không hỗ trợ Nhận diện giọng nói.");
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ko-KR';
+    recognition.interimResults = false;
+
+    const btnMic = document.getElementById('btn-mic');
+    if (btnMic) btnMic.classList.add('recording');
+    setElementText('mic-status', 'Đang nghe... Bắt đầu đọc!');
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+        if (btnMic) btnMic.classList.remove('recording');
+        setElementText('mic-status', 'Nhấn micro và đọc');
+
+        const transcript = event.results[0][0].transcript.trim();
+        evaluatePronunciation(transcript);
+    };
+
+    recognition.onerror = () => {
+        if (btnMic) btnMic.classList.remove('recording');
+        setElementText('mic-status', 'Không thể nhận diện. Thử lại!');
+    };
+
+    recognition.onend = () => {
+        if (btnMic) btnMic.classList.remove('recording');
+    };
+}
+
+function evaluatePronunciation(transcript) {
+    if (!currentSpeakingWord) return;
+    const target = currentSpeakingWord.front.trim();
+
+    const evalBox = document.getElementById('eval-box');
+    if (evalBox) evalBox.style.display = 'block';
+
+    setElementText('eval-transcript', `Giọng nói nhận diện: ${transcript}`);
+
+    if (transcript === target) {
+        setElementText('eval-score', '100%');
+        setElementText('eval-rating', 'Perfect! Phát âm chuẩn xác!');
+    } else if (transcript.includes(target) || target.includes(transcript)) {
+        setElementText('eval-score', '75%');
+        setElementText('eval-rating', 'Gần đúng! Cố gắng nói rõ hơn.');
+    } else {
+        setElementText('eval-score', '30%');
+        setElementText('eval-rating', 'Chưa đúng. Hãy thử nghe lại từ mẫu.');
+    }
 }
 
 /* ==========================================================================
-   GEMINI AI INTEGRATION (CHUẨN HÓA AN TOÀN)
+   GEMINI AI INTEGRATION
    ========================================================================== */
 async function callGeminiAPI(promptText) {
     const apiKey = localStorage.getItem('gemini_api_key');
     if (!apiKey) {
-        throw new Error("Chưa nhập API Key! Vui lòng cấu hình khóa trước.");
+        throw new Error("Chưa nhập API Key! Vui lòng dán Gemini API Key ở ô phía trên.");
     }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    
+    let scenarioPrompt = "";
+    if (currentScenario === 'food') scenarioPrompt = "Bạn là nhà hàng Hàn Quốc. Bắt đầu trò chuyện bằng tiếng Hàn để giúp người học gọi món.";
+    else if (currentScenario === 'taxi') scenarioPrompt = "Bạn là tài xế taxi ở Seoul. Bắt đầu trò chuyện bằng tiếng Hàn.";
+    else if (currentScenario === 'hotel') scenarioPrompt = "Bạn là lễ tân khách sạn. Hãy giao tiếp tiếng Hàn ngắn gọn.";
+    else scenarioPrompt = "Bạn là trợ lý học tiếng Hàn thông minh. Trả lời ngắn gọn bằng tiếng Hàn và kèm dịch nghĩa tiếng Việt.";
+
+    const fullPrompt = `${scenarioPrompt}\nNgười học nói: "${promptText}". Trả lời câu trên. Trả lời bằng định dạng:\nTiếng Hàn: <câu tiếng Hàn>\nTiếng Việt: <dịch tiếng Việt>`;
+
     const requestBody = {
-        contents: [{ parts: [{ text: promptText }] }]
+        contents: [{ parts: [{ text: fullPrompt }] }]
     };
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+    });
 
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error?.message || `Lỗi kết nối HTTP: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (
-            data &&
-            data.candidates &&
-            data.candidates[0] &&
-            data.candidates[0].content &&
-            data.candidates[0].content.parts &&
-            data.candidates[0].content.parts[0]
-        ) {
-            return data.candidates[0].content.parts[0].text;
-        } else {
-            throw new Error("Phản hồi từ AI bị rỗng hoặc không đúng định dạng chuẩn.");
-        }
-    } catch (error) {
-        console.error("Lỗi gọi Gemini API:", error);
-        throw error;
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `Lỗi API HTTP: ${response.status}`);
     }
+
+    const data = await response.json();
+    if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        return data.candidates[0].content.parts[0].text;
+    } else {
+        throw new Error("Phản hồi từ Gemini bị rỗng.");
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (!message) return;
+
+    appendChatMessage('user', message);
+    input.value = '';
+
+    const chatBox = document.getElementById('chat-box');
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'chat-msg system';
+    loadingMsg.innerText = 'AI đang trả lời...';
+    chatBox.appendChild(loadingMsg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+        const reply = await callGeminiAPI(message);
+        chatBox.removeChild(loadingMsg);
+        appendChatMessage('ai', reply);
+    } catch (err) {
+        chatBox.removeChild(loadingMsg);
+        appendChatMessage('system', `Lỗi: ${err.message}`);
+    }
+}
+
+function appendChatMessage(role, text) {
+    const chatBox = document.getElementById('chat-box');
+    if (!chatBox) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-msg ${role}`;
+    msgDiv.innerText = text;
+    chatBox.appendChild(msgDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 /* ==========================================================================
    DOM & EVENT LISTENERS
    ========================================================================== */
 function setupEventListeners() {
-    document.querySelectorAll('.nav-item').forEach(btn => {
+    // Mode Switcher (Tab chính)
+    document.querySelectorAll('.mode-switcher button').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const target = e.currentTarget.dataset.tab;
-            if (!target) return;
+            const mode = e.currentTarget.dataset.mode;
+            activeMode = mode;
 
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+            document.querySelectorAll('.mode-switcher button').forEach(b => b.classList.remove('active-mode'));
+            e.currentTarget.classList.add('active-mode');
 
-            e.currentTarget.classList.add('active');
-            const targetEl = document.getElementById('tab-' + target);
-            if (targetEl) targetEl.style.display = 'block';
+            document.getElementById('dict-container').style.display = mode === 'dict' ? 'block' : 'none';
+            document.getElementById('fc-main-wrapper').style.display = mode === 'flashcard' ? 'block' : 'none';
+            document.getElementById('game-main-container').style.display = mode === 'game' ? 'none' : 'none';
+            document.getElementById('game-main-container').style.display = mode === 'game' ? 'block' : 'none';
+            document.getElementById('aichat-main-container').style.display = mode === 'aichat' ? 'block' : 'none';
 
-            activeTab = target;
-            if (activeTab === 'game') {
+            if (mode === 'game') {
                 switchSubGame('quiz');
             } else {
                 stopAllSpeech();
@@ -412,8 +674,135 @@ function setupEventListeners() {
         });
     });
 
+    // Category chips
+    document.querySelectorAll('.category-bar .cat-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            document.querySelectorAll('.category-bar .cat-chip').forEach(c => c.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            filterCategory(e.currentTarget.dataset.cat);
+        });
+    });
+
+    // Subgame buttons
+    document.querySelectorAll('.game-selector button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            switchSubGame(e.currentTarget.dataset.sub);
+        });
+    });
+
+    // Flashcard events
+    const fc = document.getElementById('flashcard');
+    if (fc) fc.addEventListener('click', flipCard);
+
+    document.getElementById('btn-prev-card')?.addEventListener('click', prevCard);
+    document.getElementById('btn-next-card')?.addEventListener('click', nextCard);
+    document.getElementById('btn-flip-card')?.addEventListener('click', flipCard);
+    document.getElementById('btn-fav')?.addEventListener('click', toggleFavCard);
+    document.getElementById('btn-hard')?.addEventListener('click', toggleHardCard);
+    document.getElementById('btn-delete-word')?.addEventListener('click', deleteCurrentCard);
+    document.getElementById('btn-card-audio')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (filteredDeck[currentIndex]) speakKorean(filteredDeck[currentIndex].front);
+    });
+
+    // Tra từ events
+    document.getElementById('btn-dict-search')?.addEventListener('click', searchDictionary);
+    document.getElementById('dict-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchDictionary();
+    });
+    document.getElementById('btn-dict-speak')?.addEventListener('click', () => {
+        const text = document.getElementById('res-kr').innerText;
+        if (text && text !== '---') speakKorean(text);
+    });
+    document.getElementById('btn-dict-add')?.addEventListener('click', addDictToDeck);
+
+    // Mini game typing events
+    document.getElementById('btn-typing-submit')?.addEventListener('click', checkTypingAnswer);
+    document.getElementById('typing-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkTypingAnswer();
+    });
+    document.getElementById('btn-typing-listen')?.addEventListener('click', () => {
+        if (currentTypingWord) speakKorean(currentTypingWord.front);
+    });
+
+    // Speaking game events
+    document.getElementById('btn-speak-sample')?.addEventListener('click', () => {
+        if (currentSpeakingWord) speakKorean(currentSpeakingWord.front);
+    });
+    document.getElementById('btn-next-speak')?.addEventListener('click', startSpeakingGame);
+    document.getElementById('btn-mic')?.addEventListener('click', startMicRecognition);
+    document.getElementById('btn-refresh-match')?.addEventListener('click', startMatchGame);
+
+    // AI Chat events
+    document.getElementById('btn-save-key')?.addEventListener('click', () => {
+        const key = document.getElementById('gemini-api-key').value.trim();
+        if (key) {
+            localStorage.setItem('gemini_api_key', key);
+            alert('Đã lưu Gemini API Key!');
+        }
+    });
+    document.getElementById('btn-chat-send')?.addEventListener('click', sendChatMessage);
+    document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendChatMessage();
+    });
+
+    // Scenario chips
+    document.querySelectorAll('.ai-scenario-bar .scen-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            document.querySelectorAll('.ai-scenario-bar .scen-chip').forEach(c => c.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            currentScenario = e.currentTarget.dataset.scen;
+            appendChatMessage('system', `Đã đổi kịch bản sang: ${e.currentTarget.innerText}`);
+        });
+    });
+
+    // Theme & Modal & Import/Export
+    document.getElementById('btn-toggle-theme')?.addEventListener('click', toggleTheme);
+    document.getElementById('btn-open-add')?.addEventListener('click', () => {
+        document.getElementById('add-modal').style.display = 'flex';
+    });
+    document.getElementById('btn-close-modal')?.addEventListener('click', () => {
+        document.getElementById('add-modal').style.display = 'none';
+    });
+    document.getElementById('btn-cancel-modal')?.addEventListener('click', () => {
+        document.getElementById('add-modal').style.display = 'none';
+    });
+    document.getElementById('btn-save-modal')?.addEventListener('click', () => {
+        const kr = document.getElementById('new-kr').value.trim();
+        const rm = document.getElementById('new-rm').value.trim();
+        const vi = document.getElementById('new-vi').value.trim();
+        const cat = document.getElementById('new-cat').value.trim() || 'Giao tiếp';
+
+        if (!kr || !vi) {
+            alert('Vui lòng nhập đủ từ tiếng Hàn và nghĩa tiếng Việt.');
+            return;
+        }
+
+        masterDeck.push({ front: kr, roman: rm, back: vi, category: cat, fav: false, hard: false });
+        saveData();
+        updateCard();
+
+        document.getElementById('new-kr').value = '';
+        document.getElementById('new-rm').value = '';
+        document.getElementById('new-vi').value = '';
+        document.getElementById('new-cat').value = '';
+        document.getElementById('add-modal').style.display = 'none';
+    });
+
+    document.getElementById('btn-export-import')?.addEventListener('click', () => {
+        const choice = confirm("Bấm OK để XUẤT (Export) dữ liệu ra file JSON.\nBấm CANCEL để NHẬP (Import) dữ liệu từ file JSON.");
+        if (choice) {
+            exportData();
+        } else {
+            document.getElementById('import-file').click();
+        }
+    });
+
+    document.getElementById('import-file')?.addEventListener('change', importData);
+
+    // Keyboard navigation cho Flashcard
     document.addEventListener('keydown', (e) => {
-        if (activeTab !== 'card') return;
+        if (activeMode !== 'flashcard') return;
         if (e.key === 'ArrowRight') nextCard();
         if (e.key === 'ArrowLeft') prevCard();
         if (e.key === ' ') {
@@ -421,16 +810,4 @@ function setupEventListeners() {
             flipCard();
         }
     });
-
-    const typingInput = document.getElementById('typing-input');
-    if (typingInput) {
-        typingInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkTypingAnswer();
-        });
-    }
-}
-
-function setElementText(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.innerText = text;
 }
