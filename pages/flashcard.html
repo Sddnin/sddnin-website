@@ -11,22 +11,34 @@
 </head>
 <body>
     <header class="main-header">
-        <div class="logo">
-            <h1>🇰🇷 Flashcard</h1>
-        </div>
+        <div class="logo"><h1>🇰🇷 Flashcard</h1></div>
         <nav class="main-nav">
             <ul>
                 <li><a href="home.html">Trang chủ</a></li>
                 <li><a href="flashcard.html" class="active">Flashcard</a></li>
                 <li><a href="review.html">Ôn tập</a></li>
+                <li><a href="quiz.html">Quiz</a></li>
                 <li><a href="hanja.html">Hanja</a></li>
                 <li><a href="grammar.html">Ngữ pháp</a></li>
+                <li><a href="add-word.html">Thêm từ</a></li>
+                <li><a href="stats.html">Thống kê</a></li>
             </ul>
         </nav>
         <button id="theme-toggle" class="theme-btn">🌙</button>
     </header>
 
     <main class="flashcard-main">
+        <div class="filter-bar" style="display:flex; gap:10px; justify-content:center; margin-bottom:20px;">
+            <select id="topik-select">
+                <option value="all">Tất cả TOPIK</option>
+                <option value="TOPIK 1">TOPIK 1</option>
+                <option value="TOPIK 2">TOPIK 2</option>
+                <option value="TOPIK 3">TOPIK 3</option>
+            </select>
+            <button id="mode-toggle" class="control-btn">📚 Học</button>
+            <button id="voice-flip-btn" class="control-btn">🎤 Voice Flip</button>
+        </div>
+
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Tìm kiếm từ vựng..." class="search-input">
             <button id="search-btn" class="search-btn">🔍</button>
@@ -56,24 +68,21 @@
         </div>
 
         <div class="flashcard-actions">
-            <button id="favorite-btn" class="action-btn">❤️ Yêu thích</button>
-            <button id="known-btn" class="action-btn">✅ Đã thuộc</button>
+            <button id="favorite-btn" class="action-btn">🤍 Yêu thích</button>
+            <button id="known-btn" class="action-btn">☐ Đã thuộc</button>
             <button id="difficult-btn" class="action-btn">⚠️ Từ khó</button>
         </div>
 
         <div class="progress-container">
             <span id="card-counter">1 / 20</span>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
         </div>
     </main>
 
-    <footer class="main-footer">
-        <p>&copy; 2024 Korean Flashcard Hub</p>
-    </footer>
+    <footer class="main-footer"><p>&copy; 2024 Korean Flashcard Hub</p></footer>
 
     <script src="../assets/js/storage.js"></script>
+    <script src="../assets/js/srs.js"></script>
     <script src="../assets/js/theme.js"></script>
     <script src="../assets/js/flashcard.js"></script>
     <script src="../assets/js/search.js"></script>
