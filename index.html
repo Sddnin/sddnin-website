@@ -1,65 +1,399 @@
-```html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Korean Study Hub – Premium Korean Learning</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Korean Study Hub</title>
     <script src="https://cdn.tailwindcss.com">
     </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans KR', 'sans-serif'],
+                        kr: ['Noto Sans KR', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 2s infinite',
+                        'float-slow': 'float 8s ease-in-out 1s infinite',
+                        'pulse-soft': 'pulseSoft 3s ease-in-out infinite',
+                        'fade-in': 'fadeIn 0.6s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'slide-down': 'slideDown 0.4s ease-out',
+                        'bounce-gentle': 'bounceGentle 2s ease-in-out infinite',
+                        'shimmer': 'shimmer 1.8s ease-in-out infinite',
+                        'spin-slow': 'spin 8s linear infinite',
+                        'card-flip': 'cardFlip 0.6s ease-in-out',
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #4F46E5;
-            --primary-light: #818CF8;
-            --primary-dark: #3730A3;
-            --purple: #8B5CF6;
-            --purple-light: #A78BFA;
-            --bg: #F8FAFC;
-            --bg-card: #FFFFFF;
-            --text: #0F172A;
-            --text-secondary: #64748B;
-            --border: #E2E8F0;
-            --shadow: 0 8px 32px rgba(79, 70, 229, 0.10);
-            --shadow-lg: 0 20px 60px rgba(79, 70, 229, 0.15);
-            --glass-bg: rgba(255, 255, 255, 0.72);
-            --glass-border: rgba(255, 255, 255, 0.40);
-            --radius: 20px;
-            --radius-sm: 12px;
-            --radius-lg: 32px;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --accent-blue: #5b7fff;
+            --accent-purple: #8b5cf6;
+            --accent-light-purple: #c4b5fd;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: rgba(0, 0, 0, 0.06);
+            --card-bg: #ffffff;
+            --card-border: #e8ecf1;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #5b7fff 0%, #8b5cf6 100%);
+            --gradient-3: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 50%, #818cf8 100%);
+            --nav-bg: rgba(255, 255, 255, 0.8);
+            --skeleton-base: #e2e8f0;
+            --skeleton-shine: #f1f5f9;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.1), 0 8px 20px rgba(0, 0, 0, 0.05);
+            --transition-speed: 0.3s;
         }
 
         .dark {
-            --bg: #0B1121;
-            --bg-card: #1A2332;
-            --text: #F1F5F9;
-            --text-secondary: #94A3B8;
-            --border: #2D3A50;
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.40);
-            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.50);
-            --glass-bg: rgba(26, 35, 50, 0.72);
-            --glass-border: rgba(45, 58, 80, 0.40);
+            --bg-primary: #0f1119;
+            --bg-secondary: #161922;
+            --bg-tertiary: #1c1f2e;
+            --text-primary: #e8ecf4;
+            --text-secondary: #bcc4d4;
+            --text-muted: #6b7280;
+            --glass-bg: rgba(22, 25, 34, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.3);
+            --card-bg: #1a1d2b;
+            --card-border: #262a38;
+            --nav-bg: rgba(15, 17, 25, 0.85);
+            --skeleton-base: #262a38;
+            --skeleton-shine: #2d3243;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4);
+            --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
+            transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
         }
 
         body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
             font-family: 'Inter', 'Noto Sans KR', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            transition: background 0.4s ease, color 0.4s ease;
             overflow-x: hidden;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-md);
+        }
+        .glass-strong {
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-lg);
+        }
+        .card-premium {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-premium:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-4px);
+            border-color: var(--accent-purple);
+        }
+        .gradient-text {
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-bg {
+            background: var(--gradient-2);
+        }
+        .gradient-bg-subtle {
+            background: var(--gradient-3);
+        }
+        .btn-primary {
+            background: var(--gradient-2);
+            color: #fff;
+            border-radius: 9999px;
+            padding: 0.85rem 2rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            box-shadow: 0 6px 24px rgba(91, 127, 255, 0.35);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(91, 127, 255, 0.5);
+        }
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+        .btn-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 9999px;
+            padding: 0.7rem 1.6rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-glass:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-purple);
+            transform: translateY(-2px);
+        }
+
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-20px) rotate(3deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(-2deg);
+            }
+            75% {
+                transform: translateY(-30px) rotate(1deg);
+            }
+        }
+        @keyframes pulseSoft {
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.9;
+                transform: scale(1.04);
+            }
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes bounceGentle {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-12px);
+            }
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+        @keyframes cardFlip {
+            0% {
+                transform: perspective(600px) rotateY(0deg);
+            }
+            50% {
+                transform: perspective(600px) rotateY(90deg);
+            }
+            100% {
+                transform: perspective(600px) rotateY(0deg);
+            }
+        }
+        @keyframes spinGradient {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes loadingPulse {
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-shine) 50%, var(--skeleton-base) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.8s ease-in-out infinite;
+            border-radius: 0.75rem;
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+            animation: float 6s ease-in-out 2s infinite;
+        }
+        .animate-float-slow {
+            animation: float 8s ease-in-out 1s infinite;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        .animate-slide-up {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .flip-card-inner.flipped {
+            transform: perspective(800px) rotateY(180deg);
+        }
+        .flip-card-front,
+        .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .flip-card-front {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-md);
+        }
+        .flip-card-back {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-md);
+            transform: rotateY(180deg);
+        }
+
+        .nav-link {
+            position: relative;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: color 0.25s ease;
+            cursor: pointer;
+            padding: 0.4rem 0.2rem;
+        }
+        .nav-link:hover {
+            color: var(--accent-purple);
+        }
+        .nav-link.active {
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-2);
+            border-radius: 9999px;
+        }
+
+        .section-panel {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .section-panel.active {
+            display: block;
+        }
+
+        .progress-ring {
+            transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-xl);
+            border-radius: 9999px;
+            padding: 0.75rem 1.5rem;
+            z-index: 9999;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
         }
 
         ::-webkit-scrollbar {
@@ -69,55 +403,774 @@
             background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-            background: var(--primary-light);
-            border-radius: 10px;
+            background: var(--text-muted);
+            border-radius: 9999px;
         }
 
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--glass-border);
+        @media (max-width: 768px) {
+            .mobile-menu {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 75%;
+                max-width: 320px;
+                height: 100vh;
+                background: var(--bg-primary);
+                box-shadow: var(--shadow-xl);
+                z-index: 1000;
+                transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                padding: 2rem;
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .mobile-menu.open {
+                right: 0;
+            }
+            .mobile-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            .mobile-overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[var(--bg-primary)] text-[var(--text-primary)]">
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-[var(--bg-primary)] transition-opacity duration-600">
+        <div class="relative w-20 h-20 mb-6">
+            <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-[#5b7fff] border-r-[#8b5cf6] animate-spin"></div>
+            <div class="absolute inset-3 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-2xl">한</div>
+        </div>
+        <p class="text-lg font-semibold gradient-text animate-pulse">Korean Study Hub</p>
+        <p class="text-sm text-[var(--text-muted)] mt-2">준비 중... Loading...</p>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div id="mobileOverlay" class="mobile-overlay" onclick="closeMobileMenu()"></div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu">
+        <div class="flex justify-between items-center mb-6">
+            <span class="text-xl font-bold gradient-text">한국어 허브</span>
+            <button onclick="closeMobileMenu()" class="text-2xl text-[var(--text-secondary)] hover:text-[var(--accent-purple)] transition-colors">&times;</button>
+        </div>
+        <nav class="flex flex-col gap-3">
+            <a onclick="navigateTo('home');closeMobileMenu()" class="nav-link-mobile text-lg py-2 px-3 rounded-xl hover:bg-[var(--bg-tertiary)] cursor-pointer transition-all" data-section="home"><i class="fas fa-home mr-3 w-5 text-center"></i> Home</a>
+            <a onclick="navigateTo('dashboard');closeMobileMenu()" class="nav-link-mobile text-lg py-2 px-3 rounded-xl hover:bg-[var(--bg-tertiary)] cursor-pointer transition-all" data-section="dashboard"><i class="fas fa-chart-line mr-3 w-5 text-center"></i> Dashboard</a>
+            <a onclick="navigateTo('vocabulary');closeMobileMenu()" class="nav-link-mobile text-lg py-2 px-3 rounded-xl hover:bg-[var(--bg-tertiary)] cursor-pointer transition-all" data-section="vocabulary"><i class="fas fa-book mr-3 w-5 text-center"></i> Vocabulary</a>
+            <a onclick="navigateTo('hanja');closeMobileMenu()" class="nav-link-mobile text-lg py-2 px-3 rounded-xl hover:bg-[var(--bg-tertiary)] cursor-pointer transition-all" data-section="hanja"><i class="fas fa-paint-brush mr-3 w-5 text-center"></i> Hanja</a>
+            <a onclick="navigateTo('grammar');closeMobileMenu()" class="nav-link-mobile text-lg py-2 px-3 rounded-xl hover:bg-[var(--bg-tertiary)] cursor-pointer transition-all" data-section="grammar"><i class="fas fa-list-check mr-3 w-5 text-center"></i> Grammar</a>
+            <a onclick="navigateTo('quiz');closeMobileMenu()" class="nav-link-mobile text-lg py-2 px-3 rounded-xl hover:bg-[var(--bg-tertiary)] cursor-pointer transition-all" data-section="quiz"><i class="fas fa-question-circle mr-3 w-5 text-center"></i> Quiz</a>
+            <a onclick="navigateTo('profile');closeMobileMenu()" class="nav-link-mobile text-lg py-2 px-3 rounded-xl hover:bg-[var(--bg-tertiary)] cursor-pointer transition-all" data-section="profile"><i class="fas fa-user-circle mr-3 w-5 text-center"></i> Profile</a>
+        </nav>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="mainNav" class="fixed top-0 left-0 right-0 z-[900] glass-strong px-4 md:px-8 py-3 transition-all duration-300">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('home')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">한</div>
+                <span class="text-xl font-bold hidden sm:block gradient-text">Korean Study Hub</span>
+            </div>
+            <div class="hidden md:flex items-center gap-1">
+                <a onclick="navigateTo('home')" class="nav-link active px-3 py-2 rounded-lg text-sm" data-section="home">Home</a>
+                <a onclick="navigateTo('dashboard')" class="nav-link px-3 py-2 rounded-lg text-sm" data-section="dashboard">Dashboard</a>
+                <a onclick="navigateTo('vocabulary')" class="nav-link px-3 py-2 rounded-lg text-sm" data-section="vocabulary">Vocabulary</a>
+                <a onclick="navigateTo('hanja')" class="nav-link px-3 py-2 rounded-lg text-sm" data-section="hanja">Hanja</a>
+                <a onclick="navigateTo('grammar')" class="nav-link px-3 py-2 rounded-lg text-sm" data-section="grammar">Grammar</a>
+                <a onclick="navigateTo('quiz')" class="nav-link px-3 py-2 rounded-lg text-sm" data-section="quiz">Quiz</a>
+                <a onclick="navigateTo('profile')" class="nav-link px-3 py-2 rounded-lg text-sm" data-section="profile">Profile</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="darkModeToggle" onclick="toggleDarkMode()" class="btn-glass p-2.5 rounded-full text-lg" aria-label="Toggle Dark Mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button onclick="toggleMobileMenu()" class="md:hidden btn-glass p-2.5 rounded-full text-lg" aria-label="Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-20 md:pt-24 pb-16 px-4 md:px-8 max-w-7xl mx-auto">
+
+        <!-- ==================== HOME SECTION ==================== -->
+        <section id="section-home" class="section-panel active">
+            <!-- Hero -->
+            <div class="relative overflow-hidden rounded-[2.5rem] p-8 md:p-16 mb-16 min-h-[500px] flex items-center" style="background: var(--gradient-2);">
+                <div class="absolute inset-0 opacity-20">
+                    <div class="absolute top-10 left-10 w-64 h-64 bg-white rounded-full blur-3xl animate-float"></div>
+                    <div class="absolute bottom-10 right-20 w-80 h-80 bg-purple-300 rounded-full blur-3xl animate-float-delayed"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-300 rounded-full blur-3xl animate-float-slow"></div>
+                </div>
+                <div class="relative z-10 max-w-2xl">
+                    <span class="inline-block px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-sm font-medium mb-5 border border-white/25">🇰🇷 Learn Korean Smarter</span>
+                    <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight">Master Korean<br>with <span class="underline decoration-white/40 decoration-4">Confidence</span></h1>
+                    <p class="text-lg text-white/80 mb-8 max-w-lg">Interactive lessons, smart flashcards, and AI-powered quizzes designed to make Korean learning intuitive and fun.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="navigateTo('vocabulary')" class="btn-primary bg-white text-[#5b4cf0] !shadow-lg hover:!shadow-xl !font-bold">Start Learning <i class="fas fa-arrow-right"></i></button>
+                        <button onclick="navigateTo('dashboard')" class="btn-glass !bg-white/15 !border-white/30 !text-white">View Dashboard</button>
+                    </div>
+                </div>
+                <div class="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 z-10">
+                    <div class="w-40 h-40 rounded-[2rem] bg-white/15 backdrop-blur-xl border border-white/20 flex items-center justify-center text-7xl shadow-2xl animate-bounce-gentle">📚</div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-center mb-3">Why Korean Study Hub?</h2>
+                <p class="text-center text-[var(--text-muted)] mb-10 max-w-lg mx-auto">A modern approach to language learning with tools that adapt to you.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="card-premium p-7 text-center group cursor-default">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">📝</div>
+                        <h3 class="font-semibold text-lg mb-2">Smart Flashcards</h3>
+                        <p class="text-sm text-[var(--text-muted)]">Spaced repetition with flip animations and pronunciation support.</p>
+                    </div>
+                    <div class="card-premium p-7 text-center group cursor-default">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">🎯</div>
+                        <h3 class="font-semibold text-lg mb-2">TOPIK Focused</h3>
+                        <p class="text-sm text-[var(--text-muted)]">Filter vocabulary by TOPIK levels I through VI for targeted study.</p>
+                    </div>
+                    <div class="card-premium p-7 text-center group cursor-default">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">🧠</div>
+                        <h3 class="font-semibold text-lg mb-2">Hanja Deep Dive</h3>
+                        <p class="text-sm text-[var(--text-muted)]">Explore Chinese characters with radicals, stroke counts, and related words.</p>
+                    </div>
+                    <div class="card-premium p-7 text-center group cursor-default">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">⚡</div>
+                        <h3 class="font-semibold text-lg mb-2">Quick Quizzes</h3>
+                        <p class="text-sm text-[var(--text-muted)]">Test your knowledge with instant feedback and track your progress.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learning Roadmap -->
+            <div class="mb-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-center mb-3">Your Learning Roadmap</h2>
+                <p class="text-center text-[var(--text-muted)] mb-10">Follow this path from beginner to advanced Korean mastery.</p>
+                <div class="relative">
+                    <div class="hidden md:block absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-300 via-purple-400 to-purple-600 rounded-full -translate-x-1/2"></div>
+                    <div class="space-y-6">
+                        <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8 md:even:flex-row-reverse">
+                            <div class="flex-1 md:text-right md:even:text-left card-premium p-6 w-full">
+                                <span class="text-xs font-bold text-white bg-blue-500 px-3 py-1 rounded-full">LEVEL 1</span>
+                                <h3 class="text-lg font-bold mt-2">Beginner Foundations</h3>
+                                <p class="text-sm text-[var(--text-muted)]">Hangul mastery, basic greetings, numbers, and simple sentence structure.</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-lg shadow-lg z-10 shrink-0">1</div>
+                            <div class="flex-1 hidden md:block"></div>
+                        </div>
+                        <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8 md:flex-row-reverse">
+                            <div class="flex-1 md:text-left card-premium p-6 w-full">
+                                <span class="text-xs font-bold text-white bg-purple-500 px-3 py-1 rounded-full">LEVEL 2</span>
+                                <h3 class="text-lg font-bold mt-2">Elementary Korean</h3>
+                                <p class="text-sm text-[var(--text-muted)]">Common vocabulary, present/past tenses, and everyday conversations.</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold text-lg shadow-lg z-10 shrink-0">2</div>
+                            <div class="flex-1 hidden md:block"></div>
+                        </div>
+                        <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8 md:even:flex-row-reverse">
+                            <div class="flex-1 md:text-right md:even:text-left card-premium p-6 w-full">
+                                <span class="text-xs font-bold text-white bg-indigo-500 px-3 py-1 rounded-full">LEVEL 3</span>
+                                <h3 class="text-lg font-bold mt-2">Intermediate</h3>
+                                <p class="text-sm text-[var(--text-muted)]">Complex grammar, honorifics, TOPIK II preparation, and Hanja basics.</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-lg z-10 shrink-0">3</div>
+                            <div class="flex-1 hidden md:block"></div>
+                        </div>
+                        <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8 md:flex-row-reverse">
+                            <div class="flex-1 md:text-left card-premium p-6 w-full">
+                                <span class="text-xs font-bold text-white bg-violet-600 px-3 py-1 rounded-full">LEVEL 4</span>
+                                <h3 class="text-lg font-bold mt-2">Advanced Fluency</h3>
+                                <p class="text-sm text-[var(--text-muted)]">News articles, academic Korean, advanced Hanja, and fluent conversation.</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-violet-600 text-white flex items-center justify-center font-bold text-lg shadow-lg z-10 shrink-0">4</div>
+                            <div class="flex-1 hidden md:block"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="text-center mt-12 p-10 rounded-[2rem] bg-[var(--bg-tertiary)]">
+                <h3 class="text-2xl font-bold mb-3">Ready to Start Your Journey?</h3>
+                <p class="text-[var(--text-muted)] mb-6">Join thousands of learners mastering Korean every day.</p>
+                <button onclick="navigateTo('vocabulary')" class="btn-primary">Explore Vocabulary <i class="fas fa-rocket"></i></button>
+            </div>
+        </section>
+
+        <!-- ==================== DASHBOARD SECTION ==================== -->
+        <section id="section-dashboard" class="section-panel">
+            <h2 class="text-3xl md:text-4xl font-bold mb-2">Dashboard</h2>
+            <p class="text-[var(--text-muted)] mb-8">Track your learning progress and stay motivated.</p>
+            <div id="dashboardContent">
+                <!-- Skeleton Loading -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8" id="statsSkeleton">
+                    <div class="skeleton h-32 rounded-2xl"></div>
+                    <div class="skeleton h-32 rounded-2xl"></div>
+                    <div class="skeleton h-32 rounded-2xl"></div>
+                    <div class="skeleton h-32 rounded-2xl"></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8" id="progressSkeleton">
+                    <div class="skeleton h-48 rounded-2xl lg:col-span-2"></div>
+                    <div class="skeleton h-48 rounded-2xl"></div>
+                </div>
+                <!-- Real Content (hidden initially) -->
+                <div id="dashboardReal" style="display:none;">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                        <div class="card-premium p-6 text-center">
+                            <div class="text-4xl mb-2">⚡</div>
+                            <p class="text-3xl font-extrabold gradient-text">2,450</p>
+                            <p class="text-sm text-[var(--text-muted)] font-medium">Total XP</p>
+                        </div>
+                        <div class="card-premium p-6 text-center">
+                            <div class="text-4xl mb-2">🏆</div>
+                            <p class="text-3xl font-extrabold text-[var(--accent-purple)]">12</p>
+                            <p class="text-sm text-[var(--text-muted)] font-medium">Level</p>
+                        </div>
+                        <div class="card-premium p-6 text-center">
+                            <div class="text-4xl mb-2">🔥</div>
+                            <p class="text-3xl font-extrabold text-orange-500">28</p>
+                            <p class="text-sm text-[var(--text-muted)] font-medium">Day Streak</p>
+                        </div>
+                        <div class="card-premium p-6 text-center">
+                            <div class="text-4xl mb-2">📚</div>
+                            <p class="text-3xl font-extrabold text-emerald-500">340</p>
+                            <p class="text-sm text-[var(--text-muted)] font-medium">Words Learned</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                        <div class="card-premium p-7 lg:col-span-2">
+                            <h3 class="font-semibold text-lg mb-4">Weekly Progress</h3>
+                            <div class="space-y-4">
+                                <div><div class="flex justify-between text-sm mb-1"><span>Vocabulary</span><span class="font-semibold">85%</span></div><div class="w-full h-3 bg-[var(--bg-tertiary)] rounded-full overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-blue-400 to-purple-500 transition-all duration-700" style="width:85%"></div></div></div>
+                                <div><div class="flex justify-between text-sm mb-1"><span>Grammar</span><span class="font-semibold">62%</span></div><div class="w-full h-3 bg-[var(--bg-tertiary)] rounded-full overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500 transition-all duration-700" style="width:62%"></div></div></div>
+                                <div><div class="flex justify-between text-sm mb-1"><span>Hanja</span><span class="font-semibold">40%</span></div><div class="w-full h-3 bg-[var(--bg-tertiary)] rounded-full overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-blue-500 transition-all duration-700" style="width:40%"></div></div></div>
+                                <div><div class="flex justify-between text-sm mb-1"><span>Speaking</span><span class="font-semibold">55%</span></div><div class="w-full h-3 bg-[var(--bg-tertiary)] rounded-full overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-700" style="width:55%"></div></div></div>
+                            </div>
+                        </div>
+                        <div class="card-premium p-7 flex flex-col items-center justify-center text-center">
+                            <svg width="120" height="120" viewBox="0 0 120 120" class="mb-3">
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--bg-tertiary)" stroke-width="10"/>
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="url(#gradCircle)" stroke-width="10" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="62" class="progress-ring" transform="rotate(-90 60 60)"/>
+                                <defs><linearGradient id="gradCircle" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5b7fff"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
+                                <text x="60" y="58" text-anchor="middle" fill="var(--text-primary)" font-size="22" font-weight="700">80%</text>
+                                <text x="60" y="76" text-anchor="middle" fill="var(--text-muted)" font-size="11">Overall</text>
+                            </svg>
+                            <p class="text-sm text-[var(--text-muted)]">Keep going! You're doing great.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VOCABULARY SECTION ==================== -->
+        <section id="section-vocabulary" class="section-panel">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-bold mb-1">Vocabulary</h2>
+                    <p class="text-[var(--text-muted)]">Study flashcards with pronunciation and favorites.</p>
+                </div>
+                <div class="flex gap-2 flex-wrap">
+                    <select id="topikFilter" onchange="filterVocabulary()" class="btn-glass text-sm cursor-pointer outline-none">
+                        <option value="all">All TOPIK Levels</option>
+                        <option value="1">TOPIK I - Level 1</option>
+                        <option value="2">TOPIK I - Level 2</option>
+                        <option value="3">TOPIK II - Level 3</option>
+                        <option value="4">TOPIK II - Level 4</option>
+                    </select>
+                </div>
+            </div>
+            <div id="vocabGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <!-- Flashcards rendered by JS -->
+            </div>
+            <div id="vocabEmpty" class="text-center py-16 hidden">
+                <p class="text-5xl mb-4">🔍</p>
+                <p class="text-lg font-semibold text-[var(--text-muted)]">No vocabulary found for this filter.</p>
+            </div>
+        </section>
+
+        <!-- ==================== HANJA SECTION ==================== -->
+        <section id="section-hanja" class="section-panel">
+            <h2 class="text-3xl md:text-4xl font-bold mb-2">Hanja Study</h2>
+            <p class="text-[var(--text-muted)] mb-8">Explore Chinese characters used in Korean with detailed breakdowns.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="hanjaGrid">
+                <!-- Hanja cards rendered by JS -->
+            </div>
+        </section>
+
+        <!-- ==================== GRAMMAR SECTION ==================== -->
+        <section id="section-grammar" class="section-panel">
+            <h2 class="text-3xl md:text-4xl font-bold mb-2">Grammar Lessons</h2>
+            <p class="text-[var(--text-muted)] mb-8">Master Korean grammar with clear explanations and examples.</p>
+            <div class="space-y-4" id="grammarList">
+                <!-- Grammar items rendered by JS -->
+            </div>
+        </section>
+
+        <!-- ==================== QUIZ SECTION ==================== -->
+        <section id="section-quiz" class="section-panel">
+            <h2 class="text-3xl md:text-4xl font-bold mb-2">Quick Quiz</h2>
+            <p class="text-[var(--text-muted)] mb-8">Test your Korean knowledge with instant feedback.</p>
+            <div id="quizContainer" class="card-premium p-8 max-w-2xl mx-auto">
+                <!-- Quiz rendered by JS -->
+            </div>
+        </section>
+
+        <!-- ==================== PROFILE SECTION ==================== -->
+        <section id="section-profile" class="section-panel">
+            <h2 class="text-3xl md:text-4xl font-bold mb-8">Profile</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="card-premium p-8 text-center lg:col-span-1">
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-4 shadow-lg">김</div>
+                    <h3 class="text-xl font-bold">Kim Min-ji</h3>
+                    <p class="text-[var(--text-muted)] text-sm mb-4">@minji_korean</p>
+                    <div class="flex justify-center gap-4 text-sm">
+                        <span class="font-semibold">12 <span class="text-[var(--text-muted)] font-normal">Level</span></span>
+                        <span class="font-semibold">28 <span class="text-[var(--text-muted)] font-normal">Streak</span></span>
+                        <span class="font-semibold">340 <span class="text-[var(--text-muted)] font-normal">Words</span></span>
+                    </div>
+                </div>
+                <div class="card-premium p-7 lg:col-span-2 space-y-5">
+                    <h3 class="font-semibold text-lg">Learning Stats</h3>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div class="p-4 rounded-xl bg-[var(--bg-tertiary)]"><p class="text-[var(--text-muted)]">Total Study Hours</p><p class="text-2xl font-bold">87<span class="text-sm font-normal"> hrs</span></p></div>
+                        <div class="p-4 rounded-xl bg-[var(--bg-tertiary)]"><p class="text-[var(--text-muted)]">Quizzes Completed</p><p class="text-2xl font-bold">156</p></div>
+                        <div class="p-4 rounded-xl bg-[var(--bg-tertiary)]"><p class="text-[var(--text-muted)]">Accuracy</p><p class="text-2xl font-bold">84<span class="text-sm font-normal">%</span></p></div>
+                        <div class="p-4 rounded-xl bg-[var(--bg-tertiary)]"><p class="text-[var(--text-muted)]">Current TOPIK Goal</p><p class="text-2xl font-bold">Level 4</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-[var(--card-border)] mt-12 py-10 px-4 md:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">한</div>
+                <span class="font-semibold text-sm">Korean Study Hub © 2026</span>
+            </div>
+            <div class="flex gap-6 text-sm text-[var(--text-muted)]">
+                <a href="#" class="hover:text-[var(--accent-purple)] transition-colors">About</a>
+                <a href="#" class="hover:text-[var(--accent-purple)] transition-colors">Blog</a>
+                <a href="#" class="hover:text-[var(--accent-purple)] transition-colors">Privacy</a>
+                <a href="#" class="hover:text-[var(--accent-purple)] transition-colors">Terms</a>
+            </div>
+            <div class="flex gap-3 text-lg text-[var(--text-muted)]">
+                <a href="#" class="hover:text-[var(--accent-purple)] transition-colors"><i class="fab fa-github"></i></a>
+                <a href="#" class="hover:text-[var(--accent-purple)] transition-colors"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="hover:text-[var(--accent-purple)] transition-colors"><i class="fab fa-discord"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle text-emerald-500"></i>
+        <span id="toastMsg">Action completed!</span>
+    </div>
+
+    <script>
+        // ============ DATA ============
+        const vocabularyData = [
+            { id: 1, korean: '사랑', romanization: 'sarang', english: 'Love', topik: 1, favorite: false },
+            { id: 2, korean: '행복', romanization: 'haengbok', english: 'Happiness', topik: 1, favorite: true },
+            { id: 3, korean: '학교', romanization: 'hakgyo', english: 'School', topik: 1, favorite: false },
+            { id: 4, korean: '음식', romanization: 'eumsik', english: 'Food', topik: 2, favorite: false },
+            { id: 5, korean: '여행', romanization: 'yeohaeng', english: 'Travel', topik: 2, favorite: true },
+            { id: 6, korean: '경제', romanization: 'gyeongje', english: 'Economy', topik: 3, favorite: false },
+            { id: 7, korean: '발전', romanization: 'baljeon', english: 'Development', topik: 3, favorite: false },
+            { id: 8, korean: '환경', romanization: 'hwangyeong', english: 'Environment', topik: 4, favorite: true },
+            { id: 9, korean: '문화', romanization: 'munhwa', english: 'Culture', topik: 2, favorite: false },
+            { id: 10, korean: '과학', romanization: 'gwahak', english: 'Science', topik: 4, favorite: false },
+        ];
+
+        const hanjaData = [
+            { id: 1, character: '學', meaning: 'Learn / Study', radical: '子 (Child)', strokeCount: 16,
+                relatedWords: ['학교 (School)', '학생 (Student)', '과학 (Science)'] },
+            { id: 2, character: '山', meaning: 'Mountain', radical: '山 (Mountain)', strokeCount: 3,
+                relatedWords: ['산책 (Walk)', '등산 (Hiking)', '산소 (Oxygen)'] },
+            { id: 3, character: '水', meaning: 'Water', radical: '水 (Water)', strokeCount: 4,
+                relatedWords: ['수영 (Swimming)', '생수 (Drinking water)', '수도 (Capital)'] },
+            { id: 4, character: '人', meaning: 'Person', radical: '人 (Person)', strokeCount: 2,
+                relatedWords: ['인간 (Human)', '개인 (Individual)', '인기 (Popularity)'] },
+            { id: 5, character: '大', meaning: 'Big / Great', radical: '大 (Big)', strokeCount: 3,
+                relatedWords: ['대학교 (University)', '대통령 (President)', '확대 (Enlarge)'] },
+            { id: 6, character: '心', meaning: 'Heart / Mind', radical: '心 (Heart)', strokeCount: 4,
+                relatedWords: ['심장 (Heart)', '관심 (Interest)', '중심 (Center)'] },
+        ];
+
+        const grammarData = [
+            { id: 1, title: '~고 있다 (Present Progressive)',
+                explanation: 'Attach to verb stems to express an ongoing action, similar to "-ing" in English.',
+                examples: ['나는 책을 읽고 있어요. (I am reading a book.)', '친구가 밥을 먹고 있어요. (My friend is eating.)'],
+                note: 'Use with action verbs only. Not used with adjectives.' },
+            { id: 2, title: '~지만 (But / Although)',
+                explanation: 'Connects two contrasting clauses. Attach to the stem of the first clause.',
+                examples: ['한국어는 어렵지만 재미있어요. (Korean is difficult but interesting.)',
+                    '비가 오지만 따뜻해요. (It\'s raining but warm.)'
+                ], note: 'The subject of both clauses can be the same or different.' },
+            { id: 3, title: '~(으)면 (If / When)',
+                explanation: 'Expresses a conditional meaning. Use ~면 after vowels, ~으면 after consonants.',
+                examples: ['시간이 있으면 전화해 주세요. (If you have time, please call.)',
+                    '날씨가 좋으면 산책할 거예요. (If the weather is nice, I will take a walk.)'
+                ], note: 'Future tense is not used in the ~(으)면 clause.' },
+            { id: 4, title: '~고 싶다 (Want to)',
+                explanation: 'Expresses desire or wish. Attach to verb stems to say "want to do [verb]."',
+                examples: ['나는 한국에 가고 싶어요. (I want to go to Korea.)',
+                    '뭐 먹고 싶어요? (What do you want to eat?)'], note: 'For third person, use ~고 싶어하다.' },
+        ];
+
+        const quizQuestions = [
+            { question: 'What does "사랑" mean?', options: ['Love', 'Happiness', 'School', 'Food'], correct: 0 },
+            { question: 'Which is the correct romanization of "학교"?', options: ['hakgyo', 'hakyo', 'haggyo',
+                    'hakgyu'
+                ], correct: 0 },
+            { question: 'What TOPIK level is "경제" typically associated with?', options: ['Level 1', 'Level 2',
+                    'Level 3', 'Level 4'
+                ], correct: 2 },
+            { question: 'Which Hanja character means "Water"?', options: ['山', '水', '人', '大'], correct: 1 },
+            { question: 'What does "~고 있다" express?', options: ['Past tense', 'Ongoing action', 'Future plan',
+                    'Negation'
+                ], correct: 1 },
+        ];
+
+        // ============ STATE ============
+        let currentSection = 'home';
+        let darkMode = localStorage.getItem('darkMode') === 'true';
+        let vocabFavorites = JSON.parse(localStorage.getItem('vocabFavorites') || '{}');
+        let quizState = { currentQuestion: 0, score: 0, answered: false };
+
+        // Apply stored favorites
+        vocabularyData.forEach(v => { if (vocabFavorites[v.id]) v.favorite = true; });
+
+        // ============ FUNCTIONS ============
+        function toggleDarkMode() {
+            darkMode = !darkMode;
+            localStorage.setItem('darkMode', darkMode);
+            applyDarkMode();
         }
 
-        .card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        function applyDarkMode() {
+            if (darkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('darkModeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('darkModeToggle').innerHTML = '<i class="fas fa-moon"></i>';
+            }
         }
 
-        .card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-2px);
+        function navigateTo(section) {
+            currentSection = section;
+            document.querySelectorAll('.section-panel').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById('section-' + section);
+            if (target) target.classList.add('active');
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.querySelectorAll('.nav-link[data-section="' + section + '"]').forEach(l => l.classList.add(
+            'active'));
+            document.querySelectorAll('.nav-link-mobile').forEach(l => l.classList.remove('active'));
+            document.querySelectorAll('.nav-link-mobile[data-section="' + section + '"]').forEach(l => l.classList.add(
+                'active'));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Trigger specific renders
+            if (section === 'vocabulary') renderVocabulary();
+            if (section === 'hanja') renderHanja();
+            if (section === 'grammar') renderGrammar();
+            if (section === 'quiz') renderQuiz();
+            if (section === 'dashboard') initDashboard();
+            // Close mobile menu
+            closeMobileMenu();
         }
 
-        .gradient-primary {
-            background: linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%);
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileOverlay');
+            if (menu.classList.contains('open')) {
+                closeMobileMenu();
+            } else {
+                menu.classList.add('open');
+                overlay.classList.add('open');
+            }
         }
 
-        .gradient-subtle {
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('open');
+            document.getElementById('mobileOverlay').classList.remove('open');
         }
 
-        .gradient-text {
-            background: linear-gradient(135deg, #4F46E5, #A78BFA);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        function showToast(message, icon = 'fa-check-circle') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.textContent = message;
+            toast.querySelector('i').className = 'fas ' + icon + ' text-emerald-500';
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => toast.classList.remove('show'), 2200);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-            color: #fff;
-            padding: 12px 28px;
-            border-radius: 60px;
-            font-weight: 600;
-            font-size: 15px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.35);
-            display: inline-flex;
-            align-items: center;
+        function speakWord(koreanWord) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(koreanWord);
+                utterance.lang = 'ko-KR';
+                utterance.rate = 0.85;
+                speechSynthesis.cancel();
+                speechSynthesis.speak(utterance);
+                showToast('🔊 Pronunciation: ' + koreanWord, 'fa-volume-up');
+            } else {
+                showToast('Speech not supported in this browser.', 'fa-exclamation-circle');
+            }
+        }
+
+        function toggleFavorite(vocabId) {
+            vocabularyData.find(v => v.id === vocabId).favorite = !vocabularyData.find(v => v.id === vocabId).favorite;
+            vocabFavorites[vocabId] = vocabularyData.find(v => v.id === vocabId).favorite;
+            localStorage.setItem('vocabFavorites', JSON.stringify(vocabFavorites));
+            renderVocabulary();
+            const word = vocabularyData.find(v => v.id === vocabId);
+            showToast(word.favorite ? '⭐ Added to favorites: ' + word.korean : 'Removed from favorites: ' + word.korean,
+                word.favorite ? 'fa-star' : 'fa-check-circle');
+        }
+
+        // ============ RENDER FUNCTIONS ============
+        function renderVocabulary() {
+            const filterVal = document.getElementById('topikFilter')?.value || 'all';
+            const filtered = filterVal === 'all' ? vocabularyData : vocabularyData.filter(v => v.topik === parseInt(
+                filterVal));
+            const grid = document.getElementById('vocabGrid');
+            const empty = document.getElementById('vocabEmpty');
+            if (!grid) return;
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            grid.innerHTML = filtered.map(v => `
+            <div class="relative" style="perspective: 800px; min-height: 220px;">
+              <div class="flip-card-inner cursor-pointer" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-front">
+                  <button onclick="event.stopPropagation(); toggleFavorite(${v.id})" class="absolute top-3 right-3 text-lg transition-colors ${v.favorite ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-400'}">
+                    <i class="fas ${v.favorite ? 'fa-star' : 'fa-star'}"></i>
+                  </button>
+                  <p class="text-3xl font-bold font-kr mb-1">${v.korean}</p>
+                  <p class="text-sm text-[var(--text-muted)] italic">${v.romanization}</p>
+                  <span class="text-xs mt-3 px-3 py-1 rounded-full bg-[var(--bg-tertiary)]">TOPIK ${v.topik}</span>
+                  <p class="text-xs text-[var(--text-muted)] mt-3">Tap to reveal</p>
+                </div>
+                <div class="flip-card-back">
+                  <button onclick="event.stopPropagation(); speakWord('${v.korean}')" class="absolute top-3 right-3 text-lg text-blue-500 hover:text-blue-600 transition-colors">
+                    <i class="fas fa-volume-up"></i>
+                  </button>
+                  <p class="text-2xl font-bold text-[var(--accent-purple)]">${v.english}</p>
+                  <p class="text-sm text-[var(--text-muted)] mt-2">${v.korean} · ${v.romanization}</p>
+                  <span class="text-xs mt-3 px-3 py-1 rounded-full bg-[var(--bg-tertiary)]">TOPIK ${v.topik}</span>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        function filterVocabulary() {
+            renderVocabulary();
+        }
+
+        function renderHanja() {
+            const grid = document.getElementById('hanjaGrid');
+            if (!grid) return;
+            grid.innerHTML = hanjaData.map(h => `
+            <div class="card-premium p-7 text-center group cursor-default">
+              <p class="text-6xl font-bold mb-3 font-kr group-hover:scale-110 transition-transform duration-300">${h.character}</p>
+              <p class="font-semibold text-lg text-[var(--accent-purple)]">${h.meaning}</p>
+              <div class="flex justify-center gap-3 mt-3 text-xs text-[var(--text-muted)]">
+                <span class="px-2 py-1 rounded-lg bg-[var(--bg-tertiary)]">Radical: ${h.radical}</span>
+                <span class="px-2 py-1 rounded-lg bg-[var(--bg-tertiary)]">Strokes: ${h.strokeCount}</span>
+              </div>
+              <div class="mt-4 pt-4 border-t border-[var(--card-border)]">
+                <p class="text-xs font-semibold text-[var(--text-muted)] mb-2">Related Words</p>
+                <div class="flex flex-wrap gap-1.5 justify-center">
+                  ${h.relatedWords.map(w => `<span class="text-xs px-2 py-1 rounded-md bg-[var(--bg-tertiary)]">${w}</span>`).join('')}
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        function renderGrammar() {
+            const list = document.getElementById('grammarList');
+            if (!list) return;
+            list.innerHTML = grammarData.map((g, i) => `
+            <div class="card-premium p-6 cursor-pointer" onclick="toggleGrammar(${i})">
+              <div class="flex justify-between items-center">
+                <h3 class="font-semibold text-lg">${g.title}</h3>
+                <i class="fas fa-chevron-down text-[var(--text-muted)] transition-transform duration-300" id="grammarChevron${i}"></i>
+              </div>
+              <div id="grammarBody${i}" class="mt-4 pt-4 border-t border-[var(--card-border)] hidden">
+                <p class="text-sm text-[var(--text-secondary)] mb-3">${g.explanation}</p>
+                <p class="text-xs font-semibold text-[var(--accent-purple)] mb-2">Examples:</p>
+                <ul class="space-y-2 text-sm text-[var(--text-secondary)]">
+                  ${g.examples.map(e => `<li class="pl-3 border-l-2 border-[var(--accent-light-purple)]">${e}</li>`).join('')}
+                </ul>
+                <p class="text-xs text-[var(--text-muted)] mt-3 italic">💡 ${g.note}</p>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        function toggleGrammar(index) {
+            const body = document.getElementById('grammarBody' + index);
+            const chevron = document.getElementById('grammarChevron' + index);
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+                body.style.animation = 'slideDown 0.4s ease-out';
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                body.classList.add('hidden');
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function renderQuiz() {
+            quizState = { currentQuestion: 0, score: 0, answered: false };
+            const container = document.getElementById('quizContainer');
+            if (!container) return;
+            renderQuizQuestion(container);
+        }
+
+        function renderQuizQuestion(container) {
+            if (quizState.currentQuestion >= quizQuestions.length) {
+                container.innerHTML = `
+              <div class="text-center py-8">
+                <p class="text-5xl mb-4">🎉</p>
+                <h3 class="text-2xl font-bold mb-2">Quiz Complete!</h3>
+                <p class="text-lg mb-2">Your score: <span class="font-extrabold gradient-text text-2xl">${quizState.score} / ${quizQuestions.length}</span></p>
+                <p class="text-[var(--text-muted)] mb-6">${quizState.score === quizQuestions.length ? 'Perfect! Amazing job! 🏆' : quizState.score >= quizQuestions.length/2 ? 'Good work! Keep studying!' : 'Keep practicing, you\'ll improve!'}</p>
+                <button onclick="renderQuiz()" class="btn-primary">Retry Quiz <i class="fas fa-redo"></i></button>
+              </div>`;
+                return;
+            }
+            const q = quizQuestions[quizState.currentQuestion];
+            quizState.answered = false;
+            container.innerHTML = `
+            <div class="mb-4 text-sm text-[var(--text-muted)]">Question ${quizState.currentQuestion + 1} of ${quizQuestions.length}</div>
+            <div class="w-full h-2 bg-[var(--bg-tertiary)] rounded-full mb-6 overflow-hidden">
+              <div class="h-full rounded-full bg-gradient-to-r from-blue-400 to-purple-500 transition-all duration-500" style="width:${((quizState.currentQuestion)/quizQuestions.length)*100}%"></div>
+            </div>
+            <h3 class="text-xl font-semibold mb-6">${q.question}</h3>
+            <div class="space-y-3" id="quizOptions">
+              ${q.options.map((opt, i) => `
+                <button onclick="answerQuiz(${i}, this)" class="w-full text-left p-4 rounded-xl border-2 border-[var(--card-border)] bg-[var(--bg-secondary)] hover:border-[var(--accent-purple)] hover:bg-[var(--bg-tertiary)] transition-all duration-200 font-medium quiz-option-btn">
+                  <span class="inline-block w-8 h-8 rounded-full bg-[var(--bg-tertiary)] text-center leading-8 mr-3 text-sm font-bold">${String.fromCharCode(65+i)}</span>${opt}
+                </button>
+              `).join('')}
+            </div>
+            <div id="quizFeedback" class="mt-4 text-center font-semibold min-h-[2rem]"></div>
+            <button id="quizNextBtn" class="btn-primary mx-auto mt-4 hidden" onclick="nextQuizQuestion()">Next <i class="fas fa-arrow-right"></i></button>
+          `;
+        }
+
+        function answerQuiz(selectedIndex, btnElement) {
+            if (quizState.answered) return;
+            quizState.answered = true;
+            const q = quizQuestions[quizState.currentQuestion];
+            const feedback = document.getElementById('quizFeedback');
+            const allBtns = document.querySelectorAll('.quiz-option-btn');
+            allBtns.forEach(b => b.style.pointerEvents = 'none');
+            if (selectedIndex === q.correct) {
+                quizState.score++;
+                btnElement.classList.add('border-emerald-500', 'bg-emerald-50');
+                btnElement.style.borderColor = '#10b981';
+                btnElement.style.backgroundColor = 'rgba(16,185,129,0.08)';
+                feedback.innerHTML = '<span class="text-emerald-600">✅ Correct! Well done!</span>';
+            } else {
+                btnElement.classList.add('border-red-400', 'bg-red-50');
+                btnElement.style.borderColor = '#f87171';
+                btnElement.style.backgroundColor = 'rgba(248,113,113,0.08)';
+                allBtns[q.correct].classList.add('border-emerald-500');
+                allBtns[q.correct].style.borderColor = '#10b981';
+                allBtns[q.correct].style.backgroundColor = 'rgba(16,185,129,0.08)';
+                feedback.innerHTML = '<span class="text-red-500">❌ Not quite. The correct answer is highlighted.</span>';
+            }
+            document.getElementById('quizNextBtn').classList.remove('hidden');
+            document.getElementById('quizNextBtn').style.animation = 'fadeIn 0.3s ease-out';
+        }
+
+        function nextQuizQuestion() {
+            quizState.currentQuestion++;
+            const container = document.getElementById('quizContainer');
+            renderQuizQuestion(container);
+        }
+
+        function initDashboard() {
+            const skeleton = document.getElementById('statsSkeleton');
+            const progressSk = document.getElementById('progressSkeleton');
+            const real = document.getElementById('dashboardReal');
+            if (!real || real.style.display !== 'none') return;
+            // Show skeletons for 1.5 seconds then reveal
+            if (skeleton) skeleton.style.display = 'grid';
+            if (progressSk) progressSk.style.display = 'grid';
+            if (real) real.style.display = 'none';
+            setTimeout(() => {
+                if (skeleton) skeleton.style.display = 'none';
+                if (progressSk) progressSk.style.display = 'none';
+                if (real) {
+                    real.style.display = 'block';
+                    real.style.animation = 'fadeIn 0.5s ease-out';
+                }
+            }, 1500);
+        }
+
+        // ============ INITIALIZATION ============
+        function init() {
+            applyDarkMode();
+            // Loading screen
+            const loadingScreen = document.getElementById('loadingScreen');
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                loadingScreen.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }, 1800);
+            // Initial renders
+            renderVocabulary();
+            renderHanja();
+            renderGrammar();
+            renderQuiz();
+            // Click outside mobile menu
+            document.getElementById('mobileOverlay').addEventListener('click', closeMobileMenu);
+            // Keyboard nav
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeMobileMenu();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Handle initial dashboard skeleton state
+        document.addEventListener('DOMContentLoaded', () => {
+            const real = document.getElementById('dashboardReal');
+            const statsSk = document.getElementById('statsSkeleton');
+            const progressSk = document.getElementById('progressSkeleton');
+            if (real) real.style.display = 'none';
+            if (statsSk) statsSk.style.display = 'grid';
+            if (progressSk) progressSk.style.display = 'grid';
+        });
+    </script>
+</body>
+</html>
