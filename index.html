@@ -3,227 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcard Học Từ Vựng</title>
+    <title>60 Từ Vựng Tiếng Hàn Flashcard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary-blue: #4a90e2;
-            --light-blue: #eef7ff;
-            --text-dark: #333;
-            --shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-
+        :root { --primary-blue: #4a90e2; --shadow: 0 10px 20px rgba(0,0,0,0.1); }
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            padding: 20px;
-        }
-
-        /* Header đơn giản */
-        .header {
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--primary-blue);
-        }
-        .header i { margin-right: 8px; }
-
-        /* Thanh tìm kiếm */
-        .search-container {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-        .search-container input {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            outline: none;
-        }
-        .search-container button {
-            width: 40px;
-            border: none;
-            background: var(--primary-blue);
-            color: white;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        /* Card Flashcard */
-        .flashcard-wrapper {
-            perspective: 1000px;
-            width: 320px;
-            height: 200px;
-            margin-bottom: 25px;
-        }
-
-        .card {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
-            cursor: pointer;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-        }
-
-        .card.is-flipped { transform: rotateY(180deg); }
-
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(145deg, #5da0f4, #4a90e2);
-            color: white;
-            font-size: 28px;
-            font-weight: 500;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .card-back {
-            transform: rotateY(180deg);
-            background: #ffffff;
-            color: #333;
-            border: 1px solid #eee;
-        }
-
-        .flip-icon-center {
-            margin-top: 15px;
-            font-size: 14px;
-            background: rgba(255,255,255,0.3);
-            padding: 5px 12px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* Nút điều khiển chính */
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #f8f9fa; padding: 20px; }
+        .header { width: 100%; max-width: 600px; text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: 600; color: var(--primary-blue); }
         
-        .controls button {
-            padding: 8px 20px;
-            border: 1px solid var(--primary-blue);
-            background: white;
-            color: var(--primary-blue);
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .controls button:hover {
-            background: var(--primary-blue);
-            color: white;
-        }
-        .controls button.active-btn {
-            background: var(--primary-blue);
-            color: white;
-        }
+        .search-container { width: 100%; max-width: 400px; display: flex; gap: 10px; margin-bottom: 25px; }
+        .search-container input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+        .search-container button { width: 40px; border: none; background: var(--primary-blue); color: white; border-radius: 50%; cursor: pointer; }
 
-        /* Các nút hành động (Yêu thích, Thuộc...) */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .action-buttons button {
-            padding: 6px 15px;
-            border: none;
-            background: white;
-            color: #555;
-            border-radius: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            cursor: pointer;
-            font-size: 13px;
-        }
+        .flashcard-wrapper { perspective: 1000px; width: 100%; max-width: 400px; height: 240px; margin-bottom: 25px; position: relative; }
+        .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); cursor: pointer; border-radius: 15px; box-shadow: var(--shadow); }
+        .card.is-flipped { transform: rotateY(180deg); }
+        
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; padding: 30px; text-align: center; }
+        .card-back { transform: rotateY(180deg); background: #ffffff; color: #333; border: 1px solid #eee; }
+        
+        .word-wrap { display: flex; flex-direction: column; gap: 8px; }
+        .korean { font-size: 32px; font-weight: 600; letter-spacing: 1px; }
+        .vietnamese { font-size: 28px; font-weight: 500; color: var(--primary-blue); }
+        .roman { font-size: 16px; color: rgba(255,255,255,0.75); }
+        .card-back .roman { color: #888; }
+        
+        .flip-icon-center { margin-top: 20px; font-size: 14px; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px; display: flex; align-items: center; gap: 5px; }
+        .card-back .flip-icon-center { background: #f0f0f0; color: #555; }
+
+        /* Nút nghe phát âm */
+        .btn-speak { position: absolute; top: 15px; right: 15px; border: none; background: rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 16px; z-index: 10; transition: 0.2s; }
+        .card-back .btn-speak { background: #e3f2fd; color: #4a90e2; }
+        .btn-speak:hover { transform: scale(1.1); background: #fff; color: #4a90e2; }
+        .card-back .btn-speak:hover { background: var(--primary-blue); color: white; }
+
+        /* Điều khiển */
+        .controls { display: flex; gap: 15px; margin-bottom: 15px; }
+        .controls button { padding: 8px 20px; border: 1px solid var(--primary-blue); background: white; color: var(--primary-blue); border-radius: 20px; cursor: pointer; transition: 0.2s; }
+        .controls button:hover, .controls button.active-btn { background: var(--primary-blue); color: white; }
+        
+        /* Nút hành động */
+        .action-buttons { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
+        .action-buttons button { padding: 6px 15px; border: none; background: white; color: #555; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; font-size: 13px; }
         .action-buttons button i { margin-right: 5px; }
-        .action-buttons button.active { background: #f0f4f8; color: #4a90e2; }
         .action-buttons button.active-love { background: #ffeaea; color: #e74c3c; }
+        .action-buttons button.active-learnt { background: #e8f5e9; color: #2e7d32; }
         .action-buttons button.active-hard { background: #fff3e0; color: #f39c12; }
 
         /* Tiến độ */
-        .progress-container {
-            width: 300px;
-            text-align: center;
-            font-size: 14px;
-            color: #777;
-            margin-top: 10px;
-        }
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #e9ecef;
-            border-radius: 3px;
-            margin-top: 5px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: var(--primary-blue);
-            transition: width 0.3s;
-            width: 0%;
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 30px;
-            font-size: 12px;
-            color: #aaa;
-        }
+        .progress-container { width: 100%; max-width: 300px; text-align: center; font-size: 14px; color: #777; margin-top: 10px; }
+        .progress-bar { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary-blue); transition: width 0.3s; width: 0%; }
+        .footer { margin-top: 30px; font-size: 12px; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <i class="fas fa-layer-group"></i> Flashcard
-    </div>
-
+    <div class="header"><i class="fas fa-language"></i> 60 Từ vựng Hàn Quốc</div>
+    
     <div class="search-container">
         <input type="text" placeholder="Tìm kiếm từ vựng...">
         <button><i class="fas fa-search"></i></button>
     </div>
 
     <div class="flashcard-wrapper">
-        <div class="card" id="flashcard" onclick="handleCardClick(event)">
+        <div class="card" id="flashcard">
+            <!-- Nút Nghe phát âm gắn trên thẻ -->
+            <button class="btn-speak" onclick="event.stopPropagation(); playAudio()"><i class="fas fa-volume-up"></i></button>
+            
             <div class="card-face card-front">
-                <span id="front-text">안녕하세요</span>
-                <div class="flip-icon-center">
-                    <i class="fas fa-sync-alt"></i> Lật
+                <div class="word-wrap">
+                    <div class="korean" id="front-text">안녕하세요</div>
+                    <div class="roman" id="front-roman">annyeonghaseyo</div>
                 </div>
+                <div class="flip-icon-center"><i class="fas fa-sync-alt"></i> Lật thẻ</div>
             </div>
             <div class="card-face card-back">
-                <span id="back-text">Xin chào</span>
+                <div class="word-wrap">
+                    <div class="vietnamese" id="back-text">Xin chào</div>
+                    <div class="roman" id="back-roman">annyeonghaseyo</div>
+                </div>
+                <div class="flip-icon-center"><i class="fas fa-sync-alt"></i> Lật lại</div>
             </div>
         </div>
     </div>
 
     <div class="controls">
-        <button onclick="prevCard()"><i class="fas fa-minus"></i> Trước</button>
+        <button onclick="prevCard()"><i class="fas fa-chevron-left"></i> Trước</button>
         <button class="active-btn" onclick="flipCard()"><i class="fas fa-sync-alt"></i> Lật thẻ</button>
-        <button onclick="nextCard()">Sau <i class="fas fa-plus"></i></button>
+        <button onclick="nextCard()">Sau <i class="fas fa-chevron-right"></i></button>
     </div>
 
     <div class="action-buttons">
@@ -234,54 +102,101 @@
 
     <div class="progress-container">
         <span id="current-idx">1</span> / <span id="total-idx">60</span>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
-        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
 
-    <div class="footer">
-        © 2024 Flashcard Hub
-    </div>
+    <div class="footer">© 2024 Korean Flashcard Hub</div>
 
     <script>
-        // 1. Dữ liệu Flashcards (Bạn có thể thêm từ vựng vào đây)
+        // 1. Danh sách 60 từ tiếng Hàn kèm phiên âm (Romaja)
         const flashcards = [
-            { front: "안녕하세요", back: "Xin chào", fav: false, learnt: false, hard: false },
-            { front: "감사합니다", back: "Cảm ơn", fav: false, learnt: false, hard: false },
-            { front: "죄송합니다", back: "Xin lỗi", fav: false, learnt: false, hard: false },
-            { front: "사랑해요", back: "Yêu em/anh", fav: false, learnt: false, hard: false },
-            { front: "맛있어요", back: "Ngon quá", fav: false, learnt: false, hard: false },
-            { front: "안녕", back: "Chào (thân mật)", fav: false, learnt: false, hard: false },
-            { front: "물", back: "Nước", fav: false, learnt: false, hard: false },
-            { front: "친구", back: "Bạn bè", fav: false, learnt: false, hard: false }
+            { front: "안녕하세요", roman: "annyeonghaseyo", back: "Xin chào", fav: false, learnt: false, hard: false },
+            { front: "감사합니다", roman: "gamsahamnida", back: "Cảm ơn", fav: false, learnt: false, hard: false },
+            { front: "죄송합니다", roman: "joesonghamnida", back: "Xin lỗi", fav: false, learnt: false, hard: false },
+            { front: "사랑해요", roman: "saranghaeyo", back: "Tôi yêu bạn", fav: false, learnt: false, hard: false },
+            { front: "안녕", roman: "annyeong", back: "Chào (thân mật)", fav: false, learnt: false, hard: false },
+            { front: "맛있어요", roman: "masisseoyo", back: "Ngon quá", fav: false, learnt: false, hard: false },
+            { front: "어서 오세요", roman: "eoseo oseyo", back: "Xin mời vào", fav: false, learnt: false, hard: false },
+            { front: "잠시만요", roman: "jamsimanyo", back: "Chờ một chút", fav: false, learnt: false, hard: false },
+            { front: "도와주세요", roman: "dowajuseyo", back: "Xin hãy giúp tôi", fav: false, learnt: false, hard: false },
+            { front: "미안해요", roman: "mianhaeyo", back: "Xin lỗi (nhẹ nhàng)", fav: false, learnt: false, hard: false },
+            { front: "네", roman: "ne", back: "Vâng / Đúng", fav: false, learnt: false, hard: false },
+            { front: "아니요", roman: "aniyo", back: "Không", fav: false, learnt: false, hard: false },
+            { front: "좋아요", roman: "johayo", back: "Tốt / Thích", fav: false, learnt: false, hard: false },
+            { front: "괜찮아요", roman: "gwaenchanayo", back: "Không sao / Ổn thôi", fav: false, learnt: false, hard: false },
+            { front: "어떻게 지내요?", roman: "eotteoke jinaeyo", back: "Bạn khỏe không?", fav: false, learnt: false, hard: false },
+            { front: "잘 지내요", roman: "jal jinaeyo", back: "Tôi khỏe", fav: false, learnt: false, hard: false },
+            { front: "오늘", roman: "oneul", back: "Hôm nay", fav: false, learnt: false, hard: false },
+            { front: "내일", roman: "naeil", back: "Ngày mai", fav: false, learnt: false, hard: false },
+            { front: "어제", roman: "eoje", back: "Hôm qua", fav: false, learnt: false, hard: false },
+            { front: "그럼", roman: "geureom", back: "Vậy thì", fav: false, learnt: false, hard: false },
+            { front: "맞아요", roman: "majayo", back: "Đúng vậy", fav: false, learnt: false, hard: false },
+            { front: "아니에요", roman: "anieyo", back: "Không phải đâu", fav: false, learnt: false, hard: false },
+            { front: "물", roman: "mul", back: "Nước", fav: false, learnt: false, hard: false },
+            { front: "밥", roman: "bap", back: "Cơm", fav: false, learnt: false, hard: false },
+            { front: "친구", roman: "chingu", back: "Bạn bè", fav: false, learnt: false, hard: false },
+            { front: "가족", roman: "gajok", back: "Gia đình", fav: false, learnt: false, hard: false },
+            { front: "사람", roman: "saram", back: "Người", fav: false, learnt: false, hard: false },
+            { front: "한국", roman: "hanguk", back: "Hàn Quốc", fav: false, learnt: false, hard: false },
+            { front: "영어", roman: "yeong-eo", back: "Tiếng Anh", fav: false, learnt: false, hard: false },
+            { front: "학교", roman: "hakgyo", back: "Trường học", fav: false, learnt: false, hard: false },
+            { front: "선생님", roman: "seonsaengnim", back: "Giáo viên", fav: false, learnt: false, hard: false },
+            { front: "학생", roman: "haksaeng", back: "Học sinh", fav: false, learnt: false, hard: false },
+            { front: "음식", roman: "eumsik", back: "Đồ ăn", fav: false, learnt: false, hard: false },
+            { front: "맥주", roman: "maekju", back: "Bia", fav: false, learnt: false, hard: false },
+            { front: "커피", roman: "keopi", back: "Cà phê", fav: false, learnt: false, hard: false },
+            { front: "차", roman: "cha", back: "Trà", fav: false, learnt: false, hard: false },
+            { front: "나무", roman: "namu", back: "Cái cây", fav: false, learnt: false, hard: false },
+            { front: "꽃", roman: "kkot", back: "Hoa", fav: false, learnt: false, hard: false },
+            { front: "하늘", roman: "haneul", back: "Bầu trời", fav: false, learnt: false, hard: false },
+            { front: "별", roman: "byeol", back: "Ngôi sao", fav: false, learnt: false, hard: false },
+            { front: "달", roman: "dal", back: "Mặt trăng", fav: false, learnt: false, hard: false },
+            { front: "해", roman: "hae", back: "Mặt trời", fav: false, learnt: false, hard: false },
+            { front: "따뜻하다", roman: "ttatteuthada", back: "Ấm áp", fav: false, learnt: false, hard: false },
+            { front: "춥다", roman: "chupda", back: "Lạnh", fav: false, learnt: false, hard: false },
+            { front: "덥다", roman: "deopda", back: "Nóng (thời tiết)", fav: false, learnt: false, hard: false },
+            { front: "좋다", roman: "jota", back: "Tốt", fav: false, learnt: false, hard: false },
+            { front: "예쁘다", roman: "yeppeuda", back: "Đẹp (người/vật)", fav: false, learnt: false, hard: false },
+            { front: "멋지다", roman: "meotjida", back: "Đẹp trai / Phong cách", fav: false, learnt: false, hard: false },
+            { front: "크다", roman: "keuda", back: "To, lớn", fav: false, learnt: false, hard: false },
+            { front: "작다", roman: "jakda", back: "Nhỏ", fav: false, learnt: false, hard: false },
+            { front: "빠르다", roman: "ppareuda", back: "Nhanh", fav: false, learnt: false, hard: false },
+            { front: "느리다", roman: "neurida", back: "Chậm", fav: false, learnt: false, hard: false },
+            { front: "가다", roman: "gada", back: "Đi", fav: false, learnt: false, hard: false },
+            { front: "오다", roman: "oda", back: "Đến", fav: false, learnt: false, hard: false },
+            { front: "먹다", roman: "meokda", back: "Ăn", fav: false, learnt: false, hard: false },
+            { front: "마시다", roman: "masida", back: "Uống", fav: false, learnt: false, hard: false },
+            { front: "보다", roman: "boda", back: "Xem / Nhìn", fav: false, learnt: false, hard: false },
+            { front: "듣다", roman: "deutda", back: "Nghe", fav: false, learnt: false, hard: false },
+            { front: "말하다", roman: "malhada", back: "Nói", fav: false, learnt: false, hard: false },
+            { front: "알다", roman: "alda", back: "Biết", fav: false, learnt: false, hard: false },
+            { front: "모르다", roman: "moreuda", back: "Không biết", fav: false, learnt: false, hard: false }
         ];
 
-        // 2. Biến trạng thái
+        // 2. Logic cốt lõi
         let currentIndex = 0;
         const card = document.getElementById('flashcard');
         const frontText = document.getElementById('front-text');
         const backText = document.getElementById('back-text');
+        const frontRoman = document.getElementById('front-roman');
+        const backRoman = document.getElementById('back-roman');
         const currentIdxSpan = document.getElementById('current-idx');
         const totalIdxSpan = document.getElementById('total-idx');
         const progressFill = document.getElementById('progress-fill');
 
-        // 3. Cập nhật giao diện
         function updateCard() {
-            // Reset lật thẻ
             card.classList.remove('is-flipped');
-            
-            // Cập nhật nội dung
             const currentCard = flashcards[currentIndex];
             frontText.innerText = currentCard.front;
             backText.innerText = currentCard.back;
+            frontRoman.innerText = currentCard.roman;
+            backRoman.innerText = currentCard.roman;
 
-            // Cập nhật tiến độ
             currentIdxSpan.innerText = currentIndex + 1;
             totalIdxSpan.innerText = flashcards.length;
-            const progressPercent = ((currentIndex + 1) / flashcards.length) * 100;
-            progressFill.style.width = progressPercent + '%';
+            progressFill.style.width = ((currentIndex + 1) / flashcards.length) * 100 + '%';
 
-            // Cập nhật trạng thái nút (Yêu thích, Đã thuộc, Từ khó)
+            // Cập nhật nút trạng thái
             const btnFav = document.getElementById('btn-fav');
             const btnLearnt = document.getElementById('btn-learnt');
             const btnHard = document.getElementById('btn-hard');
@@ -290,52 +205,45 @@
             btnFav.className = currentCard.fav ? 'active-love' : '';
             
             btnLearnt.innerHTML = (currentCard.learnt ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-check-circle"></i>') + ' Đã thuộc';
-            btnLearnt.className = currentCard.learnt ? 'active' : '';
+            btnLearnt.className = currentCard.learnt ? 'active-learnt' : '';
 
             btnHard.innerHTML = (currentCard.hard ? '<i class="fas fa-exclamation-triangle"></i>' : '<i class="fas fa-exclamation-triangle"></i>') + ' Từ khó';
             btnHard.className = currentCard.hard ? 'active-hard' : '';
         }
 
-        // 4. Các hành động
-        function flipCard() {
-            card.classList.toggle('is-flipped');
+        function flipCard() { card.classList.toggle('is-flipped'); }
+        function prevCard() { if (currentIndex > 0) { currentIndex--; updateCard(); } else alert("Bạn đang ở thẻ đầu!"); }
+        function nextCard() { if (currentIndex < flashcards.length - 1) { currentIndex++; updateCard(); } else alert("Đã học hết 60 từ!"); }
+        function toggleStatus(type) { 
+            const c = flashcards[currentIndex];
+            if (type === 'fav') c.fav = !c.fav; if (type === 'learnt') c.learnt = !c.learnt; if (type === 'hard') c.hard = !c.hard;
+            updateCard(); 
         }
 
-        // Ngăn chặn nút lật ở giữa thẻ kích hoạt click đúp (gây lỗi)
-        function handleCardClick(e) {
-            // Lật thẻ khi click vào vùng trống
-            flipCard();
-        }
+        // 3. Chức năng Phát âm bằng Text-to-Speech của trình duyệt
+        function playAudio() {
+            const text = flashcards[currentIndex].front; // Đọc từ tiếng Hàn
+            if (window.speechSynthesis) {
+                // Huỷ bỏ giọng nói cũ nếu đang đọc dở
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ko-KR';  // Cài đặt ngôn ngữ tiếng Hàn
+                utterance.rate = 0.75;     // Tốc độ chậm rãi để dễ nghe theo
+                utterance.pitch = 1.0;
+                
+                // Thử chọn giọng nói Hàn Quốc có sẵn
+                const voices = window.speechSynthesis.getVoices();
+                const koVoice = voices.find(voice => voice.lang === 'ko-KR');
+                if (koVoice) utterance.voice = koVoice;
 
-        function prevCard() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                updateCard();
+                window.speechSynthesis.speak(utterance);
             } else {
-                alert("Bạn đang ở thẻ đầu tiên!");
+                alert('Trình duyệt hiện tại chưa hỗ trợ công nghệ đọc văn bản.');
             }
         }
 
-        function nextCard() {
-            if (currentIndex < flashcards.length - 1) {
-                currentIndex++;
-                updateCard();
-            } else {
-                alert("Bạn đã học hết bộ thẻ này!");
-            }
-        }
-
-        function toggleStatus(type) {
-            const card = flashcards[currentIndex];
-            if (type === 'fav') card.fav = !card.fav;
-            if (type === 'learnt') card.learnt = !card.learnt;
-            if (type === 'hard') card.hard = !card.hard;
-            updateCard(); // Cập nhật lại nút bấm
-        }
-
-        // Khởi tạo lần đầu
-        updateCard();
-
+        updateCard(); // Chạy lần đầu
     </script>
 </body>
 </html>
