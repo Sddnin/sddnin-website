@@ -281,7 +281,7 @@ function searchDictionary() {
         item.front.toLowerCase().includes(input) || item.back.toLowerCase().includes(input)
     );
 
-    resBox.style.display = 'block';
+    if (resBox) resBox.style.display = 'block';
     if (found) {
         setElementText('res-kr', found.front);
         setElementText('res-vi', found.back + (found.roman ? ` (${found.roman})` : ''));
@@ -292,8 +292,8 @@ function searchDictionary() {
 }
 
 function addDictToDeck() {
-    const kr = document.getElementById('res-kr').innerText;
-    const vi = document.getElementById('res-vi').innerText;
+    const kr = document.getElementById('res-kr')?.innerText;
+    const vi = document.getElementById('res-vi')?.innerText;
     if (!kr || kr === '---') return;
 
     const exists = masterDeck.some(item => item.front === kr);
@@ -593,7 +593,7 @@ function evaluatePronunciation(transcript) {
 }
 
 /* ==========================================================================
-   GEMINI AI CHAT INTEGRATION
+   GEMINI AI CHAT INTEGRATION (GỌI QUA CLOUDFLARE PROXY)
    ========================================================================== */
 function renderChatSuggestions() {
     const sugBox = document.getElementById('chat-sug');
@@ -624,13 +624,9 @@ function renderChatSuggestions() {
 }
 
 async function callGeminiAPI(promptText) {
-    const apiKey = localStorage.getItem('gemini_api_key');
-    if (!apiKey) {
-        throw new Error("Chưa nhập API Key! Vui lòng dán Gemini API Key ở ô phía trên.");
-    }
+    // Địa chỉ Cloudflare Worker Proxy của bạn
+    const PROXY_URL = "https://silent-term-6e03.sddnin21.workers.dev";
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    
     let scenarioPrompt = "";
     if (currentScenario === 'food') scenarioPrompt = "Bạn là nhà hàng Hàn Quốc. Bắt đầu trò chuyện bằng tiếng Hàn để giúp người học gọi món.";
     else if (currentScenario === 'taxi') scenarioPrompt = "Bạn là tài xế taxi ở Seoul. Bắt đầu trò chuyện bằng tiếng Hàn.";
@@ -643,7 +639,7 @@ async function callGeminiAPI(promptText) {
         contents: [{ parts: [{ text: fullPrompt }] }]
     };
 
-    const response = await fetch(url, {
+    const response = await fetch(PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
@@ -651,7 +647,7 @@ async function callGeminiAPI(promptText) {
 
     if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `Lỗi API HTTP: ${response.status}`);
+        throw new Error(errData.error?.message || `Lỗi máy chủ Proxy: ${response.status}`);
     }
 
     const data = await response.json();
@@ -664,7 +660,7 @@ async function callGeminiAPI(promptText) {
 
 async function sendChatMessage() {
     const input = document.getElementById('chat-input');
-    const message = input.value.trim();
+    const message = input?.value.trim();
     if (!message) return;
 
     appendChatMessage('user', message);
@@ -674,15 +670,17 @@ async function sendChatMessage() {
     const loadingMsg = document.createElement('div');
     loadingMsg.className = 'chat-msg system';
     loadingMsg.innerText = 'AI đang suy nghĩ...';
-    chatBox.appendChild(loadingMsg);
-    chatBox.scrollTop = chatBox.scrollHeight;
+    if (chatBox) {
+        chatBox.appendChild(loadingMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
     try {
         const reply = await callGeminiAPI(message);
-        chatBox.removeChild(loadingMsg);
+        if (chatBox) chatBox.removeChild(loadingMsg);
         appendChatMessage('ai', reply);
     } catch (err) {
-        chatBox.removeChild(loadingMsg);
+        if (chatBox) chatBox.removeChild(loadingMsg);
         appendChatMessage('system', `Lỗi: ${err.message}`);
     }
 }
@@ -711,10 +709,15 @@ function setupEventListeners() {
             document.querySelectorAll('.mode-switcher button').forEach(b => b.classList.remove('active-mode'));
             e.currentTarget.classList.add('active-mode');
 
-            document.getElementById('dict-container').style.display = mode === 'dict' ? 'block' : 'none';
-            document.getElementById('fc-main-wrapper').style.display = mode === 'flashcard' ? 'block' : 'none';
-            document.getElementById('game-main-container').style.display = mode === 'game' ? 'block' : 'none';
-            document.getElementById('aichat-main-container').style.display = mode === 'aichat' ? 'block' : 'none';
+            const dictCont = document.getElementById('dict-container');
+            const fcCont = document.getElementById('fc-main-wrapper');
+            const gameCont = document.getElementById('game-main-container');
+            const aiCont = document.getElementById('aichat-main-container');
+
+            if (dictCont) dictCont.style.display = mode === 'dict' ? 'block' : 'none';
+            if (fcCont) fcCont.style.display = mode === 'flashcard' ? 'block' : 'none';
+            if (gameCont) gameCont.style.display = mode === 'game' ? 'block' : 'none';
+            if (aiCont) aiCont.style.display = mode === 'aichat' ? 'block' : 'none';
 
             if (mode === 'game') {
                 switchSubGame('quiz');
@@ -752,7 +755,7 @@ function setupEventListeners() {
     document.getElementById('btn-hard')?.addEventListener('click', toggleHardCard);
     document.getElementById('btn-delete-word')?.addEventListener('click', deleteCurrentCard);
     
-    // Nút nghe phát âm trên thẻ bài (Ngăn không cho bị lật thẻ khi bấm)
+    // Nút nghe phát âm trên thẻ bài (Ngăn bị lật thẻ khi bấm)
     document.getElementById('btn-card-audio')?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (filteredDeck[currentIndex]) speakKorean(filteredDeck[currentIndex].front);
@@ -770,7 +773,7 @@ function setupEventListeners() {
         if (e.key === 'Enter') searchDictionary();
     });
     document.getElementById('btn-dict-speak')?.addEventListener('click', () => {
-        const text = document.getElementById('res-kr').innerText;
+        const text = document.getElementById('res-kr')?.innerText;
         if (text && text !== '---') speakKorean(text);
     });
     document.getElementById('btn-dict-add')?.addEventListener('click', addDictToDeck);
@@ -792,13 +795,6 @@ function setupEventListeners() {
     document.getElementById('btn-refresh-match')?.addEventListener('click', startMatchGame);
 
     // 7. AI Chat & Voice
-    document.getElementById('btn-save-key')?.addEventListener('click', () => {
-        const key = document.getElementById('gemini-api-key').value.trim();
-        if (key) {
-            localStorage.setItem('gemini_api_key', key);
-            alert('Đã lưu Gemini API Key!');
-        }
-    });
     document.getElementById('btn-chat-send')?.addEventListener('click', sendChatMessage);
     document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendChatMessage();
@@ -819,19 +815,22 @@ function setupEventListeners() {
     // 8. Theme, Modal, Import/Export
     document.getElementById('btn-toggle-theme')?.addEventListener('click', toggleTheme);
     document.getElementById('btn-open-add')?.addEventListener('click', () => {
-        document.getElementById('add-modal').style.display = 'flex';
+        const modal = document.getElementById('add-modal');
+        if (modal) modal.style.display = 'flex';
     });
     document.getElementById('btn-close-modal')?.addEventListener('click', () => {
-        document.getElementById('add-modal').style.display = 'none';
+        const modal = document.getElementById('add-modal');
+        if (modal) modal.style.display = 'none';
     });
     document.getElementById('btn-cancel-modal')?.addEventListener('click', () => {
-        document.getElementById('add-modal').style.display = 'none';
+        const modal = document.getElementById('add-modal');
+        if (modal) modal.style.display = 'none';
     });
     document.getElementById('btn-save-modal')?.addEventListener('click', () => {
-        const kr = document.getElementById('new-kr').value.trim();
-        const rm = document.getElementById('new-rm').value.trim();
-        const vi = document.getElementById('new-vi').value.trim();
-        const cat = document.getElementById('new-cat').value.trim() || 'Giao tiếp';
+        const kr = document.getElementById('new-kr')?.value.trim();
+        const rm = document.getElementById('new-rm')?.value.trim();
+        const vi = document.getElementById('new-vi')?.value.trim();
+        const cat = document.getElementById('new-cat')?.value.trim() || 'Giao tiếp';
 
         if (!kr || !vi) {
             alert('Vui lòng nhập đủ từ tiếng Hàn và nghĩa tiếng Việt.');
@@ -842,11 +841,13 @@ function setupEventListeners() {
         saveData();
         updateCard();
 
-        document.getElementById('new-kr').value = '';
-        document.getElementById('new-rm').value = '';
-        document.getElementById('new-vi').value = '';
-        document.getElementById('new-cat').value = '';
-        document.getElementById('add-modal').style.display = 'none';
+        if (document.getElementById('new-kr')) document.getElementById('new-kr').value = '';
+        if (document.getElementById('new-rm')) document.getElementById('new-rm').value = '';
+        if (document.getElementById('new-vi')) document.getElementById('new-vi').value = '';
+        if (document.getElementById('new-cat')) document.getElementById('new-cat').value = '';
+        
+        const modal = document.getElementById('add-modal');
+        if (modal) modal.style.display = 'none';
     });
 
     document.getElementById('btn-export-import')?.addEventListener('click', () => {
@@ -854,7 +855,7 @@ function setupEventListeners() {
         if (choice) {
             exportData();
         } else {
-            document.getElementById('import-file').click();
+            document.getElementById('import-file')?.click();
         }
     });
 
