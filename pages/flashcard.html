@@ -3,80 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcard - Korean Flashcard Hub</title>
+    <title>Flashcard 2.0 - Học Từ Vựng Hàn Quốc</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/flashcard.css">
-    <link rel="stylesheet" href="../assets/css/animation.css">
-    <link rel="stylesheet" href="../assets/css/responsive.css">
 </head>
 <body>
-    <header class="main-header">
-        <div class="logo">
-            <h1>🇰🇷 Flashcard</h1>
+    <header class="navbar">
+        <a href="../index.html" class="logo">SDDNIN 2.0</a>
+        <div class="user-stats">
+            <span id="user-streak">🔥 0 ngày</span>
+            <span id="user-learned-count">✅ 0 từ</span>
         </div>
-        <nav class="main-nav">
-            <ul>
-                <li><a href="home.html">Trang chủ</a></li>
-                <li><a href="flashcard.html" class="active">Flashcard</a></li>
-                <li><a href="review.html">Ôn tập</a></li>
-                <li><a href="hanja.html">Hanja</a></li>
-                <li><a href="grammar.html">Ngữ pháp</a></li>
-            </ul>
-        </nav>
-        <button id="theme-toggle" class="theme-btn">🌙</button>
     </header>
 
-    <main class="flashcard-main">
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Tìm kiếm từ vựng..." class="search-input">
-            <button id="search-btn" class="search-btn">🔍</button>
+    <main class="flashcard-container">
+        <!-- Controls Bar -->
+        <div class="toolbar">
+            <select id="filter-select">
+                <option value="all">Tất cả từ vựng</option>
+                <option value="unlearned">Chưa thuộc</option>
+                <option value="learned">Đã thuộc</option>
+                <option value="bookmarked">Đã đánh dấu</option>
+            </select>
+            <button id="shuffle-btn" class="btn-secondary">🔀 Xáo trộn</button>
         </div>
 
-        <div class="flashcard-container">
-            <div class="flashcard" id="flashcard">
-                <div class="flashcard-inner">
-                    <div class="flashcard-front">
-                        <span class="card-text" id="front-text">안녕하세요</span>
-                        <button class="pronounce-btn" id="pronounce-btn">🔊</button>
-                    </div>
-                    <div class="flashcard-back">
-                        <span class="card-text" id="back-text">Xin chào</span>
-                        <span class="card-romanization" id="romanization-text">annyeonghaseyo</span>
-                        <span class="card-example" id="example-text">안녕하세요, 반갑습니다.</span>
-                    </div>
-                </div>
+        <!-- Flashcard UI -->
+        <div id="flashcard" class="card">
+            <div class="card-face card-front">
+                <span id="korean-text" class="korean-word">안녕하세요</span>
+                <span id="romanization-text" class="romanization">[annyeonghaseyo]</span>
+                <button id="audio-btn" class="no-flip btn-icon">🔊 Phát âm</button>
+            </div>
+            <div class="card-face card-back">
+                <p id="meaning-text" class="meaning">Xin chào</p>
+                <p id="example-text" class="example">안녕하세요, 반갑습니다.</p>
             </div>
         </div>
 
-        <div class="flashcard-controls">
-            <button id="prev-btn" class="control-btn">⬅ Trước</button>
-            <button id="flip-btn" class="control-btn flip-btn">🔄 Lật thẻ</button>
-            <button id="next-btn" class="control-btn">Sau ➡</button>
-            <button id="shuffle-btn" class="control-btn">🔀 Xáo trộn</button>
-        </div>
-
-        <div class="flashcard-actions">
-            <button id="favorite-btn" class="action-btn">❤️ Yêu thích</button>
-            <button id="known-btn" class="action-btn">✅ Đã thuộc</button>
-            <button id="difficult-btn" class="action-btn">⚠️ Từ khó</button>
-        </div>
-
-        <div class="progress-container">
-            <span id="card-counter">1 / 20</span>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
+        <!-- Card Action Controls -->
+        <div class="controls">
+            <button id="prev-btn" class="btn">⬅️ Từ trước</button>
+            <span id="card-counter">1 / 60</span>
+            <button id="master-btn" class="btn-success no-flip">Đánh dấu thuộc</button>
+            <button id="next-btn" class="btn">Từ tiếp ➡️</button>
         </div>
     </main>
 
-    <footer class="main-footer">
-        <p>&copy; 2024 Korean Flashcard Hub</p>
-    </footer>
-
     <script src="../assets/js/storage.js"></script>
-    <script src="../assets/js/theme.js"></script>
-    <script src="../assets/js/flashcard.js"></script>
-    <script src="../assets/js/search.js"></script>
     <script src="../assets/js/app.js"></script>
+    <script src="../assets/js/flashcard.js"></script>
 </body>
 </html>
