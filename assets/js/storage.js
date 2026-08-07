@@ -1,178 +1,82 @@
-// === FILE: storage.js ===
-// Quản lý LocalStorage: Progress, Favorite, Settings
+const StorageManager = {
+    KEYS: {
+        LEARNED: 'sddnin_learned_items',
+        BOOKMARKS: 'sddnin_bookmarks',
+        STATS: 'sddnin_user_stats',
+        SETTINGS: 'sddnin_settings'
+    },
 
-const StorageManager = (function() {
-    'use strict';
+    // Lấy dữ liệu mảng từ LocalStorage
+    getData(key) {
+        return JSON.parse(localStorage.getItem(key)) || [];
+    },
 
-    const STORAGE_KEYS = {
-        THEME: 'korean-flashcard-theme',
-        FAVORITES: 'korean-flashcard-favorites',
-        KNOWN_WORDS: 'korean-flashcard-known',
-        DIFFICULT_WORDS: 'korean-flashcard-difficult',
-        PROGRESS: 'korean-flashcard-progress',
-        SETTINGS: 'korean-flashcard-settings'
-    };
+    // Lưu dữ liệu vào LocalStorage
+    setData(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    },
 
-    // === Theme ===
-    function saveTheme(theme) {
-        localStorage.setItem(STORAGE_KEYS.THEME, theme);
-    }
-
-    function getTheme() {
-        return localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
-    }
-
-    // === Favorites ===
-    function getFavorites() {
-        const data = localStorage.getItem(STORAGE_KEYS.FAVORITES);
-        return data ? JSON.parse(data) : [];
-    }
-
-    function addFavorite(wordId) {
-        const favorites = getFavorites();
-        if (!favorites.includes(wordId)) {
-            favorites.push(wordId);
-            localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
-        }
-    }
-
-    function removeFavorite(wordId) {
-        const favorites = getFavorites().filter(id => id !== wordId);
-        localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
-    }
-
-    function isFavorite(wordId) {
-        return getFavorites().includes(wordId);
-    }
-
-    function toggleFavorite(wordId) {
-        if (isFavorite(wordId)) {
-            removeFavorite(wordId);
-            return false;
+    // Đánh dấu đã học / chưa học
+    toggleLearned(type, id) {
+        const learned = this.getData(this.KEYS.LEARNED);
+        const itemKey = `${type}_${id}`;
+        const index = learned.indexOf(itemKey);
+        
+        if (index > -1) {
+            learned.splice(index, 1);
         } else {
-            addFavorite(wordId);
-            return true;
+            learned.push(itemKey);
+            this.updateStreak();
         }
-    }
-
-    // === Known Words ===
-    function getKnownWords() {
-        const data = localStorage.getItem(STORAGE_KEYS.KNOWN_WORDS);
-        return data ? JSON.parse(data) : [];
-    }
-
-    function addKnownWord(wordId) {
-        const known = getKnownWords();
-        if (!known.includes(wordId)) {
-            known.push(wordId);
-            localStorage.setItem(STORAGE_KEYS.KNOWN_WORDS, JSON.stringify(known));
-        }
-        // Nếu từ đã thuộc thì xóa khỏi danh sách từ khó
-        removeDifficultWord(wordId);
-    }
-
-    function removeKnownWord(wordId) {
-        const known = getKnownWords().filter(id => id !== wordId);
-        localStorage.setItem(STORAGE_KEYS.KNOWN_WORDS, JSON.stringify(known));
-    }
-
-    function isKnown(wordId) {
-        return getKnownWords().includes(wordId);
-    }
-
-    // === Difficult Words ===
-    function getDifficultWords() {
-        const data = localStorage.getItem(STORAGE_KEYS.DIFFICULT_WORDS);
-        return data ? JSON.parse(data) : [];
-    }
-
-    function addDifficultWord(wordId) {
-        const difficult = getDifficultWords();
-        if (!difficult.includes(wordId)) {
-            difficult.push(wordId);
-            localStorage.setItem(STORAGE_KEYS.DIFFICULT_WORDS, JSON.stringify(difficult));
-        }
-    }
-
-    function removeDifficultWord(wordId) {
-        const difficult = getDifficultWords().filter(id => id !== wordId);
-        localStorage.setItem(STORAGE_KEYS.DIFFICULT_WORDS, JSON.stringify(difficult));
-    }
-
-    function isDifficult(wordId) {
-        return getDifficultWords().includes(wordId);
-    }
-
-    // === Progress ===
-    function getProgress() {
-        const data = localStorage.getItem(STORAGE_KEYS.PROGRESS);
-        return data ? JSON.parse(data) : {
-            totalCards: 0,
-            cardsReviewed: 0,
-            lastStudyDate: null,
-            streak: 0
-        };
-    }
-
-    function updateProgress(cardsReviewed) {
-        const progress = getProgress();
-        progress.cardsReviewed = cardsReviewed;
         
+        this.setData(this.KEYS.LEARNED, learned);
+        return index === -1; // trả về true nếu vừa đánh dấu thuộc
+    },
+
+    isLearned(type, id) {
+        const learned = this.getData(this.KEYS.LEARNED);
+        return learned.includes(`${type}_${id}`);
+    },
+
+    // Đánh dấu Bookmark
+    toggleBookmark(type, id) {
+        const bookmarks = this.getData(this.KEYS.BOOKMARKS);
+        const itemKey = `${type}_${id}`;
+        const index = bookmarks.indexOf(itemKey);
+
+        if (index > -1) {
+            bookmarks.splice(index, 1);
+        } else {
+            bookmarks.push(itemKey);
+        }
+
+        this.setData(this.KEYS.BOOKMARKS, bookmarks);
+        return index === -1;
+    },
+
+    isBookmarked(type, id) {
+        return this.getData(this.KEYS.BOOKMARKS).includes(`${type}_${id}`);
+    },
+
+    // Cập nhật Chuỗi ngày học (Streak)
+    updateStreak() {
+        const stats = JSON.parse(localStorage.getItem(this.KEYS.STATS)) || { streak: 0, lastActive: null, totalLearned: 0 };
         const today = new Date().toDateString();
-        const yesterday = new Date(Date.now() - 86400000).toDateString();
-        
-        if (progress.lastStudyDate === yesterday) {
-            progress.streak += 1;
-        } else if (progress.lastStudyDate !== today) {
-            progress.streak = 1;
+
+        if (stats.lastActive !== today) {
+            const yesterday = new Date(Date.now() - 86400000).toDateString();
+            if (stats.lastActive === yesterday) {
+                stats.streak += 1;
+            } else if (stats.lastActive !== today) {
+                stats.streak = 1;
+            }
+            stats.lastActive = today;
         }
-        
-        progress.lastStudyDate = today;
-        localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(progress));
-    }
+        stats.totalLearned = this.getData(this.KEYS.LEARNED).length;
+        localStorage.setItem(this.KEYS.STATS, JSON.stringify(stats));
+    },
 
-    function resetProgress() {
-        localStorage.removeItem(STORAGE_KEYS.PROGRESS);
-        localStorage.removeItem(STORAGE_KEYS.KNOWN_WORDS);
-        localStorage.removeItem(STORAGE_KEYS.DIFFICULT_WORDS);
-        localStorage.removeItem(STORAGE_KEYS.FAVORITES);
+    getStats() {
+        return JSON.parse(localStorage.getItem(this.KEYS.STATS)) || { streak: 0, lastActive: null, totalLearned: 0 };
     }
-
-    // === Settings ===
-    function getSettings() {
-        const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-        return data ? JSON.parse(data) : {
-            autoPlay: false,
-            shuffleMode: false,
-            cardsPerSession: 20
-        };
-    }
-
-    function saveSettings(settings) {
-        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-    }
-
-    // === Export ===
-    return {
-        saveTheme,
-        getTheme,
-        getFavorites,
-        addFavorite,
-        removeFavorite,
-        isFavorite,
-        toggleFavorite,
-        getKnownWords,
-        addKnownWord,
-        removeKnownWord,
-        isKnown,
-        getDifficultWords,
-        addDifficultWord,
-        removeDifficultWord,
-        isDifficult,
-        getProgress,
-        updateProgress,
-        resetProgress,
-        getSettings,
-        saveSettings
-    };
-})();
+};
