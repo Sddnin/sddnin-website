@@ -1,12 +1,11 @@
 /* ==========================================================================
    APP STATE & INITIALIZATION
    ========================================================================== */
-let masterDeck = [];      // Danh sách từ vựng gốc
-let filteredDeck = [];    // Danh sách từ vựng sau khi lọc/tìm kiếm
-let currentIndex = 0;     // Chỉ số từ vựng hiện tại
-let activeTab = 'card';   // Tab đang mở
+let masterDeck = [];      
+let filteredDeck = [];    
+let currentIndex = 0;     
+let activeTab = 'card';   
 
-// Biến trạng thái cho Mini Game
 let gameTimers = [];
 let isProcessingQuiz = false;
 let currentQuiz = null;
@@ -21,7 +20,6 @@ let typingScore = 0;
 
 let currentSpeakingWord = null;
 
-// Tải ứng dụng khi trang đã sẵn sàng
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
     setupEventListeners();
@@ -48,6 +46,7 @@ function loadData() {
 
 function saveData() {
     localStorage.setItem('masterDeck', JSON.stringify(masterDeck));
+    filteredDeck = [...masterDeck];
 }
 
 function getSampleData() {
@@ -74,7 +73,7 @@ function clearGameTimers() {
 }
 
 function playSFX(type) {
-    // Tùy chọn âm thanh nếu có
+    // Tùy chọn hiệu ứng âm thanh an toàn
 }
 
 function stopAllSpeech() {
@@ -90,7 +89,6 @@ function updateCard() {
     const card = document.getElementById('flashcard');
     if (card) card.classList.remove('is-flipped');
     
-    // Kiểm tra an toàn khi danh sách từ vựng rỗng
     if (!filteredDeck || filteredDeck.length === 0) {
         setElementText('front-text', 'Chưa có từ vựng');
         setElementText('back-text', 'Vui lòng thêm từ mới');
@@ -133,13 +131,13 @@ function updateCard() {
 }
 
 function nextCard() {
-    if (filteredDeck.length === 0) return;
+    if (!filteredDeck || filteredDeck.length === 0) return;
     currentIndex = (currentIndex + 1) % filteredDeck.length;
     updateCard();
 }
 
 function prevCard() {
-    if (filteredDeck.length === 0) return;
+    if (!filteredDeck || filteredDeck.length === 0) return;
     currentIndex = (currentIndex - 1 + filteredDeck.length) % filteredDeck.length;
     updateCard();
 }
@@ -241,7 +239,7 @@ function startMatchGame() {
     container.innerHTML = '';
 
     if (!masterDeck || masterDeck.length < 2) {
-        container.innerHTML = '<p style="grid-column: span 2; text-align: center;">Cần ít nhất 2 từ vựng để chơi nối từ.</p>';
+        container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-color);">Cần ít nhất 2 từ vựng để chơi nối từ.</p>';
         return;
     }
 
@@ -343,7 +341,7 @@ function startSpeakingGame() {
 }
 
 /* ==========================================================================
-   GEMINI AI INTEGRATION (CHUẨN HÓA CHỐNG LỖI KẾT NỐI & ĐỊNH DẠNG)
+   GEMINI AI INTEGRATION (CHUẨN HÓA AN TOÀN)
    ========================================================================== */
 async function callGeminiAPI(promptText) {
     const apiKey = localStorage.getItem('gemini_api_key');
@@ -364,13 +362,12 @@ async function callGeminiAPI(promptText) {
         });
 
         if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error?.message || `Lỗi HTTP: ${response.status}`);
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `Lỗi kết nối HTTP: ${response.status}`);
         }
 
         const data = await response.json();
 
-        // Bóc tách an toàn tránh lỗi định dạng trả về
         if (
             data &&
             data.candidates &&
@@ -381,7 +378,7 @@ async function callGeminiAPI(promptText) {
         ) {
             return data.candidates[0].content.parts[0].text;
         } else {
-            throw new Error("Định dạng phản hồi từ AI không hợp lệ.");
+            throw new Error("Phản hồi từ AI bị rỗng hoặc không đúng định dạng chuẩn.");
         }
     } catch (error) {
         console.error("Lỗi gọi Gemini API:", error);
@@ -393,7 +390,6 @@ async function callGeminiAPI(promptText) {
    DOM & EVENT LISTENERS
    ========================================================================== */
 function setupEventListeners() {
-    // Chuyển Tab chính
     document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const target = e.currentTarget.dataset.tab;
@@ -416,7 +412,6 @@ function setupEventListeners() {
         });
     });
 
-    // Bắt sự kiện bàn phím cho Flashcard
     document.addEventListener('keydown', (e) => {
         if (activeTab !== 'card') return;
         if (e.key === 'ArrowRight') nextCard();
@@ -427,7 +422,6 @@ function setupEventListeners() {
         }
     });
 
-    // Lắng nghe sự kiện Enter cho game typing
     const typingInput = document.getElementById('typing-input');
     if (typingInput) {
         typingInput.addEventListener('keypress', (e) => {
