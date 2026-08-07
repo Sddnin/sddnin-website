@@ -1,0 +1,8 @@
+.quiz-main { max-width: 600px; margin: 20px auto; padding: 20px; }
+.quiz-question { font-size: 1.8rem; margin-bottom: 20px; }
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-option { padding: 15px; border: 2px solid var(--border-light); border-radius: 10px; cursor: pointer; transition: 0.2s; }
+.quiz-option:hover { border-color: var(--primary-color); }
+.quiz-option.correct { background: #d4edda; border-color: #28a745; }
+.quiz-option.wrong { background: #f8d7da; border-color: #dc3545; }
+.hidden { display: none; }
