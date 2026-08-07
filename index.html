@@ -5,176 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Học Tiếng Hàn 3.0 - AI Chat & Game Luyện Nói</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --bg-color: #f4f7f9;
-            --card-bg: #ffffff;
-            --text-color: #2c3e50;
-            --text-muted: #7f8c8d;
-            --primary-color: #4a90e2;
-            --primary-hover: #357abd;
-            --success-color: #2ecc71;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
-            --border-color: #e2e8f0;
-            --shadow: 0 10px 25px rgba(0,0,0,0.08);
-            --ai-msg-bg: #eef5ff;
-            --user-msg-bg: #4a90e2;
-        }
-
-        body.dark-mode {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --text-muted: #a0a0a0;
-            --primary-color: #3772ff;
-            --border-color: #333333;
-            --shadow: 0 10px 25px rgba(0,0,0,0.4);
-            --ai-msg-bg: #2a2a3c;
-            --user-msg-bg: #3772ff;
-        }
-
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s; }
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-color); color: var(--text-color); padding: 15px; }
-
-        button:disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: none; }
-
-        .top-bar { width: 100%; max-width: 480px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .app-title { font-size: 20px; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 8px; }
-        .top-actions { display: flex; gap: 8px; align-items: center; }
-        .streak-badge { background: #fff3e0; color: #d35400; padding: 5px 10px; border-radius: 20px; font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 4px; border: 1px solid #ffe0b2; }
-        .btn-icon-top { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
-        .category-bar { width: 100%; max-width: 480px; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: none; }
-        .category-bar::-webkit-scrollbar { display: none; }
-        .cat-chip { padding: 6px 14px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; color: var(--text-muted); }
-        .cat-chip.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
-
-        .mode-switcher { display: flex; background: var(--border-color); border-radius: 25px; padding: 3px; margin-bottom: 15px; width: 100%; max-width: 480px; }
-        .mode-switcher button { flex: 1; border: none; background: transparent; padding: 8px 3px; border-radius: 20px; font-weight: 600; cursor: pointer; color: var(--text-muted); font-size: 11px; }
-        .mode-switcher button.active-mode { background: var(--card-bg); color: var(--primary-color); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-
-        .content-card { width: 100%; max-width: 480px; background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); display: none; }
-
-        .dict-search-box { display: flex; gap: 8px; margin-bottom: 15px; }
-        .dict-search-box input { flex: 1; padding: 10px 15px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); border-radius: 20px; outline: none; font-size: 14px; }
-        .dict-search-box button { padding: 10px 18px; border: none; background: var(--primary-color); color: white; border-radius: 20px; cursor: pointer; font-weight: 600; }
-        .dict-result { border: 1px dashed var(--primary-color); background: rgba(74, 144, 226, 0.05); border-radius: 12px; padding: 15px; text-align: center; display: none; margin-top: 10px; }
-        .dict-word-kr { font-size: 28px; font-weight: 700; margin-bottom: 5px; }
-        .dict-word-vi { font-size: 20px; font-weight: 600; color: var(--primary-color); margin-bottom: 10px; }
-        .btn-add-deck { background: var(--success-color); color: white; border: none; padding: 8px 16px; border-radius: 15px; font-size: 13px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-
-        .search-container { width: 100%; max-width: 480px; display: flex; gap: 10px; margin-bottom: 15px; }
-        .search-container input { flex: 1; padding: 10px 15px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); border-radius: 20px; outline: none; font-size: 14px; }
-        .search-container button { width: 40px; border: none; background: var(--primary-color); color: white; border-radius: 50%; cursor: pointer; }
-        
-        .flashcard-wrapper { perspective: 1000px; width: 100%; max-width: 480px; height: 230px; margin-bottom: 15px; }
-        .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); cursor: pointer; border-radius: 16px; box-shadow: var(--shadow); }
-        .card.is-flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; padding: 25px; text-align: center; }
-        .card-back { transform: rotateY(180deg); background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); }
-        .korean { font-size: 32px; font-weight: 700; }
-        .vietnamese { font-size: 26px; font-weight: 600; color: var(--primary-color); }
-        .roman { font-size: 14px; opacity: 0.8; margin-top: 4px; }
-        .card-back .roman { color: var(--text-muted); }
-        .cat-tag { position: absolute; top: 15px; left: 15px; font-size: 11px; background: rgba(0,0,0,0.15); padding: 3px 10px; border-radius: 10px; }
-
-        .btn-speak { position: absolute; top: 15px; right: 15px; border: none; background: rgba(255,255,255,0.25); color: white; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-size: 16px; z-index: 10; }
-        .card-back .btn-speak { background: var(--border-color); color: var(--primary-color); }
-
-        .controls { display: flex; gap: 12px; margin-bottom: 12px; justify-content: center; }
-        .controls button { padding: 8px 18px; border: 1px solid var(--primary-color); background: var(--card-bg); color: var(--primary-color); border-radius: 20px; cursor: pointer; font-weight: 600; }
-        .controls button.active-btn { background: var(--primary-color); color: white; }
-
-        .action-buttons { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
-        .action-buttons button { padding: 6px 14px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-muted); border-radius: 15px; cursor: pointer; font-size: 12px; }
-        .action-buttons button.active-love { background: #ffeaea; color: var(--danger-color); border-color: #ffcdd2; }
-        .action-buttons button.active-hard { background: #fff3e0; color: var(--warning-color); border-color: #ffe0b2; }
-
-        .progress-container { width: 100%; max-width: 300px; text-align: center; font-size: 13px; color: var(--text-muted); margin: 0 auto; }
-        .progress-bar { width: 100%; height: 6px; background: var(--border-color); border-radius: 3px; margin-top: 5px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--primary-color); transition: width 0.3s; width: 0%; }
-
-        .game-selector { display: flex; gap: 6px; width: 100%; max-width: 480px; margin-bottom: 15px; }
-        .game-selector button { flex: 1; padding: 8px 4px; border: 1px solid var(--border-color); background: var(--card-bg); border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--text-muted); }
-        .game-selector button.active-subgame { background: var(--primary-color); color: white; border-color: var(--primary-color); }
-
-        .game-stats { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 12px; font-size: 13px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
-
-        .quiz-card { background: linear-gradient(145deg, #5da0f4, #4a90e2); color: white; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 12px; }
-        .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .quiz-opt-btn { background: var(--bg-color); border: 1px solid var(--border-color); padding: 12px 8px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-color); }
-        .quiz-opt-btn.correct { background: var(--success-color) !important; color: white !important; border-color: var(--success-color) !important; }
-        .quiz-opt-btn.wrong { background: var(--danger-color) !important; color: white !important; border-color: var(--danger-color) !important; }
-
-        .cross-match-container { display: flex; justify-content: space-between; gap: 15px; margin-top: 10px; }
-        .cross-col { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-        .cross-col-header { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
-        .cross-card { background: var(--bg-color); border: 2px solid var(--border-color); padding: 12px 8px; border-radius: 10px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-color); transition: all 0.2s; }
-        .cross-card.selected { border-color: var(--primary-color); background: rgba(74, 144, 226, 0.15); color: var(--primary-color); transform: scale(1.02); }
-        .cross-card.matched-correct { border-color: var(--success-color); background: rgba(46, 204, 113, 0.15); color: var(--success-color); pointer-events: none; opacity: 0.6; }
-        .cross-card.matched-wrong { border-color: var(--danger-color); background: rgba(231, 76, 60, 0.15); color: var(--danger-color); pointer-events: none; }
-
-        .typing-card { background: rgba(74, 144, 226, 0.1); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; }
-        .typing-input-wrap { display: flex; gap: 8px; }
-        .typing-input-wrap input { flex: 1; padding: 10px 15px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); border-radius: 20px; outline: none; font-size: 15px; text-align: center; }
-        .typing-input-wrap button { padding: 10px 20px; border: none; background: var(--primary-color); color: white; border-radius: 20px; cursor: pointer; font-weight: 600; }
-
-        .speak-card { background: linear-gradient(145deg, #8e24aa, #ab47bc); color: white; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(142, 36, 170, 0.25); }
-        .speak-target-word { font-size: 32px; font-weight: 800; letter-spacing: 1px; }
-        .speak-target-vi { font-size: 15px; opacity: 0.9; margin-top: 4px; }
-        
-        .btn-speak-listen { background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
-        .btn-speak-listen:hover { background: rgba(255,255,255,0.4); }
-
-        .mic-btn-large { width: 70px; height: 70px; border-radius: 50%; border: none; background: #ffffff; color: #8e24aa; font-size: 28px; cursor: pointer; margin: 15px auto 10px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(0,0,0,0.2); transition: all 0.3s; }
-        .mic-btn-large.recording { background: #ff1744; color: white; animation: pulse 1.2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 23, 68, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 23, 68, 0); } }
-
-        .eval-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-top: 12px; text-align: center; }
-        .eval-score-ring { font-size: 30px; font-weight: 800; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .eval-rating { font-size: 14px; font-weight: 700; margin: 4px 0; }
-        .eval-transcript { font-size: 13px; color: var(--text-muted); background: var(--card-bg); padding: 8px 12px; border-radius: 8px; margin-top: 8px; border: 1px solid var(--border-color); }
-
-        .ai-scenario-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
-        .ai-scenario-bar::-webkit-scrollbar { display: none; }
-        .scen-chip { padding: 5px 12px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 15px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; color: var(--text-muted); }
-        .scen-chip.active { background: #6c5ce7; color: white; border-color: #6c5ce7; }
-
-        .chat-box { height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px; background: var(--bg-color); border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 10px; }
-        
-        .chat-msg { max-width: 82%; padding: 10px 14px; border-radius: 16px; font-size: 13px; line-height: 1.4; position: relative; }
-        .chat-msg.ai { align-self: flex-start; background: var(--ai-msg-bg); color: var(--text-color); border-bottom-left-radius: 2px; }
-        .chat-msg.user { align-self: flex-end; background: var(--user-msg-bg); color: white; border-bottom-right-radius: 2px; }
-        .chat-msg.system { align-self: center; background: transparent; color: var(--text-muted); font-size: 11px; font-style: italic; }
-
-        .msg-kr { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
-        .msg-vi { font-size: 11px; opacity: 0.8; }
-        .msg-correction { font-size: 11px; color: #d63031; background: #ffeaa7; padding: 4px 8px; border-radius: 6px; margin-top: 4px; font-weight: 600; }
-        .btn-msg-audio { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 12px; margin-left: 6px; }
-
-        .chat-suggestions { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; scrollbar-width: none; }
-        .sug-chip { padding: 4px 10px; background: rgba(108, 92, 231, 0.1); color: #6c5ce7; border: 1px solid rgba(108, 92, 231, 0.3); border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-
-        .chat-input-bar { display: flex; gap: 6px; align-items: center; }
-        .chat-input-bar input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); border-radius: 20px; outline: none; font-size: 13px; }
-        .btn-chat-mic { width: 38px; height: 38px; border-radius: 50%; border: none; background: #6c5ce7; color: white; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
-        .btn-chat-mic.recording { background: #ff1744; animation: pulse 1.2s infinite; }
-        .btn-chat-send { padding: 0 16px; height: 38px; border-radius: 20px; border: none; background: var(--primary-color); color: white; font-weight: 600; cursor: pointer; font-size: 13px; }
-
-        .api-key-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: flex; gap: 6px; align-items: center; font-size: 12px; }
-        .api-key-box input { flex: 1; border: none; background: transparent; color: var(--text-color); outline: none; font-size: 12px; }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
-        .modal-body { background: var(--card-bg); width: 90%; max-width: 400px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); }
-        .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 15px; color: var(--primary-color); display: flex; justify-content: space-between; align-items: center; }
-        .modal-input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color); color: var(--text-color); outline: none; font-size: 13px; }
-        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
-        .modal-btn { padding: 8px 16px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; font-size: 12px; }
-
-        .game-feedback { text-align: center; min-height: 24px; font-weight: 600; margin-top: 10px; font-size: 13px; }
-        .footer { margin-top: 20px; font-size: 12px; color: var(--text-muted); text-align: center; }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
@@ -182,53 +13,53 @@
         <div class="app-title"><i class="fas fa-robot"></i> Hàn-Việt 3.0</div>
         <div class="top-actions">
             <div class="streak-badge"><i class="fas fa-fire"></i> <span id="daily-streak">1</span> ngày</div>
-            <button class="btn-icon-top" onclick="openAddModal()" title="Thêm từ mới"><i class="fas fa-plus"></i></button>
-            <button class="btn-icon-top" onclick="exportImportData()" title="Xuất/Nhập Dữ Liệu JSON"><i class="fas fa-file-export"></i></button>
-            <button class="btn-icon-top" onclick="toggleDarkMode()" title="Tối/Sáng"><i class="fas fa-moon" id="theme-icon"></i></button>
+            <button class="btn-icon-top" id="btn-open-add" title="Thêm từ mới"><i class="fas fa-plus"></i></button>
+            <button class="btn-icon-top" id="btn-export-import" title="Xuất/Nhập Dữ Liệu JSON"><i class="fas fa-file-export"></i></button>
+            <button class="btn-icon-top" id="btn-toggle-theme" title="Tối/Sáng"><i class="fas fa-moon" id="theme-icon"></i></button>
         </div>
     </div>
 
-    <div class="category-bar">
-        <button class="cat-chip active" onclick="filterCategory('ALL')">Tất cả</button>
-        <button class="cat-chip" onclick="filterCategory('Giao tiếp')">Giao tiếp</button>
-        <button class="cat-chip" onclick="filterCategory('Du lịch')">Du lịch & Ẩm thực</button>
-        <button class="cat-chip" onclick="filterCategory('TOPIK 1')">TOPIK 1</button>
-        <button class="cat-chip" onclick="filterCategory('Yêu thích')"><i class="fas fa-heart" style="color:var(--danger-color);"></i> Yêu thích</button>
+    <div class="category-bar" id="category-bar">
+        <button class="cat-chip active" data-cat="ALL">Tất cả</button>
+        <button class="cat-chip" data-cat="Giao tiếp">Giao tiếp</button>
+        <button class="cat-chip" data-cat="Du lịch">Du lịch & Ẩm thực</button>
+        <button class="cat-chip" data-cat="TOPIK 1">TOPIK 1</button>
+        <button class="cat-chip" data-cat="Yêu thích"><i class="fas fa-heart" style="color:var(--danger-color);"></i> Yêu thích</button>
     </div>
 
     <div class="mode-switcher">
-        <button id="mode-dict" class="active-mode" onclick="switchMode('dict')"><i class="fas fa-search"></i> Tra Từ</button>
-        <button id="mode-flashcard" onclick="switchMode('flashcard')"><i class="fas fa-clone"></i> Thẻ Bài (<span id="count-badge">0</span>)</button>
-        <button id="mode-game" onclick="switchMode('game')"><i class="fas fa-gamepad"></i> Mini Games</button>
-        <button id="mode-aichat" onclick="switchMode('aichat')"><i class="fas fa-comments"></i> AI Chat</button>
+        <button id="mode-dict" class="active-mode" data-mode="dict"><i class="fas fa-search"></i> Tra Từ</button>
+        <button id="mode-flashcard" data-mode="flashcard"><i class="fas fa-clone"></i> Thẻ Bài (<span id="count-badge">0</span>)</button>
+        <button id="mode-game" data-mode="game"><i class="fas fa-gamepad"></i> Mini Games</button>
+        <button id="mode-aichat" data-mode="aichat"><i class="fas fa-comments"></i> AI Chat</button>
     </div>
 
     <!-- MODE 1: TRA TỪ -->
     <div id="dict-container" class="content-card" style="display: block;">
         <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px; text-align: center;">Tra từ trực tuyến & Lưu tự động:</div>
         <div class="dict-search-box">
-            <input type="text" id="dict-input" placeholder="Nhập từ Hàn/Việt..." onkeyup="if(event.key==='Enter') lookupDictionary()">
-            <button id="btn-dict-search" onclick="lookupDictionary()"><i class="fas fa-search"></i> Tra</button>
+            <input type="text" id="dict-input" placeholder="Nhập từ Hàn/Việt...">
+            <button id="btn-dict-search"><i class="fas fa-search"></i> Tra</button>
         </div>
         <div id="dict-result" class="dict-result">
             <div class="dict-word-kr" id="res-kr">---</div>
             <div class="dict-word-vi" id="res-vi">---</div>
-            <button class="controls button" style="background: var(--primary-color); color: white; padding: 6px 12px; border-radius: 15px; border:none; cursor:pointer;" onclick="speakText(document.getElementById('res-kr').innerText)"><i class="fas fa-volume-up"></i> Phát âm</button>
+            <button class="controls button" style="background: var(--primary-color); color: white; padding: 6px 12px; border-radius: 15px; border:none; cursor:pointer;" id="btn-dict-speak"><i class="fas fa-volume-up"></i> Phát âm</button>
             <br>
-            <button class="btn-add-deck" onclick="addDictResultToDeck()"><i class="fas fa-plus-circle"></i> Lưu vào bộ từ vựng</button>
+            <button class="btn-add-deck" id="btn-dict-add"><i class="fas fa-plus-circle"></i> Lưu vào bộ từ vựng</button>
         </div>
     </div>
 
     <!-- MODE 2: FLASHCARD -->
     <div id="fc-main-wrapper" style="display:none; width: 100%; max-width: 480px;">
         <div class="search-container">
-            <input type="text" id="search-input" placeholder="Tìm từ..." onkeyup="if(event.key==='Enter') searchWord()">
-            <button onclick="searchWord()"><i class="fas fa-search"></i></button>
+            <input type="text" id="search-input" placeholder="Tìm từ...">
+            <button id="btn-search-word"><i class="fas fa-search"></i></button>
         </div>
 
         <div class="flashcard-wrapper">
-            <div class="card" id="flashcard" onclick="flipCard()">
-                <button class="btn-speak" onclick="event.stopPropagation(); playAudio();"><i class="fas fa-volume-up"></i></button>
+            <div class="card" id="flashcard">
+                <button class="btn-speak" id="btn-card-audio"><i class="fas fa-volume-up"></i></button>
                 <div class="card-face card-front">
                     <span class="cat-tag" id="front-cat">Chủ đề</span>
                     <div style="display:flex; flex-direction:column; gap:6px;">
@@ -247,15 +78,15 @@
         </div>
 
         <div class="controls">
-            <button onclick="prevCard()"><i class="fas fa-chevron-left"></i> Trước</button>
-            <button class="active-btn" onclick="flipCard()"><i class="fas fa-sync-alt"></i> Lật thẻ</button>
-            <button onclick="nextCard()">Sau <i class="fas fa-chevron-right"></i></button>
+            <button id="btn-prev-card"><i class="fas fa-chevron-left"></i> Trước</button>
+            <button class="active-btn" id="btn-flip-card"><i class="fas fa-sync-alt"></i> Lật thẻ</button>
+            <button id="btn-next-card">Sau <i class="fas fa-chevron-right"></i></button>
         </div>
 
         <div class="action-buttons">
-            <button id="btn-fav" onclick="toggleStatus('fav')"><i class="far fa-heart"></i> Yêu thích</button>
-            <button id="btn-hard" onclick="toggleStatus('hard')"><i class="fas fa-exclamation-triangle"></i> Từ khó</button>
-            <button onclick="deleteCurrentWord()" style="color:var(--danger-color);"><i class="fas fa-trash"></i> Xóa từ</button>
+            <button id="btn-fav"><i class="far fa-heart"></i> Yêu thích</button>
+            <button id="btn-hard"><i class="fas fa-exclamation-triangle"></i> Từ khó</button>
+            <button id="btn-delete-word" style="color:var(--danger-color);"><i class="fas fa-trash"></i> Xóa từ</button>
         </div>
 
         <div class="progress-container">
@@ -267,10 +98,10 @@
     <!-- MODE 3: MINI GAMES -->
     <div id="game-main-container" style="display: none; width: 100%; max-width: 480px;">
         <div class="game-selector">
-            <button id="sg-quiz" onclick="switchSubGame('quiz')"><i class="fas fa-list-ul"></i> Trắc Nghiệm</button>
-            <button id="sg-match" onclick="switchSubGame('match')"><i class="fas fa-project-diagram"></i> Nối Từ</button>
-            <button id="sg-typing" onclick="switchSubGame('typing')"><i class="fas fa-keyboard"></i> Gõ Phím</button>
-            <button id="sg-speaking" class="active-subgame" onclick="switchSubGame('speaking')"><i class="fas fa-microphone"></i> Luyện Nói</button>
+            <button id="sg-quiz" data-sub="quiz"><i class="fas fa-list-ul"></i> Trắc Nghiệm</button>
+            <button id="sg-match" data-sub="match"><i class="fas fa-project-diagram"></i> Nối Từ</button>
+            <button id="sg-typing" data-sub="typing"><i class="fas fa-keyboard"></i> Gõ Phím</button>
+            <button id="sg-speaking" class="active-subgame" data-sub="speaking"><i class="fas fa-microphone"></i> Luyện Nói</button>
         </div>
 
         <div id="game-quiz" class="content-card">
@@ -289,7 +120,7 @@
         <div id="game-match" class="content-card">
             <div class="game-stats">
                 <span>Nối từ Hàn - Việt:</span>
-                <button id="btn-refresh-match" onclick="startMatchGame()" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600;"><i class="fas fa-redo"></i> Đổi lượt</button>
+                <button id="btn-refresh-match" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600;"><i class="fas fa-redo"></i> Đổi lượt</button>
             </div>
             <div class="cross-match-container">
                 <div class="cross-col">
@@ -311,11 +142,11 @@
             <div class="typing-card">
                 <div style="font-size: 13px; color:var(--text-muted);">Gõ tiếng Hàn cho từ:</div>
                 <div style="font-size: 24px; font-weight:700; margin: 8px 0; color:var(--primary-color);" id="typing-vi">Xin chào</div>
-                <button class="controls button" style="padding:4px 12px; font-size:12px; border:none; background:var(--card-bg); cursor:pointer; border-radius:12px;" onclick="playTypingAudio()"><i class="fas fa-volume-up"></i> Nghe</button>
+                <button class="controls button" style="padding:4px 12px; font-size:12px; border:none; background:var(--card-bg); cursor:pointer; border-radius:12px;" id="btn-typing-listen"><i class="fas fa-volume-up"></i> Nghe</button>
             </div>
             <div class="typing-input-wrap">
-                <input type="text" id="typing-input" placeholder="Gõ từ tiếng Hàn..." onkeyup="if(event.key==='Enter') checkTyping()">
-                <button id="btn-typing-submit" onclick="checkTyping()">Gửi</button>
+                <input type="text" id="typing-input" placeholder="Gõ từ tiếng Hàn...">
+                <button id="btn-typing-submit">Gửi</button>
             </div>
             <div id="typing-fb" class="game-feedback"></div>
         </div>
@@ -323,18 +154,18 @@
         <div id="game-speaking" class="content-card">
             <div class="game-stats">
                 <span><i class="fas fa-bullhorn"></i> Luyện Phát Âm</span>
-                <button id="btn-next-speak" onclick="nextSpeakingWord()" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600;"><i class="fas fa-forward"></i> Từ tiếp</button>
+                <button id="btn-next-speak" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600;"><i class="fas fa-forward"></i> Từ tiếp</button>
             </div>
 
             <div class="speak-card">
                 <div class="speak-target-word" id="speak-target">안녕하세요</div>
                 <div class="speak-target-vi" id="speak-vi">Xin chào</div>
 
-                <button class="btn-speak-listen" onclick="playSpeakingAudio()">
+                <button class="btn-speak-listen" id="btn-speak-sample">
                     <i class="fas fa-volume-up"></i> Nghe mẫu
                 </button>
 
-                <button class="mic-btn-large" id="btn-mic" onclick="toggleSpeechRecognition()">
+                <button class="mic-btn-large" id="btn-mic">
                     <i class="fas fa-microphone"></i>
                 </button>
                 <div style="font-size:12px; opacity:0.9;" id="mic-status">Nhấn micro và đọc</div>
@@ -355,585 +186,47 @@
     <div id="aichat-main-container" class="content-card">
         <div class="api-key-box">
             <i class="fas fa-key" style="color:var(--primary-color);"></i>
-            <input type="password" id="gemini-api-key" placeholder="Dán Gemini API Key vào đây..." onchange="saveApiKey()">
-            <button style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:700; font-size:11px;" onclick="saveApiKey()">Lưu</button>
+            <input type="password" id="gemini-api-key" placeholder="Dán Gemini API Key vào đây...">
+            <button style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:700; font-size:11px;" id="btn-save-key">Lưu</button>
         </div>
 
-        <div class="ai-scenario-bar">
-            <button class="scen-chip active" onclick="setScenario('free')">💬 Tự Do</button>
-            <button class="scen-chip" onclick="setScenario('food')">🍲 Gọi Món</button>
-            <button class="scen-chip" onclick="setScenario('taxi')">🚕 Đi Taxi</button>
-            <button class="scen-chip" onclick="setScenario('hotel')">🏨 Khách Sạn</button>
+        <div class="ai-scenario-bar" id="ai-scenario-bar">
+            <button class="scen-chip active" data-scen="free">💬 Tự Do</button>
+            <button class="scen-chip" data-scen="food">🍲 Gọi Món</button>
+            <button class="scen-chip" data-scen="taxi">🚕 Đi Taxi</button>
+            <button class="scen-chip" data-scen="hotel">🏨 Khách Sạn</button>
         </div>
 
         <div class="chat-box" id="chat-box"></div>
         <div class="chat-suggestions" id="chat-sug"></div>
 
         <div class="chat-input-bar">
-            <button class="btn-chat-mic" id="btn-chat-mic" onclick="toggleChatMic()" title="Nói">
+            <button class="btn-chat-mic" id="btn-chat-mic" title="Nói">
                 <i class="fas fa-microphone"></i>
             </button>
-            <input type="text" id="chat-input" placeholder="Nhập câu tiếng Hàn..." onkeyup="if(event.key==='Enter') sendChatMessage()">
-            <button class="btn-chat-send" id="btn-chat-send" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+            <input type="text" id="chat-input" placeholder="Nhập câu tiếng Hàn...">
+            <button class="btn-chat-send" id="btn-chat-send"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
     <div class="modal-overlay" id="add-modal">
         <div class="modal-body">
-            <div class="modal-title">Thêm từ mới <i class="fas fa-times" style="cursor:pointer;" onclick="closeAddModal()"></i></div>
+            <div class="modal-title">Thêm từ mới <i class="fas fa-times" style="cursor:pointer;" id="btn-close-modal"></i></div>
             <input type="text" class="modal-input" id="new-kr" placeholder="Tiếng Hàn (VD: 학교)">
             <input type="text" class="modal-input" id="new-rm" placeholder="Phiên âm (VD: hakgyo)">
             <input type="text" class="modal-input" id="new-vi" placeholder="Nghĩa tiếng Việt">
             <input type="text" class="modal-input" id="new-cat" placeholder="Chủ đề">
             <div class="modal-actions">
-                <button class="modal-btn" style="background:var(--border-color);" onclick="closeAddModal()">Hủy</button>
-                <button class="modal-btn" style="background:var(--primary-color); color:white;" onclick="saveCustomWord()">Lưu thẻ</button>
+                <button class="modal-btn" style="background:var(--border-color);" id="btn-cancel-modal">Hủy</button>
+                <button class="modal-btn" style="background:var(--primary-color); color:white;" id="btn-save-modal">Lưu thẻ</button>
             </div>
         </div>
     </div>
 
-    <input type="file" id="import-file" style="display:none;" accept=".json" onchange="handleFileImport(event)">
+    <input type="file" id="import-file" style="display:none;" accept=".json">
 
-    <div class="footer">© 2026 Korean Engine 3.0 • Đã sửa triệt để lỗi lặp tin nhắn khi chuyển tab</div>
+    <div class="footer">© 2026 Korean Engine 3.0 • Optimized for GitHub Pages</div>
 
-    <script>
-        const defaultDeck = [
-            { front: "안녕하세요", roman: "annyeonghaseyo", back: "Xin chào", category: "Giao tiếp", fav: false, hard: false },
-            { front: "감사합니다", roman: "gamsahamnida", back: "Cảm ơn", category: "Giao tiếp", fav: false, hard: false },
-            { front: "죄송합니다", roman: "joesonghamnida", back: "Xin lỗi", category: "Giao tiếp", fav: false, hard: false },
-            { front: "물", roman: "mul", back: "Nước", category: "Du lịch", fav: false, hard: false },
-            { front: "밥", roman: "bap", back: "Cơm", category: "Du lịch", fav: false, hard: false },
-            { front: "학교", roman: "hakgyo", back: "Trường học", category: "TOPIK 1", fav: false, hard: false }
-        ];
-
-        let masterDeck = JSON.parse(localStorage.getItem('kr_deck_2')) || defaultDeck;
-        let filteredDeck = [...masterDeck];
-        let currentIndex = 0;
-        let activeCategory = 'ALL';
-        let currentMode = 'dict'; // Theo dõi tab hiện tại
-        let lastDictResult = null;
-
-        // Cờ chống Spam Click
-        let isFlipping = false;
-        let isFetchingDict = false;
-        let isProcessingQuiz = false;
-        let isProcessingMatch = false;
-        let isProcessingTyping = false;
-        let isChatting = false;
-
-        function playSFX(type) {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-
-                if (type === 'correct') {
-                    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
-                    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                    osc.start(); osc.stop(ctx.currentTime + 0.25);
-                } else if (type === 'wrong') {
-                    osc.frequency.setValueAtTime(220, ctx.currentTime);
-                    osc.frequency.setValueAtTime(164.81, ctx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                    osc.start(); osc.stop(ctx.currentTime + 0.3);
-                }
-            } catch(e) {}
-        }
-
-        function saveDeck() {
-            localStorage.setItem('kr_deck_2', JSON.stringify(masterDeck));
-            applyFilter();
-        }
-
-        function initSettings() {
-            if (localStorage.getItem('kr_darkmode') === 'true') {
-                document.body.classList.add('dark-mode');
-                document.getElementById('theme-icon').className = 'fas fa-sun';
-            }
-            document.getElementById('gemini-api-key').value = localStorage.getItem('gemini_api_key') || '';
-
-            const lastActive = localStorage.getItem('kr_last_active');
-            const today = new Date().toDateString();
-            let streak = parseInt(localStorage.getItem('kr_streak_count') || '1');
-            if (lastActive && lastActive !== today) {
-                const diffDays = Math.round((new Date(today) - new Date(lastActive)) / 86400000);
-                streak = diffDays === 1 ? streak + 1 : 1;
-            }
-            localStorage.setItem('kr_last_active', today);
-            localStorage.setItem('kr_streak_count', streak);
-            document.getElementById('daily-streak').innerText = streak;
-        }
-
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('kr_darkmode', document.body.classList.contains('dark-mode'));
-            document.getElementById('theme-icon').className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
-        }
-
-        function saveApiKey() {
-            localStorage.setItem('gemini_api_key', document.getElementById('gemini-api-key').value.trim());
-            alert('Đã lưu API Key!');
-        }
-
-        function filterCategory(cat) {
-            activeCategory = cat;
-            document.querySelectorAll('.cat-chip').forEach(btn => btn.classList.toggle('active', btn.innerText.includes(cat) || (cat==='ALL' && btn.innerText==='Tất cả')));
-            applyFilter();
-        }
-
-        function applyFilter() {
-            filteredDeck = activeCategory === 'ALL' ? [...masterDeck] : (activeCategory === 'Yêu thích' ? masterDeck.filter(w => w.fav) : masterDeck.filter(w => w.category === activeCategory));
-            if (filteredDeck.length === 0) filteredDeck = [{ front: "Không có từ", roman: "-", back: "-", category: "-" }];
-            if (currentIndex >= filteredDeck.length) currentIndex = 0;
-            updateCard();
-        }
-
-        const card = document.getElementById('flashcard');
-        function updateCard() {
-            card.classList.remove('is-flipped');
-            const c = filteredDeck[currentIndex];
-            document.getElementById('front-text').innerText = c.front;
-            document.getElementById('back-text').innerText = c.back;
-            document.getElementById('front-roman').innerText = c.roman || '';
-            document.getElementById('back-roman').innerText = c.roman || '';
-            document.getElementById('front-cat').innerText = c.category || 'Chủ đề';
-            document.getElementById('back-cat').innerText = c.category || 'Chủ đề';
-            document.getElementById('current-idx').innerText = filteredDeck.length ? currentIndex + 1 : 0;
-            document.getElementById('total-idx').innerText = filteredDeck.length;
-            document.getElementById('progress-fill').style.width = filteredDeck.length ? ((currentIndex + 1) / filteredDeck.length) * 100 + '%' : '0%';
-            document.getElementById('btn-fav').className = c.fav ? 'active-love' : '';
-            document.getElementById('btn-hard').className = c.hard ? 'active-hard' : '';
-            document.getElementById('count-badge').innerText = masterDeck.length;
-        }
-
-        function flipCard() {
-            if (isFlipping) return;
-            isFlipping = true;
-            card.classList.toggle('is-flipped');
-            setTimeout(() => { isFlipping = false; }, 400); 
-        }
-
-        function prevCard() { if (currentIndex > 0) { currentIndex--; updateCard(); } }
-        function nextCard() { if (currentIndex < filteredDeck.length - 1) { currentIndex++; updateCard(); } }
-
-        function toggleStatus(type) {
-            const c = filteredDeck[currentIndex];
-            if (!c || c.front === "Không có từ") return;
-            if (type === 'fav') c.fav = !c.fav;
-            if (type === 'hard') c.hard = !c.hard;
-            saveDeck();
-        }
-
-        function deleteCurrentWord() {
-            const c = filteredDeck[currentIndex];
-            if (!c || c.front === "Không có từ") return;
-            if (confirm(`Xóa từ "${c.front}"?`)) { masterDeck = masterDeck.filter(w => w.front !== c.front); saveDeck(); }
-        }
-
-        function speakText(text) {
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(text);
-                u.lang = 'ko-KR'; u.rate = 0.8;
-                window.speechSynthesis.speak(u);
-            }
-        }
-        function playAudio() { speakText(filteredDeck[currentIndex].front); }
-
-        async function lookupDictionary() {
-            if (isFetchingDict) return;
-            const query = document.getElementById('dict-input').value.trim();
-            if (!query) return;
-            
-            isFetchingDict = true;
-            const btn = document.getElementById('btn-dict-search');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Tra...';
-            document.getElementById('dict-result').style.display = 'block';
-            document.getElementById('res-kr').innerText = 'Đang tra...';
-            document.getElementById('res-vi').innerText = '';
-
-            try {
-                const isKorean = /[\u3131-\u318E\uAC00-\uD7A3]/.test(query);
-                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${isKorean?'ko':'vi'}&tl=${isKorean?'vi':'ko'}&dt=t&q=${encodeURIComponent(query)}`;
-                const res = await fetch(url);
-                const data = await res.json();
-                const kr = isKorean ? data[0][0][1] : data[0][0][0];
-                const vi = isKorean ? data[0][0][0] : data[0][0][1];
-                document.getElementById('res-kr').innerText = kr;
-                document.getElementById('res-vi').innerText = vi;
-                lastDictResult = { front: kr, roman: 'Tra cứu', back: vi, category: 'Đã lưu', fav: false, hard: false };
-            } catch (e) { document.getElementById('res-kr').innerText = 'Lỗi tra cứu!'; }
-
-            isFetchingDict = false;
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-search"></i> Tra';
-        }
-
-        function addDictResultToDeck() {
-            if (!lastDictResult || masterDeck.some(c => c.front === lastDictResult.front)) return alert('Từ này đã có hoặc chưa hợp lệ!');
-            masterDeck.push(lastDictResult); saveDeck(); alert(`Đã lưu "${lastDictResult.front}"!`);
-        }
-
-        function openAddModal() { document.getElementById('add-modal').style.display = 'flex'; }
-        function closeAddModal() { document.getElementById('add-modal').style.display = 'none'; }
-        function saveCustomWord() {
-            const kr = document.getElementById('new-kr').value.trim();
-            const rm = document.getElementById('new-rm').value.trim();
-            const vi = document.getElementById('new-vi').value.trim();
-            const cat = document.getElementById('new-cat').value.trim() || 'Cá nhân';
-            if (!kr || !vi) return alert('Nhập đủ từ Hàn và Việt!');
-            masterDeck.push({ front: kr, roman: rm, back: vi, category: cat, fav: false, hard: false });
-            saveDeck(); closeAddModal(); alert('Đã thêm!');
-        }
-
-        function exportImportData() {
-            const choice = prompt("Nhập '1' để XUẤT, '2' để NHẬP JSON.");
-            if (choice === '1') {
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(new Blob([JSON.stringify(masterDeck, null, 2)], { type: 'application/json' }));
-                a.download = 'bo_tu.json'; a.click();
-            } else if (choice === '2') document.getElementById('import-file').click();
-        }
-
-        function handleFileImport(e) {
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                try {
-                    const data = JSON.parse(evt.target.result);
-                    if (Array.isArray(data)) { masterDeck = data; saveDeck(); alert('Đã nhập dữ liệu!'); }
-                } catch(err) { alert('Lỗi định dạng!'); }
-            };
-            if(e.target.files[0]) reader.readAsText(e.target.files[0]);
-        }
-
-        /* --- SỬA CHÍNH: KHÔNG TỰ KHỞI TẠO LẠI CHAT KHI CHUYỂN TAB --- */
-        function switchMode(mode) {
-            currentMode = mode;
-            if (window.speechSynthesis) window.speechSynthesis.cancel(); // Tắt giọng đọc khi đổi tab
-
-            ['dict', 'flashcard', 'game', 'aichat'].forEach(m => {
-                document.getElementById(m + (m==='dict'?'-container':(m==='aichat'?'-main-container':'-main-wrapper'))).style.display = m === mode ? 'block' : 'none';
-                document.getElementById('mode-' + m).className = m === mode ? 'active-mode' : '';
-            });
-
-            // Chỉ khởi tạo AI Chat LẦN ĐẦU TIÊN duy nhất
-            if (mode === 'aichat' && chatHistory.length === 0) {
-                initAiChat();
-            }
-        }
-
-        function switchSubGame(sub) {
-            ['quiz', 'match', 'typing', 'speaking'].forEach(g => {
-                document.getElementById('game-' + g).style.display = g === sub ? 'block' : 'none';
-                document.getElementById('sg-' + g).className = g === sub ? 'active-subgame' : '';
-            });
-            if (sub === 'quiz') startQuizGame();
-            if (sub === 'match') startMatchGame();
-            if (sub === 'typing') startTypingGame();
-            if (sub === 'speaking') startSpeakingGame();
-        }
-
-        // Mini Games
-        let quizScore = 0, quizStreak = 0, currentQuiz = null;
-        function startQuizGame() {
-            isProcessingQuiz = false;
-            document.getElementById('quiz-fb').innerText = '';
-            currentQuiz = masterDeck[Math.floor(Math.random() * masterDeck.length)];
-            document.getElementById('quiz-kr').innerText = currentQuiz.front;
-            document.getElementById('quiz-rm').innerText = currentQuiz.roman || '';
-            const opts = [currentQuiz.back];
-            while(opts.length < Math.min(4, masterDeck.length)) {
-                const r = masterDeck[Math.floor(Math.random() * masterDeck.length)].back;
-                if(!opts.includes(r)) opts.push(r);
-            }
-            opts.sort(() => Math.random() - 0.5);
-            const container = document.getElementById('quiz-opts');
-            container.innerHTML = '';
-            opts.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'quiz-opt-btn'; btn.innerText = opt;
-                btn.onclick = () => {
-                    if (isProcessingQuiz) return;
-                    isProcessingQuiz = true;
-                    if(opt === currentQuiz.back) {
-                        btn.classList.add('correct'); playSFX('correct');
-                        quizScore += 10; quizStreak++;
-                        document.getElementById('quiz-fb').innerHTML = '<span style="color:var(--success-color);">Chính xác!</span>';
-                    } else {
-                        btn.classList.add('wrong'); playSFX('wrong');
-                        quizStreak = 0;
-                        document.getElementById('quiz-fb').innerHTML = `<span style="color:var(--danger-color);">Sai! Đáp án: ${currentQuiz.back}</span>`;
-                    }
-                    document.getElementById('quiz-score').innerText = quizScore;
-                    document.getElementById('quiz-streak').innerText = quizStreak;
-                    setTimeout(startQuizGame, 1000);
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        let selectedKrElem = null, selectedViElem = null, matchedPairsCount = 0, totalPairsInRound = 0;
-        function startMatchGame() {
-            document.getElementById('match-fb').innerText = '';
-            selectedKrElem = null; selectedViElem = null; matchedPairsCount = 0;
-            const krListDiv = document.getElementById('col-kr-list');
-            const viListDiv = document.getElementById('col-vi-list');
-            krListDiv.innerHTML = ''; viListDiv.innerHTML = '';
-            
-            const sampleSize = Math.min(4, masterDeck.length);
-            totalPairsInRound = sampleSize;
-            const roundWords = [...masterDeck].sort(() => Math.random() - 0.5).slice(0, sampleSize);
-            const shuffledVi = [...roundWords].sort(() => Math.random() - 0.5);
-
-            roundWords.forEach(w => {
-                const div = document.createElement('div');
-                div.className = 'cross-card'; div.innerText = w.front; div.dataset.id = w.front;
-                div.onclick = () => selectCrossCard(div, 'kr');
-                krListDiv.appendChild(div);
-            });
-            shuffledVi.forEach(w => {
-                const div = document.createElement('div');
-                div.className = 'cross-card'; div.innerText = w.back; div.dataset.id = w.front;
-                div.onclick = () => selectCrossCard(div, 'vi');
-                viListDiv.appendChild(div);
-            });
-        }
-
-        function selectCrossCard(elem, colType) {
-            if (isProcessingMatch || elem.classList.contains('matched-correct')) return;
-            if (colType === 'kr') {
-                if (selectedKrElem) selectedKrElem.classList.remove('selected');
-                selectedKrElem = elem; selectedKrElem.classList.add('selected');
-            } else {
-                if (selectedViElem) selectedViElem.classList.remove('selected');
-                selectedViElem = elem; selectedViElem.classList.add('selected');
-            }
-
-            if (selectedKrElem && selectedViElem) {
-                if (selectedKrElem.dataset.id === selectedViElem.dataset.id) {
-                    playSFX('correct');
-                    selectedKrElem.className = 'cross-card matched-correct';
-                    selectedViElem.className = 'cross-card matched-correct';
-                    selectedKrElem = null; selectedViElem = null; matchedPairsCount++;
-                    if (matchedPairsCount === totalPairsInRound) document.getElementById('match-fb').innerHTML = '<span style="color:var(--success-color);">Tuyệt vời! Hoàn thành! 🎉</span>';
-                } else {
-                    isProcessingMatch = true;
-                    playSFX('wrong');
-                    const tempKr = selectedKrElem, tempVi = selectedViElem;
-                    tempKr.classList.add('matched-wrong'); tempVi.classList.add('matched-wrong');
-                    selectedKrElem = null; selectedViElem = null;
-                    setTimeout(() => {
-                        tempKr.classList.remove('selected', 'matched-wrong');
-                        tempVi.classList.remove('selected', 'matched-wrong');
-                        isProcessingMatch = false;
-                    }, 500);
-                }
-            }
-        }
-
-        let typingScore = 0, currentTyping = null;
-        function startTypingGame() {
-            isProcessingTyping = false;
-            document.getElementById('btn-typing-submit').disabled = false;
-            document.getElementById('typing-fb').innerText = '';
-            document.getElementById('typing-input').value = '';
-            currentTyping = masterDeck[Math.floor(Math.random() * masterDeck.length)];
-            document.getElementById('typing-vi').innerText = currentTyping.back;
-        }
-        function playTypingAudio() { if (currentTyping) speakText(currentTyping.front); }
-        function checkTyping() {
-            if (isProcessingTyping) return;
-            const val = document.getElementById('typing-input').value.trim();
-            if (!val) return;
-            
-            isProcessingTyping = true;
-            document.getElementById('btn-typing-submit').disabled = true;
-
-            if (val === currentTyping.front) {
-                playSFX('correct'); typingScore += 10;
-                document.getElementById('typing-score').innerText = typingScore;
-                document.getElementById('typing-fb').innerHTML = '<span style="color:var(--success-color);">Đúng rồi!</span>';
-                setTimeout(startTypingGame, 1000);
-            } else {
-                playSFX('wrong');
-                document.getElementById('typing-fb').innerHTML = `<span style="color:var(--danger-color);">Sai! Đáp án: <strong>${currentTyping.front}</strong></span>`;
-                setTimeout(() => { 
-                    isProcessingTyping = false; 
-                    document.getElementById('btn-typing-submit').disabled = false;
-                }, 1000);
-            }
-        }
-
-        let recognition = null, currentSpeaking = null;
-        function calcSim(s1, s2) {
-            s1 = s1.replace(/\s+/g,'').toLowerCase(); s2 = s2.replace(/\s+/g,'').toLowerCase();
-            if(s1===s2) return 100;
-            const len = Math.max(s1.length, s2.length);
-            if(len===0) return 100;
-            let m = [];
-            for(let i=0; i<=s1.length; i++) m[i] = [i];
-            for(let j=0; j<=s2.length; j++) m[0][j] = j;
-            for(let i=1; i<=s1.length; i++){
-                for(let j=1; j<=s2.length; j++){
-                    if(s1[i-1]===s2[j-1]) m[i][j] = m[i-1][j-1];
-                    else m[i][j] = Math.min(m[i-1][j-1]+1, m[i][j-1]+1, m[i-1][j]+1);
-                }
-            }
-            return Math.round(Math.max(0, (1 - m[s1.length][s2.length]/len)*100));
-        }
-
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRec(); recognition.lang = 'ko-KR'; recognition.interimResults = false;
-            recognition.onstart = () => {
-                document.getElementById('btn-mic').classList.add('recording');
-                document.getElementById('btn-mic').disabled = true;
-                document.getElementById('mic-status').innerText = 'Đang nghe...';
-                document.getElementById('eval-box').style.display = 'none';
-            };
-            recognition.onresult = (e) => {
-                const res = e.results[0][0].transcript.trim();
-                const sim = calcSim(currentSpeaking.front, res);
-                document.getElementById('eval-box').style.display = 'block';
-                document.getElementById('eval-score').innerText = `${sim}%`;
-                document.getElementById('eval-transcript').innerText = `Máy nghe: "${res}"`;
-                if(sim>=85){ playSFX('correct'); document.getElementById('eval-rating').innerHTML = '<span style="color:var(--success-color);">Xuất sắc!</span>'; }
-                else if(sim>=50){ playSFX('correct'); document.getElementById('eval-rating').innerHTML = '<span style="color:var(--warning-color);">Khá tốt!</span>'; }
-                else{ playSFX('wrong'); document.getElementById('eval-rating').innerHTML = '<span style="color:var(--danger-color);">Cần luyện lại</span>'; }
-            };
-            recognition.onend = () => {
-                document.getElementById('btn-mic').classList.remove('recording');
-                document.getElementById('btn-mic').disabled = false;
-                document.getElementById('mic-status').innerText = 'Nhấn mic để đọc';
-            };
-        }
-
-        function playSpeakingAudio() { if(currentSpeaking) speakText(currentSpeaking.front); }
-        function startSpeakingGame() {
-            document.getElementById('speak-fb').innerText = ''; document.getElementById('eval-box').style.display = 'none';
-            currentSpeaking = masterDeck[Math.floor(Math.random() * masterDeck.length)];
-            document.getElementById('speak-target').innerText = currentSpeaking.front;
-            document.getElementById('speak-vi').innerText = currentSpeaking.back;
-        }
-        function nextSpeakingWord() { startSpeakingGame(); }
-        function toggleSpeechRecognition() {
-            if(!recognition) return alert('Trình duyệt không hỗ trợ Mic!');
-            try { recognition.start(); } catch(e) {}
-        }
-
-        /* --- XỬ LÝ CHAT AI CHỐNG TỰ ĐỘNG CHÈN TIN NHẮN KHI CHUYỂN TAB --- */
-        const scenariosPrompt = {
-            free: { prompt: "Giáo viên tiếng Hàn. Trò chuyện 1-2 câu.", greeting: "안녕하세요! 무슨 이야기하고 싶어요?", vi: "Xin chào! Bạn muốn nói chuyện gì?", sug: ["오늘 날씨 어때요?", "한국어 공부하고 있어요", "취미가 무엇이에요?"] },
-            food: { prompt: "Phục vụ nhà hàng Hàn Quốc. Khách gọi món.", greeting: "어서 오세요! 몇 분이세요?", vi: "Chào quý khách! Đi mấy người ạ?", sug: ["비빔밥 하나 주세요", "메뉴판 좀 주세요", "이거 얼마예요?"] },
-            taxi: { prompt: "Tài xế taxi ở Seoul.", greeting: "안녕하세요! 어디로 모실까요?", vi: "Xin chào! Tôi đưa bạn đi đâu?", sug: ["명동으로 가주세요", "얼마나 걸려요?", "여기서 세워주세요"] },
-            hotel: { prompt: "Lễ tân khách sạn.", greeting: "한국 호텔입니다. 예약하셨나요?", vi: "Khách sạn Hàn Quốc. Bạn đã đặt phòng chưa?", sug: ["예약했어요", "체크인 하고 싶어요", "방 있어요?"] }
-        };
-        let currentScenario = 'free', chatHistory = [], chatRec = null;
-
-        function setScenario(k) {
-            currentScenario = k;
-            document.querySelectorAll('.scen-chip').forEach(c => c.classList.toggle('active', c.getAttribute('onclick').includes(k)));
-            initAiChat();
-        }
-
-        function initAiChat() {
-            document.getElementById('chat-box').innerHTML = ''; 
-            chatHistory = []; // Reset lịch sử
-            const s = scenariosPrompt[currentScenario];
-            appendMessage('ai', s.greeting, s.vi); 
-            renderSuggestions(s.sug);
-        }
-
-        function renderSuggestions(arr) {
-            const c = document.getElementById('chat-sug'); c.innerHTML = '';
-            (arr||[]).forEach(t => {
-                const d = document.createElement('div'); d.className = 'sug-chip'; d.innerText = t;
-                d.onclick = () => { document.getElementById('chat-input').value = t; sendChatMessage(); };
-                c.appendChild(d);
-            });
-        }
-
-        function appendMessage(sender, kr, vi, corr) {
-            // SỬA: Lưu tin nhắn vào mảng chatHistory để không bị ghi đè/tự khởi tạo lại
-            chatHistory.push({ sender, kr, vi, corr });
-
-            const b = document.getElementById('chat-box'), d = document.createElement('div');
-            d.className = `chat-msg ${sender}`;
-            let h = `<div class="msg-kr">${kr} <button class="btn-msg-audio" onclick="speakText('${kr.replace(/'/g,"\\'")}')"><i class="fas fa-volume-up"></i></button></div>`;
-            if(vi) h += `<div class="msg-vi">${vi}</div>`;
-            if(corr) h += `<div class="msg-correction"><i class="fas fa-magic"></i> ${corr}</div>`;
-            if(sender==='system') h = kr;
-            d.innerHTML = h; b.appendChild(d); b.scrollTop = b.scrollHeight;
-            if(sender==='ai' && currentMode === 'aichat') speakText(kr);
-        }
-
-        async function sendChatMessage() {
-            if(isChatting) return;
-            const inp = document.getElementById('chat-input'), msg = inp.value.trim();
-            if(!msg) return;
-
-            isChatting = true;
-            const btn = document.getElementById('btn-chat-send');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            inp.value = ''; 
-            appendMessage('user', msg); 
-            document.getElementById('chat-sug').innerHTML = '';
-
-            const key = localStorage.getItem('gemini_api_key');
-            if(!key) {
-                setTimeout(() => {
-                    appendMessage('system', 'Vui lòng nhập Gemini API Key (góc trên) để AI trả lời.');
-                    isChatting = false; btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-                }, 500);
-                return;
-            }
-
-            try {
-                const bodyObj = { contents: [{ parts: [{ text: `Kịch bản: ${scenariosPrompt[currentScenario].prompt}. Người dùng: "${msg}". Yêu cầu JSON: {"korean":"1-2 câu tiếng Hàn","vietnamese":"nghĩa","correction":"sửa lỗi nếu có, ko thì rỗng","suggestions":["3 câu gợi ý"]}` }]}] };
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(bodyObj) });
-                const data = await res.json();
-                
-                // Kiểm tra nếu người dùng vẫn ở tab AI thì mới render kết quả
-                if (currentMode === 'aichat') {
-                    const clean = data.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
-                    const obj = JSON.parse(clean);
-                    appendMessage('ai', obj.korean, obj.vietnamese, obj.correction);
-                    renderSuggestions(obj.suggestions);
-                }
-            } catch(e) { 
-                if (currentMode === 'aichat') appendMessage('system', 'Lỗi kết nối AI hoặc định dạng trả về.'); 
-            }
-            
-            isChatting = false;
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-        }
-
-        function toggleChatMic() {
-            if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return alert('Không hỗ trợ mic!');
-            if(!chatRec) {
-                const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-                chatRec = new SpeechRec(); chatRec.lang = 'ko-KR';
-                chatRec.onstart = () => document.getElementById('btn-chat-mic').classList.add('recording');
-                chatRec.onresult = (e) => { document.getElementById('chat-input').value = e.results[0][0].transcript; sendChatMessage(); };
-                chatRec.onend = () => document.getElementById('btn-chat-mic').classList.remove('recording');
-            }
-            try { chatRec.start(); } catch(e) {}
-        }
-
-        function searchWord() {
-            const v = document.getElementById('search-input').value.toLowerCase().trim();
-            if(!v) return;
-            const i = filteredDeck.findIndex(c => c.front.toLowerCase().includes(v) || c.back.toLowerCase().includes(v));
-            if(i !== -1) { currentIndex = i; updateCard(); } else alert("Không tìm thấy!");
-        }
-
-        initSettings(); applyFilter(); switchMode('dict');
-    </script>
+    <script src="js/app.js"></script>
 </body>
 </html>
