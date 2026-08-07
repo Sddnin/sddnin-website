@@ -3,17 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Korean Flashcard Hub - Học tiếng Hàn hiệu quả</title>
+    <meta name="description" content="Học tiếng Hàn với Flashcard thông minh, Hanja, Ngữ pháp, Quiz và hệ thống ôn tập SRS. Theo dõi tiến độ, thêm từ vựng riêng.">
+    <meta name="keywords" content="học tiếng Hàn, flashcard, hanja, ngữ pháp, quiz, SRS, spaced repetition, từ vựng, TOPIK">
+    <meta property="og:title" content="Korean Flashcard Hub">
+    <meta property="og:description" content="Học tiếng Hàn với Flashcard thông minh, Hanja, Ngữ pháp, Quiz và hệ thống ôn tập SRS.">
+    <meta property="og:image" content="assets/images/icons/icon-512x512.png">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Korean Flashcard Hub">
+    <meta name="twitter:description" content="Học tiếng Hàn với Flashcard thông minh, Hanja, Ngữ pháp, Quiz và hệ thống ôn tập SRS.">
+    <meta name="twitter:image" content="assets/images/icons/icon-512x512.png">
+    
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="assets/images/icons/icon-192x192.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4A90D9">
-    <title>Korean Flashcard Hub</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/animation.css">
-    <link rel="stylesheet" href="assets/css/responsive.css">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Preload font nếu dùng Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS base -->
+    <link rel="stylesheet" href="assets/css/base/variables.css">
+    <link rel="stylesheet" href="assets/css/base/reset.css">
+    <link rel="stylesheet" href="assets/css/base/typography.css">
+    <!-- CSS layout -->
+    <link rel="stylesheet" href="assets/css/layout/header.css">
+    <link rel="stylesheet" href="assets/css/layout/footer.css">
+    <!-- CSS components (sẽ load sau nếu cần) -->
+    <link rel="stylesheet" href="assets/css/components/card.css">
+    <link rel="stylesheet" href="assets/css/components/button.css">
+    <!-- CSS utilities -->
+    <link rel="stylesheet" href="assets/css/utilities/animations.css">
+    <link rel="stylesheet" href="assets/css/utilities/responsive.css">
 </head>
 <body>
-    <header class="main-header">
-        <div class="logo"><h1>🇰🇷 Korean Flashcard Hub</h1></div>
-        <nav class="main-nav">
+    <header class="header glass">
+        <div class="header__logo">
+            <h1>🇰🇷 Korean Flashcard Hub</h1>
+        </div>
+        <nav class="header__nav">
             <ul>
                 <li><a href="index.html" class="active">Trang chủ</a></li>
                 <li><a href="pages/flashcard.html">Flashcard</a></li>
@@ -25,30 +59,67 @@
                 <li><a href="pages/stats.html">Thống kê</a></li>
             </ul>
         </nav>
-        <button id="theme-toggle" class="theme-btn">🌙</button>
+        <button id="theme-toggle" class="button--icon" aria-label="Chuyển chế độ tối/sáng">🌙</button>
     </header>
 
-    <main>
-        <section class="hero fade-in">
-            <div class="hero-content">
+    <main class="main-home">
+        <section class="hero animate-fade-in">
+            <div class="hero__content">
                 <h2>Chinh phục tiếng Hàn cùng Flashcard thông minh</h2>
                 <p>Học từ vựng, Hanja, ngữ pháp, quiz, ôn tập SRS và theo dõi tiến độ.</p>
-                <a href="pages/flashcard.html" class="cta-button floating">Bắt đầu học ngay</a>
+                <a href="pages/flashcard.html" class="button button--primary floating">Bắt đầu học ngay</a>
             </div>
-            <div class="hero-stats">
-                <div class="stat-item slide-up"><span class="stat-number">500+</span><span class="stat-label">Từ vựng</span></div>
-                <div class="stat-item slide-up" style="animation-delay:0.2s"><span class="stat-number">100+</span><span class="stat-label">Hanja</span></div>
-                <div class="stat-item slide-up" style="animation-delay:0.4s"><span class="stat-number">50+</span><span class="stat-label">Ngữ pháp</span></div>
+            <div class="hero__stats">
+                <div class="stat-card animate-slide-up">
+                    <span class="stat-card__number">500+</span>
+                    <span class="stat-card__label">Từ vựng</span>
+                </div>
+                <div class="stat-card animate-slide-up" style="animation-delay:0.2s">
+                    <span class="stat-card__number">100+</span>
+                    <span class="stat-card__label">Hanja</span>
+                </div>
+                <div class="stat-card animate-slide-up" style="animation-delay:0.4s">
+                    <span class="stat-card__number">50+</span>
+                    <span class="stat-card__label">Ngữ pháp</span>
+                </div>
             </div>
         </section>
-        <!-- Features giữ nguyên -->
+
+        <section class="features animate-fade-in">
+            <h3>Tính năng nổi bật</h3>
+            <div class="card-grid">
+                <div class="card card--interactive">
+                    <span class="card__icon">🔄</span>
+                    <h4>Flashcard 3D</h4>
+                    <p>Lật thẻ, phát âm, hiệu ứng nổi bật.</p>
+                </div>
+                <div class="card card--interactive">
+                    <span class="card__icon">📊</span>
+                    <h4>Ôn tập SRS</h4>
+                    <p>Thuật toán lặp lại ngắt quãng thông minh.</p>
+                </div>
+                <div class="card card--interactive">
+                    <span class="card__icon">❓</span>
+                    <h4>Quiz trắc nghiệm</h4>
+                    <p>Kiểm tra nhanh kiến thức.</p>
+                </div>
+                <div class="card card--interactive">
+                    <span class="card__icon">➕</span>
+                    <h4>Thêm từ riêng</h4>
+                    <p>Xây dựng bộ từ vựng cá nhân.</p>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <footer class="main-footer"><p>&copy; 2024 Korean Flashcard Hub</p></footer>
+    <footer class="footer">
+        <p>&copy; 2024 Korean Flashcard Hub. Học mỗi ngày, tiến bộ mỗi ngày.</p>
+    </footer>
 
-    <script src="assets/js/storage.js"></script>
-    <script src="assets/js/theme.js"></script>
-    <script src="assets/js/app.js"></script>
-    <script src="assets/js/pwa.js"></script>
+    <!-- Scripts -->
+    <script src="assets/js/core/storage.js" defer></script>
+    <script src="assets/js/modules/theme.js" defer></script>
+    <script src="assets/js/core/app.js" defer></script>
+    <script src="assets/js/modules/pwa.js" defer></script>
 </body>
 </html>
