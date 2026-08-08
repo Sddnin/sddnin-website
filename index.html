@@ -32,6 +32,7 @@
         <button id="mode-flashcard" data-mode="flashcard"><i class="fas fa-clone"></i> Thẻ Bài (<span id="count-badge">0</span>)</button>
         <button id="mode-game" data-mode="game"><i class="fas fa-gamepad"></i> Mini Games</button>
         <button id="mode-aichat" data-mode="aichat"><i class="fas fa-comments"></i> AI Chat</button>
+        <button id="mode-voice" data-mode="voice"><i class="fas fa-satellite-dish"></i> Voice AI</button>
     </div>
 
     <!-- MODE 1: TRA TỪ -->
@@ -207,6 +208,33 @@
             <input type="text" id="chat-input" placeholder="Nhập câu tiếng Hàn...">
             <button class="btn-chat-send" id="btn-chat-send"><i class="fas fa-paper-plane"></i></button>
         </div>
+    </div>
+
+    <!-- MODE 5: VOICE AI (Gemini 3.1 Flash Live — nói chuyện 2 chiều bằng giọng nói thật) -->
+    <div id="voice-main-container" class="content-card">
+        <div class="ai-scenario-bar" id="voice-scenario-bar">
+            <button class="scen-chip active" data-vscen="free">💬 Tự Do</button>
+            <button class="scen-chip" data-vscen="food">🍲 Gọi Món</button>
+            <button class="scen-chip" data-vscen="taxi">🚕 Đi Taxi</button>
+            <button class="scen-chip" data-vscen="hotel">🏨 Khách Sạn</button>
+        </div>
+
+        <div class="voice-status-row">
+            <span class="voice-status-dot" id="voice-status-dot"></span>
+            <span id="voice-status-text">Chưa kết nối</span>
+        </div>
+
+        <div class="chat-box" id="voice-transcript-box"></div>
+
+        <div class="speak-card voice-call-card">
+            <div style="font-size:13px; opacity:0.9; margin-bottom: 4px;">Nhấn để bắt đầu gọi bằng giọng nói</div>
+            <button class="mic-btn-large" id="btn-voice-call">
+                <i class="fas fa-phone" id="voice-call-icon"></i>
+            </button>
+            <div style="font-size:12px; opacity:0.9;" id="voice-call-hint">Nhấn để kết nối</div>
+        </div>
+
+        <div id="voice-fb" class="game-feedback"></div>
     </div>
 
     <div class="modal-overlay" id="add-modal">
