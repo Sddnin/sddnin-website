@@ -18,9 +18,10 @@
     13. MINI GAME 4: Luyện nói (SpeechRecognition + Gemini chấm điểm %)
     14. GEMINI AI CORE (gọi API dùng chung cho mọi tính năng ở trên)
     15. AI CHAT (hội thoại luyện tiếng Hàn theo kịch bản)
-    16. TEXT-TO-SPEECH (phát âm mẫu)
-    17. EVENT LISTENERS (setupEventListeners — nối TOÀN BỘ nút trong HTML)
-    18. BOOTSTRAP
+    16. VOICE AI (Gemini 3.1 Flash Live — voice-to-voice 2 chiều qua WebSocket)
+    17. TEXT-TO-SPEECH (phát âm mẫu)
+    18. EVENT LISTENERS (setupEventListeners — nối TOÀN BỘ nút trong HTML)
+    19. BOOTSTRAP
    ========================================================================== */
 
 /* ==========================================================================
@@ -65,6 +66,22 @@ let activeScenario = 'free';
 let isSendingChatMessage = false; // Chặn double-send
 let chatRecognizer = null;
 let isChatRecording = false;
+
+// --- Voice AI (Gemini 3.1 Flash Live — voice-to-voice 2 chiều qua WebSocket) ---
+let voiceScenario = 'free';        // Kịch bản đang chọn (dùng chung 4 kịch bản với AI Chat)
+let voiceSocket = null;            // Kết nối WebSocket tới Gemini Live API
+let voiceState = 'idle';           // idle | connecting | connected | error — trạng thái tổng của phiên gọi
+let voiceAudioContextIn = null;    // AudioContext để capture mic (đầu vào)
+let voiceAudioContextOut = null;   // AudioContext riêng để phát audio Gemini trả về (đầu ra) — tách riêng
+                                    // khỏi context đầu vào vì 2 context có thể cần sample rate khác nhau
+                                    // (mic ở sample rate thiết bị, output cố định 24kHz theo Gemini)
+let voiceMicStream = null;         // MediaStream từ getUserMedia, cần giữ lại để tắt đúng track khi ngắt
+let voiceWorkletNode = null;       // AudioWorkletNode chạy pcm-capture-processor
+let voiceOutputQueueTime = 0;      // Mốc thời gian (audioContext.currentTime) để xếp hàng phát audio
+                                    // tuần tự không chồng lấn, vì audio Gemini trả về theo từng chunk rời rạc
+let voiceSetupComplete = false;    // true sau khi nhận được setupComplete từ server, chỉ khi đó mới được
+                                    // gửi audio — gửi sớm hơn sẽ bị server từ chối hoặc bỏ qua
+let voiceReconnectTimer = null;    // Timer cho việc tự động thử kết nối lại sau khi nhận GoAway
 
 // --- Dictionary (Tra từ) ---
 let isDictSearching = false;
@@ -129,6 +146,14 @@ function saveData() {
         showToast('Lỗi: Không thể lưu dữ liệu (bộ nhớ trình duyệt đầy)', 'error');
     }
     applyCategoryFilter(); // Luôn đồng bộ filteredDeck sau mỗi lần thay đổi masterDeck
+
+    // Cập nhật số đếm ở nút "Thẻ Bài (N)" ngay tại đây, KHÔNG chỉ trong
+    // updateCard() — vì updateCard() chỉ chạy khi người dùng đã từng mở
+    // Flashcard. Nếu chỉ dựa vào đó, badge sẽ hiện sai "0" ngay từ lúc mở
+    // app (mode mặc định là Tra Từ) cho tới khi người dùng lần đầu bấm
+    // sang Flashcard — gọi trực tiếp ở đây đảm bảo badge luôn đúng ngay
+    // từ giây đầu tiên, bất kể đang ở mode nào.
+    setElementText('count-badge', masterDeck.length);
 }
 
 function getSampleData() {
@@ -314,7 +339,8 @@ const MODE_CONTAINER_IDS = {
     dict: 'dict-container',
     flashcard: 'fc-main-wrapper',
     game: 'game-main-container',
-    aichat: 'aichat-main-container'
+    aichat: 'aichat-main-container',
+    voice: 'voice-main-container'
 };
 
 function switchMode(mode) {
@@ -330,6 +356,16 @@ function switchMode(mode) {
     stopSpeakingRecognition();
     stopChatRecognition();
     stopAllSpeech();
+
+    // Rời khỏi Voice AI (hoặc chuyển sang mode khác trong khi cuộc gọi đang
+    // chạy): luôn đóng phiên WebSocket + tắt mic ngay lập tức. Cuộc gọi
+    // thoại là tiến trình nền "nặng" nhất trong toàn app (WebSocket sống +
+    // mic đang mở liên tục) — để nó chạy ngầm khi người dùng đã chuyển màn
+    // hình vừa tốn phí API vô ích vừa vi phạm nguyên tắc "không rò rỉ tiến
+    // trình nền sang mode khác" đã áp dụng cho mọi tính năng ghi âm khác.
+    if (activeMode === 'voice' && mode !== 'voice') {
+        stopVoiceCall();
+    }
 
     activeMode = mode;
 
@@ -1448,7 +1484,429 @@ function toggleChatMic() {
 }
 
 /* ==========================================================================
-   16. TEXT-TO-SPEECH (phát âm mẫu)
+   16. VOICE AI (Gemini 3.1 Flash Live — voice-to-voice 2 chiều qua WebSocket)
+   ==========================================================================
+   Khác hẳn AI Chat (REST request-response từng câu) và Luyện Nói (ghi 1 từ
+   rồi chấm điểm), Voice AI mở 1 kết nối WebSocket SỐNG LIÊN TỤC tới Gemini
+   Live API: mic được stream real-time tới Gemini dưới dạng PCM 16-bit
+   16kHz, và Gemini trả lời trực tiếp bằng audio PCM 24kHz — giống hệt một
+   cuộc gọi điện thoại thật, không qua bước chuyển-đổi-thành-chữ-rồi-đọc-lại
+   nào cả. Google gọi đây là "native audio" (speech-to-speech thật, không
+   phải pipeline ASR→LLM→TTS).
+
+   Google tự động xử lý việc "khi nào người dùng ngừng nói thì nên trả lời"
+   (Voice Activity Detection) và "cho phép ngắt lời AI giữa chừng" (barge-in)
+   — cả 2 đều bật mặc định phía server, code này không cần tự cài đặt logic
+   phát hiện im lặng nào cả, chỉ cần liên tục đẩy audio mic lên.
+   -------------------------------------------------------------------------- */
+
+const VOICE_MODEL = 'gemini-3.1-flash-live-preview';
+const VOICE_SCENARIO_PROMPTS = {
+    free: 'Bạn là bạn luyện nói tiếng Hàn, trò chuyện tự do bằng tiếng Hàn đơn giản, phù hợp người mới học. Nói ngắn gọn, tự nhiên như hội thoại đời thường.',
+    food: 'Bạn đang đóng vai nhân viên phục vụ nhà hàng Hàn Quốc, giúp người học luyện hội thoại gọi món ăn bằng giọng nói. Nói ngắn gọn, tự nhiên.',
+    taxi: 'Bạn đang đóng vai tài xế taxi ở Hàn Quốc, giúp người học luyện hội thoại đi taxi (địa điểm, giá cước, chỉ đường) bằng giọng nói. Nói ngắn gọn, tự nhiên.',
+    hotel: 'Bạn đang đóng vai lễ tân khách sạn ở Hàn Quốc, giúp người học luyện hội thoại nhận phòng, hỏi dịch vụ khách sạn bằng giọng nói. Nói ngắn gọn, tự nhiên.'
+};
+
+function switchVoiceScenario(scen) {
+    if (!VOICE_SCENARIO_PROMPTS[scen]) return;
+    voiceScenario = scen;
+    document.querySelectorAll('#voice-scenario-bar .scen-chip[data-vscen]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.vscen === scen);
+    });
+    // Đổi kịch bản khi đang trong cuộc gọi: phải kết nối lại vì system
+    // instruction chỉ được gửi đúng 1 lần lúc bắt đầu phiên (trong message
+    // "setup"), không có cách nào đổi giữa chừng một phiên đang chạy.
+    if (voiceState === 'connected' || voiceState === 'connecting') {
+        stopVoiceCall();
+        setElementText('voice-fb', 'Đã đổi chủ đề — nhấn nút gọi lại để tiếp tục với chủ đề mới.');
+    }
+}
+
+function appendVoiceTranscript(role, text) {
+    if (!text || !text.trim()) return;
+    const box = document.getElementById('voice-transcript-box');
+    if (!box) return;
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + role;
+    div.innerText = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+
+function setVoiceUiState(state, message) {
+    voiceState = state;
+    const dot = document.getElementById('voice-status-dot');
+    const statusText = document.getElementById('voice-status-text');
+    const callBtn = document.getElementById('btn-voice-call');
+    const callIcon = document.getElementById('voice-call-icon');
+    const callHint = document.getElementById('voice-call-hint');
+
+    if (dot) dot.className = 'voice-status-dot' + (state !== 'idle' ? ' ' + state : '');
+    if (statusText) statusText.innerText = message || '';
+
+    if (callBtn) callBtn.classList.remove('recording', 'connecting');
+    if (callIcon) callIcon.className = 'fas fa-phone';
+
+    if (state === 'connecting') {
+        if (callBtn) callBtn.classList.add('connecting');
+        if (callIcon) callIcon.className = 'fas fa-spinner fa-spin';
+        if (callHint) callHint.innerText = 'Đang kết nối...';
+    } else if (state === 'connected') {
+        if (callBtn) callBtn.classList.add('recording');
+        if (callIcon) callIcon.className = 'fas fa-phone-slash';
+        if (callHint) callHint.innerText = 'Đang gọi — nhấn để kết thúc';
+    } else if (state === 'error') {
+        if (callHint) callHint.innerText = 'Nhấn để thử lại';
+    } else {
+        if (callHint) callHint.innerText = 'Nhấn để kết nối';
+    }
+}
+
+function toggleVoiceCall() {
+    if (voiceState === 'connected' || voiceState === 'connecting') {
+        stopVoiceCall();
+    } else {
+        startVoiceCall();
+    }
+}
+
+async function startVoiceCall() {
+    let apiKey = '';
+    try {
+        apiKey = localStorage.getItem('gemini_api_key') || '';
+    } catch (e) { /* localStorage không khả dụng */ }
+
+    if (!apiKey) {
+        showToast('Chưa có API Key! Vui lòng nhập ở mục AI Chat và bấm Lưu trước.', 'error');
+        setElementText('voice-fb', 'Chưa nhập API Key — vào mục AI Chat để nhập trước khi gọi.');
+        return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('Trình duyệt không hỗ trợ truy cập micro', 'error');
+        return;
+    }
+    if (typeof AudioWorkletNode === 'undefined') {
+        showToast('Trình duyệt không hỗ trợ AudioWorklet (cần Chrome/Edge/Safari bản mới)', 'error');
+        return;
+    }
+
+    setVoiceUiState('connecting', 'Đang xin quyền micro...');
+    setElementText('voice-fb', '');
+    voiceSetupComplete = false;
+    voiceOutputQueueTime = 0;
+
+    // Bước 1: xin quyền và mở mic TRƯỚC khi mở WebSocket — nếu người dùng
+    // từ chối quyền mic, dừng lại ngay ở đây, không tốn 1 kết nối WebSocket
+    // vô ích nào tới Gemini.
+    try {
+        voiceMicStream = await navigator.mediaDevices.getUserMedia({
+            audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
+    } catch (err) {
+        console.error('Không thể truy cập micro:', err);
+        setVoiceUiState('error', 'Không có quyền truy cập micro');
+        showToast('Vui lòng cho phép quyền truy cập micro để gọi thoại', 'error');
+        return;
+    }
+
+    // Bước 2: mở WebSocket tới Gemini Live API.
+    setElementText('voice-status-text', 'Đang kết nối tới Gemini...');
+    const wsUrl = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=' + encodeURIComponent(apiKey);
+
+    try {
+        voiceSocket = new WebSocket(wsUrl);
+    } catch (err) {
+        console.error('Không thể mở WebSocket:', err);
+        stopVoiceCall();
+        setVoiceUiState('error', 'Không thể kết nối');
+        showToast('Không thể mở kết nối tới Gemini Live API', 'error');
+        return;
+    }
+
+    voiceSocket.onopen = () => {
+        // Message đầu tiên PHẢI là "setup" — đây là lúc duy nhất có thể gửi
+        // model, system instruction, và cấu hình response modality. Không
+        // gửi gì khác trước message này, server sẽ từ chối.
+        const setupMessage = {
+            setup: {
+                model: 'models/' + VOICE_MODEL,
+                generationConfig: {
+                    responseModalities: ['AUDIO']
+                },
+                systemInstruction: {
+                    parts: [{ text: VOICE_SCENARIO_PROMPTS[voiceScenario] || VOICE_SCENARIO_PROMPTS.free }]
+                },
+                // Không giới hạn cứng phiên gọi ở mốc 15 phút mặc định —
+                // bật context window compression để Gemini tự nén lịch sử
+                // hội thoại cũ khi cần, cho phép gọi lâu hơn mà không bị
+                // ngắt đột ngột giữa chừng.
+                contextWindowCompression: {
+                    slidingWindow: {}
+                },
+                // Bật transcript cả 2 chiều để hiển thị chữ lên màn hình —
+                // giúp người học vừa nghe vừa đọc theo, và để debug dễ hơn
+                // khi audio khó nghe rõ.
+                inputAudioTranscription: {},
+                outputAudioTranscription: {}
+            }
+        };
+        voiceSocket.send(JSON.stringify(setupMessage));
+    };
+
+    voiceSocket.onmessage = async (event) => {
+        try {
+            // Server có thể gửi text (JSON thường) hoặc Blob (hiếm khi xảy
+            // ra với BidiGenerateContent nhưng kiểm tra để an toàn tuyệt
+            // đối, không giả định trước kiểu dữ liệu).
+            const raw = typeof event.data === 'string' ? event.data : await event.data.text();
+            const message = JSON.parse(raw);
+            handleVoiceServerMessage(message);
+        } catch (err) {
+            console.error('Lỗi xử lý message từ Gemini Live:', err);
+            // Một message lỗi không nên làm chết cả phiên gọi — bỏ qua và
+            // tiếp tục nghe message tiếp theo.
+        }
+    };
+
+    voiceSocket.onerror = (err) => {
+        console.error('Lỗi WebSocket Voice AI:', err);
+        setElementText('voice-fb', 'Lỗi kết nối tới Gemini Live API.');
+    };
+
+    voiceSocket.onclose = (event) => {
+        // Đóng ngoài ý muốn (server chủ động cắt, mất mạng...) trong khi
+        // giao diện vẫn đang hiển thị trạng thái "connected" — dọn dẹp và
+        // báo cho người dùng biết thay vì để nút gọi bị kẹt ở trạng thái
+        // "đang gọi" dù thực tế đã mất kết nối từ lâu.
+        if (voiceState === 'connected' || voiceState === 'connecting') {
+            const reason = event.code === 1000 ? 'Cuộc gọi đã kết thúc.' : 'Mất kết nối (mã ' + event.code + ').';
+            teardownVoiceResources();
+            setVoiceUiState('idle', 'Chưa kết nối');
+            setElementText('voice-fb', reason);
+        }
+    };
+}
+
+/**
+ * Xử lý mọi loại message server gửi về. Cấu trúc theo đúng
+ * BidiGenerateContentServerMessage: setupComplete | serverContent | toolCall | goAway.
+ */
+function handleVoiceServerMessage(message) {
+    if (message.setupComplete) {
+        voiceSetupComplete = true;
+        setVoiceUiState('connected', 'Đang gọi');
+        setupVoiceAudioCapture(); // Chỉ bắt đầu gửi audio SAU khi server xác nhận setup xong
+        appendVoiceTranscript('system', '— Đã kết nối, bắt đầu nói chuyện —');
+        return;
+    }
+
+    if (message.serverContent) {
+        const sc = message.serverContent;
+
+        // Audio Gemini trả lời (native speech-to-speech) — nằm trong
+        // modelTurn.parts[].inlineData, base64-encoded PCM 24kHz.
+        if (sc.modelTurn && Array.isArray(sc.modelTurn.parts)) {
+            sc.modelTurn.parts.forEach(part => {
+                if (part.inlineData && part.inlineData.data) {
+                    playVoiceAudioChunk(part.inlineData.data);
+                }
+            });
+        }
+
+        // Transcript chữ của những gì người dùng vừa nói (do Gemini tự
+        // nhận diện song song với audio, không cần SpeechRecognition riêng).
+        if (sc.inputTranscription && sc.inputTranscription.text) {
+            appendVoiceTranscript('user', sc.inputTranscription.text);
+        }
+        // Transcript chữ của những gì Gemini vừa trả lời bằng giọng nói.
+        if (sc.outputTranscription && sc.outputTranscription.text) {
+            appendVoiceTranscript('ai', sc.outputTranscription.text);
+        }
+
+        // Người dùng ngắt lời AI giữa chừng (barge-in) — Gemini tự phát
+        // hiện và báo qua interrupted:true. Phải dừng phát audio đang xếp
+        // hàng ngay lập tức, nếu không AI sẽ tiếp tục nói đè lên audio mới.
+        if (sc.interrupted) {
+            stopVoiceAudioPlayback();
+        }
+        return;
+    }
+
+    if (message.goAway) {
+        // Server báo trước sẽ ngắt kết nối (giới hạn ~10 phút/kết nối theo
+        // thiết kế của Gemini Live API, không phải lỗi). Đóng gọn gàng và
+        // báo rõ cho người dùng thay vì để họ thấy cuộc gọi tự dưng im
+        // bặt không rõ lý do.
+        appendVoiceTranscript('system', '— Phiên gọi sắp hết thời gian, đang kết thúc —');
+        stopVoiceCall();
+        return;
+    }
+
+    if (message.toolCall) {
+        // App này không đăng ký tool nào (không cần function calling cho
+        // mục đích luyện nói), nhưng vẫn xử lý phòng trường hợp server gửi
+        // toolCall ngoài ý muốn — trả lời rỗng để không làm phiên bị treo
+        // chờ phản hồi mãi mãi.
+        if (voiceSocket && voiceSocket.readyState === WebSocket.OPEN && Array.isArray(message.toolCall.functionCalls)) {
+            const functionResponses = message.toolCall.functionCalls.map(fc => ({
+                name: fc.name,
+                id: fc.id,
+                response: { result: 'not_supported' }
+            }));
+            voiceSocket.send(JSON.stringify({ toolResponse: { functionResponses } }));
+        }
+    }
+}
+
+/** Khởi tạo AudioContext + AudioWorklet để capture mic và gửi liên tục qua WebSocket. */
+async function setupVoiceAudioCapture() {
+    if (!voiceMicStream) return;
+
+    try {
+        voiceAudioContextIn = new (window.AudioContext || window.webkitAudioContext)();
+        await voiceAudioContextIn.audioWorklet.addModule('js/pcm-worklet.js');
+
+        const source = voiceAudioContextIn.createMediaStreamSource(voiceMicStream);
+        voiceWorkletNode = new AudioWorkletNode(voiceAudioContextIn, 'pcm-capture-processor');
+
+        voiceWorkletNode.port.onmessage = (event) => {
+            // event.data là ArrayBuffer chứa Int16Array PCM 16kHz đã được
+            // worklet resample sẵn — chỉ cần base64-encode và gửi đi.
+            if (!voiceSetupComplete || !voiceSocket || voiceSocket.readyState !== WebSocket.OPEN) return;
+
+            const bytes = new Uint8Array(event.data);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            const base64Data = btoa(binary);
+
+            const audioMessage = {
+                realtimeInput: {
+                    audio: {
+                        data: base64Data,
+                        mimeType: 'audio/pcm;rate=16000'
+                    }
+                }
+            };
+            voiceSocket.send(JSON.stringify(audioMessage));
+        };
+
+        source.connect(voiceWorkletNode);
+        // Không connect voiceWorkletNode ra destination (loa) — worklet
+        // này chỉ dùng để capture và gửi đi, không phải để phát lại mic
+        // của chính người dùng ra loa (sẽ gây tiếng vọng/hú rít).
+    } catch (err) {
+        console.error('Lỗi khởi tạo audio capture:', err);
+        setElementText('voice-fb', 'Lỗi khởi tạo micro cho cuộc gọi.');
+        stopVoiceCall();
+    }
+}
+
+/** Phát 1 chunk audio PCM 24kHz base64 nhận từ Gemini, xếp hàng tuần tự không chồng lấn. */
+function playVoiceAudioChunk(base64Data) {
+    try {
+        if (!voiceAudioContextOut) {
+            voiceAudioContextOut = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+            voiceOutputQueueTime = voiceAudioContextOut.currentTime;
+        }
+
+        const binary = atob(base64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+        // Convert Int16 PCM little-endian sang Float32 chuẩn Web Audio API.
+        const int16Array = new Int16Array(bytes.buffer);
+        const float32Array = new Float32Array(int16Array.length);
+        for (let i = 0; i < int16Array.length; i++) {
+            float32Array[i] = int16Array[i] / (int16Array[i] < 0 ? 32768 : 32767);
+        }
+
+        const audioBuffer = voiceAudioContextOut.createBuffer(1, float32Array.length, 24000);
+        audioBuffer.copyToChannel(float32Array, 0);
+
+        const sourceNode = voiceAudioContextOut.createBufferSource();
+        sourceNode.buffer = audioBuffer;
+        sourceNode.connect(voiceAudioContextOut.destination);
+
+        // Xếp hàng phát nối tiếp: nếu mốc hàng đợi đã ở tương lai (chunk
+        // trước đó chưa phát xong), phát chunk này ngay sau khi chunk
+        // trước kết thúc — không phát chồng lên nhau, không có khoảng
+        // trống giữa các chunk khiến giọng nói bị giật/ngắt quãng.
+        const now = voiceAudioContextOut.currentTime;
+        const startTime = Math.max(now, voiceOutputQueueTime);
+        sourceNode.start(startTime);
+        voiceOutputQueueTime = startTime + audioBuffer.duration;
+    } catch (err) {
+        console.error('Lỗi phát audio từ Gemini:', err);
+        // Một chunk audio lỗi không nên làm chết cả cuộc gọi — bỏ qua và
+        // tiếp tục nhận chunk tiếp theo.
+    }
+}
+
+/** Dừng phát audio đang xếp hàng ngay lập tức — dùng khi người dùng ngắt lời AI (barge-in). */
+function stopVoiceAudioPlayback() {
+    if (voiceAudioContextOut) {
+        // Cách đơn giản và an toàn nhất để dừng mọi audio đang phát/xếp
+        // hàng ngay lập tức: đóng hẳn AudioContext hiện tại, một context
+        // mới sẽ được tạo lại tự động ở chunk audio tiếp theo trong
+        // playVoiceAudioChunk(). Không cần theo dõi thủ công từng
+        // BufferSourceNode đang chạy để gọi .stop() từng cái một.
+        try { voiceAudioContextOut.close(); } catch (e) { /* đã đóng sẵn */ }
+        voiceAudioContextOut = null;
+        voiceOutputQueueTime = 0;
+    }
+}
+
+/** Giải phóng mic + AudioContext + WorkletNode, KHÔNG đóng WebSocket (dùng khi WebSocket tự đóng). */
+function teardownVoiceResources() {
+    if (voiceReconnectTimer) {
+        clearTimeout(voiceReconnectTimer);
+        voiceReconnectTimer = null;
+    }
+
+    if (voiceWorkletNode) {
+        try { voiceWorkletNode.port.onmessage = null; voiceWorkletNode.disconnect(); } catch (e) { /* đã ngắt sẵn */ }
+        voiceWorkletNode = null;
+    }
+    if (voiceAudioContextIn) {
+        try { voiceAudioContextIn.close(); } catch (e) { /* đã đóng sẵn */ }
+        voiceAudioContextIn = null;
+    }
+    stopVoiceAudioPlayback();
+
+    if (voiceMicStream) {
+        voiceMicStream.getTracks().forEach(track => track.stop());
+        voiceMicStream = null;
+    }
+
+    voiceSetupComplete = false;
+}
+
+/** Kết thúc cuộc gọi hoàn toàn: đóng WebSocket + giải phóng mọi tài nguyên audio/mic. */
+function stopVoiceCall() {
+    teardownVoiceResources();
+
+    if (voiceSocket) {
+        // Gỡ handler trước khi đóng để tránh onclose tự chạy lần nữa và
+        // ghi đè trạng thái UI đã được set đúng ngay bên dưới.
+        voiceSocket.onopen = null;
+        voiceSocket.onmessage = null;
+        voiceSocket.onerror = null;
+        voiceSocket.onclose = null;
+        if (voiceSocket.readyState === WebSocket.OPEN || voiceSocket.readyState === WebSocket.CONNECTING) {
+            try { voiceSocket.close(1000, 'user_ended_call'); } catch (e) { /* đã đóng sẵn */ }
+        }
+        voiceSocket = null;
+    }
+
+    if (voiceState !== 'idle') {
+        setVoiceUiState('idle', 'Chưa kết nối');
+    }
+}
+
+/* ==========================================================================
+   17. TEXT-TO-SPEECH (phát âm mẫu)
    ========================================================================== */
 function stopAllSpeech() {
     if ('speechSynthesis' in window) {
@@ -1538,6 +1996,12 @@ function setupEventListeners() {
     on('chat-input', 'keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
     on('btn-chat-mic', 'click', toggleChatMic);
 
+    // --- Mode 5: Voice AI ---
+    document.querySelectorAll('.scen-chip[data-vscen]').forEach(btn => {
+        btn.addEventListener('click', () => switchVoiceScenario(btn.dataset.vscen));
+    });
+    on('btn-voice-call', 'click', toggleVoiceCall);
+
     // --- Modal thêm từ ---
     on('btn-close-modal', 'click', closeAddModal);
     on('btn-cancel-modal', 'click', closeAddModal);
@@ -1566,12 +2030,25 @@ function setupEventListeners() {
     });
 
     // --- Dừng mọi tiến trình nền khi người dùng rời/ẩn tab, tránh ghi âm/timer
-    //     tiếp tục chạy ngầm gây treo khi quay lại ---
+    //     tiếp tục chạy ngầm gây treo khi quay lại. Voice AI KHÔNG bị dừng ở
+    //     đây — một cuộc gọi thoại là hành động có chủ đích kéo dài, tự động
+    //     ngắt chỉ vì người dùng lướt sang tab khác vài giây (kiểm tra tin
+    //     nhắn, đổi ứng dụng trên điện thoại...) sẽ làm gián đoạn trải
+    //     nghiệm khó chịu hơn nhiều so với lợi ích tiết kiệm được. ---
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             stopAllSpeech();
             stopSpeakingRecognition();
             stopChatRecognition();
+        }
+    });
+
+    // --- Đóng sạch WebSocket của Voice AI khi người dùng đóng hẳn tab/trình
+    //     duyệt trong lúc đang gọi, tránh phiên bị treo phía server (và tốn
+    //     phí API vô ích) do không ai chủ động đóng kết nối. ---
+    window.addEventListener('beforeunload', () => {
+        if (voiceState === 'connected' || voiceState === 'connecting') {
+            stopVoiceCall();
         }
     });
 }
