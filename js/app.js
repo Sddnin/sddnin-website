@@ -1629,29 +1629,39 @@ async function startVoiceCall() {
         // Message đầu tiên PHẢI là "setup" — đây là lúc duy nhất có thể gửi
         // model, system instruction, và cấu hình response modality. Không
         // gửi gì khác trước message này, server sẽ từ chối.
+        //
+        // QUAN TRỌNG: BidiGenerateContentSetup (Live API qua WebSocket) có
+        // schema RIÊNG, KHÁC với GenerateContentRequest (REST API thường).
+        // inputAudioTranscription / outputAudioTranscription / realtimeInputConfig
+        // là field NGANG HÀNG với generationConfig — nằm trực tiếp trong
+        // "setup", KHÔNG lồng bên trong generationConfig. Đặt sai cấp khiến
+        // server từ chối toàn bộ message với lỗi "Unknown name... Cannot
+        // find field" và đóng kết nối bằng mã 1007 (invalid frame payload
+        // data) — đã xác nhận qua interface protobuf chính thức
+        // (IBidiGenerateContentSetup) của Google, không phải suy đoán.
         const setupMessage = {
             setup: {
                 model: 'models/' + VOICE_MODEL,
                 generationConfig: {
                     responseModalities: ['AUDIO'],
-                    // Bật transcript cả 2 chiều để hiển thị chữ lên màn hình —
-                    // giúp người học vừa nghe vừa đọc theo, và để debug dễ hơn
-                    // khi audio khó nghe rõ. Theo đúng schema chính thức, 2
-                    // field này nằm TRONG generationConfig (cùng cấp với
-                    // responseModalities), không phải ngang cấp với nó.
-                    inputAudioTranscription: {},
-                    outputAudioTranscription: {},
                     // Gemini 3.1 dùng thinkingLevel (minimal/low/medium/high)
-                    // thay cho thinkingBudget của model đời cũ. Mặc định của
-                    // server là "minimal" (ưu tiên độ trễ thấp nhất tuyệt
-                    // đối) — với app luyện hội thoại, đặt "low" đánh đổi một
-                    // chút độ trễ để câu trả lời tự nhiên và đúng ngữ pháp
-                    // hơn khi cần sửa lỗi cho người học, vẫn đủ nhanh cho
-                    // cảm giác hội thoại thời gian thực.
+                    // thay cho thinkingBudget của model đời cũ. thinkingConfig
+                    // LÀ field hợp lệ của generationConfig (khác nhóm với 3
+                    // field transcription/realtimeInputConfig ở trên — field
+                    // này giữ đúng vị trí cũ). Mặc định server là "minimal"
+                    // (ưu tiên độ trễ thấp nhất) — với app luyện hội thoại,
+                    // đặt "low" đánh đổi một chút độ trễ để câu trả lời tự
+                    // nhiên và đúng ngữ pháp hơn khi cần sửa lỗi cho người
+                    // học, vẫn đủ nhanh cho cảm giác hội thoại thời gian thực.
                     thinkingConfig: {
                         thinkingLevel: 'low'
                     }
                 },
+                // Bật transcript cả 2 chiều để hiển thị chữ lên màn hình —
+                // giúp người học vừa nghe vừa đọc theo, và để debug dễ hơn
+                // khi audio khó nghe rõ.
+                inputAudioTranscription: {},
+                outputAudioTranscription: {},
                 systemInstruction: {
                     parts: [{ text: VOICE_SCENARIO_PROMPTS[voiceScenario] || VOICE_SCENARIO_PROMPTS.free }]
                 },
@@ -1667,7 +1677,11 @@ async function startVoiceCall() {
                 // học ngôn ngữ, người học có thể ngập ngừng lâu hơn bình
                 // thường khi tìm từ, nên tăng nhẹ độ nhạy so với mặc định
                 // giúp Gemini không cắt ngang quá sớm khi người học đang
-                // suy nghĩ giữa câu.
+                // suy nghĩ giữa câu. (Lưu ý: silenceDurationMs hiện có bug
+                // đã biết bị server bỏ qua trên riêng model 3.1-flash-live-
+                // preview — không gây lỗi kết nối, chỉ là chưa có hiệu lực
+                // cho tới khi Google khắc phục; giữ lại để tự động có tác
+                // dụng khi bug được sửa.)
                 realtimeInputConfig: {
                     automaticActivityDetection: {
                         disabled: false,
