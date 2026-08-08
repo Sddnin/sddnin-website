@@ -1633,7 +1633,24 @@ async function startVoiceCall() {
             setup: {
                 model: 'models/' + VOICE_MODEL,
                 generationConfig: {
-                    responseModalities: ['AUDIO']
+                    responseModalities: ['AUDIO'],
+                    // Bật transcript cả 2 chiều để hiển thị chữ lên màn hình —
+                    // giúp người học vừa nghe vừa đọc theo, và để debug dễ hơn
+                    // khi audio khó nghe rõ. Theo đúng schema chính thức, 2
+                    // field này nằm TRONG generationConfig (cùng cấp với
+                    // responseModalities), không phải ngang cấp với nó.
+                    inputAudioTranscription: {},
+                    outputAudioTranscription: {},
+                    // Gemini 3.1 dùng thinkingLevel (minimal/low/medium/high)
+                    // thay cho thinkingBudget của model đời cũ. Mặc định của
+                    // server là "minimal" (ưu tiên độ trễ thấp nhất tuyệt
+                    // đối) — với app luyện hội thoại, đặt "low" đánh đổi một
+                    // chút độ trễ để câu trả lời tự nhiên và đúng ngữ pháp
+                    // hơn khi cần sửa lỗi cho người học, vẫn đủ nhanh cho
+                    // cảm giác hội thoại thời gian thực.
+                    thinkingConfig: {
+                        thinkingLevel: 'low'
+                    }
                 },
                 systemInstruction: {
                     parts: [{ text: VOICE_SCENARIO_PROMPTS[voiceScenario] || VOICE_SCENARIO_PROMPTS.free }]
@@ -1645,11 +1662,18 @@ async function startVoiceCall() {
                 contextWindowCompression: {
                     slidingWindow: {}
                 },
-                // Bật transcript cả 2 chiều để hiển thị chữ lên màn hình —
-                // giúp người học vừa nghe vừa đọc theo, và để debug dễ hơn
-                // khi audio khó nghe rõ.
-                inputAudioTranscription: {},
-                outputAudioTranscription: {}
+                // Voice Activity Detection tự động phía server (mặc định đã
+                // bật) — khai báo tường minh để rõ ràng, và vì đây là app
+                // học ngôn ngữ, người học có thể ngập ngừng lâu hơn bình
+                // thường khi tìm từ, nên tăng nhẹ độ nhạy so với mặc định
+                // giúp Gemini không cắt ngang quá sớm khi người học đang
+                // suy nghĩ giữa câu.
+                realtimeInputConfig: {
+                    automaticActivityDetection: {
+                        disabled: false,
+                        silenceDurationMs: 800
+                    }
+                }
             }
         };
         voiceSocket.send(JSON.stringify(setupMessage));
