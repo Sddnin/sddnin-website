@@ -156,6 +156,16 @@ button:disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: 
 .api-key-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: flex; gap: 6px; align-items: center; font-size: 12px; }
 .api-key-box input { flex: 1; border: none; background: transparent; color: var(--text-color); outline: none; font-size: 12px; }
 
+.voice-status-row { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; }
+.voice-status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.voice-status-dot.connecting { background: var(--warning-color); animation: pulse 1s infinite; }
+.voice-status-dot.connected { background: var(--success-color); }
+.voice-status-dot.error { background: var(--danger-color); }
+.voice-call-card { background: linear-gradient(145deg, #00b894, #00cec9); box-shadow: 0 4px 15px rgba(0, 184, 148, 0.25); }
+.voice-call-card .mic-btn-large { color: #00b894; }
+.voice-call-card .mic-btn-large.recording { background: #ff1744; color: white; }
+.voice-call-card .mic-btn-large.connecting { animation: pulse 1s infinite; }
+
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
 .modal-body { background: var(--card-bg); width: 90%; max-width: 400px; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); }
 .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 15px; color: var(--primary-color); display: flex; justify-content: space-between; align-items: center; }
