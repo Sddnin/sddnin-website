@@ -19,9 +19,10 @@
     14. GEMINI AI CORE (gọi API dùng chung cho mọi tính năng ở trên)
     15. AI CHAT (hội thoại luyện tiếng Hàn theo kịch bản)
     16. VOICE AI (Gemini 3.1 Flash Live — voice-to-voice 2 chiều qua WebSocket)
-    17. TEXT-TO-SPEECH (phát âm mẫu)
-    18. EVENT LISTENERS (setupEventListeners — nối TOÀN BỘ nút trong HTML)
-    19. BOOTSTRAP
+    17. LUYỆN VIẾT (Tạo worksheet A4 — xuất Word/PDF thật, in được)
+    18. TEXT-TO-SPEECH (phát âm mẫu)
+    19. EVENT LISTENERS (setupEventListeners — nối TOÀN BỘ nút trong HTML)
+    20. BOOTSTRAP
    ========================================================================== */
 
 /* ==========================================================================
@@ -86,6 +87,20 @@ let voiceReconnectTimer = null;    // Timer cho việc tự động thử kết 
 // --- Dictionary (Tra từ) ---
 let isDictSearching = false;
 let lastDictResult = null; // Kết quả tra gần nhất để nút "Lưu vào bộ từ vựng" dùng
+
+// --- Luyện Viết (worksheet A4 — xuất Word/PDF thật) ---
+let writingList = [];              // [{word, reading, hanviet, meaning}] — nguồn dữ liệu duy nhất
+                                    // cho worksheet, độc lập hoàn toàn với masterDeck
+let writingConfig = {              // Cấu hình worksheet — có mặc định tối ưu cho in, người dùng
+    orientation: 'portrait',       // không bắt buộc phải chỉnh mới xuất được (mục 16 spec)
+    mode: 'trace',                 // trace | free | both
+    rowsPerWord: 2,
+    showReading: true,
+    showHanviet: true,
+    showMeaning: true
+};
+let isWritingExporting = false;    // Chặn bấm liên tục gây tạo file trùng (mục 27 spec)
+let isWritingAiFormatting = false; // Chặn bấm đúp AI Format
 
 /* ==========================================================================
    2. DATA MANAGEMENT (LOCALSTORAGE) — an toàn tuyệt đối
@@ -340,7 +355,8 @@ const MODE_CONTAINER_IDS = {
     flashcard: 'fc-main-wrapper',
     game: 'game-main-container',
     aichat: 'aichat-main-container',
-    voice: 'voice-main-container'
+    voice: 'voice-main-container',
+    writing: 'writing-main-container'
 };
 
 function switchMode(mode) {
@@ -1944,161 +1960,436 @@ function stopVoiceCall() {
 }
 
 /* ==========================================================================
-   17. TEXT-TO-SPEECH (phát âm mẫu)
-   ========================================================================== */
-function stopAllSpeech() {
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
+   17. LUYỆN VIẾT (Tạo worksheet A4 — xuất Word/PDF thật, in được)
+   ==========================================================================
+   Luồng: Nhập JSON -> Thêm vào danh sách (writingList, lưu localStorage riêng,
+   độc lập hoàn toàn với masterDeck) -> Tạo bản viết tay -> Preview A4 (dựng từ
+   MỘT worksheet data model duy nhất, xem buildWorksheetPages()) -> Lưu Word /
+   Lưu PDF / In, cả 3 đều đọc từ ĐÚNG data model đó nên luôn khớp nội dung.
+
+   Word dùng thư viện docx (tạo XML thật, Word tự dùng font hệ thống máy người
+   mở để hiển thị). PDF dùng jsPDF.html() + html2canvas — chụp lại đúng khối
+   DOM đã render bằng CSS font-family liệt kê sẵn các font Hangul hệ thống phổ
+   biến (Malgun Gothic/Apple SD Gothic Neo/Noto Sans KR...), nên KHÔNG cần tải
+   file .ttf nào qua mạng: trình duyệt tự chọn đúng font có sẵn trên máy để
+   render, html2canvas chỉ chụp lại y hệt những gì đã hiển thị trên màn hình.
+   Đây là lựa chọn có cân nhắc, không phải bỏ sót — tránh phụ thuộc CDN font
+   nặng (hàng chục MB cho Hangul) và tránh bẫy variable-font không tương thích
+   nhiều engine dựng PDF.
+   -------------------------------------------------------------------------- */
+
+const WRITING_STORAGE_KEY = 'writingPracticeList';
+const WRITING_FONT_STACK = "'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Nanum Gothic', sans-serif";
+
+/** Kiểm tra 1 mục worksheet có hình dạng hợp lệ tối thiểu hay không (bắt buộc có "word"). */
+function isValidWritingEntry(e) {
+    return !!(e && typeof e === 'object' && typeof e.word === 'string' && e.word.trim() !== '');
+}
+
+function normalizeWritingEntry(raw) {
+    return {
+        word: String(raw.word || '').trim().normalize('NFC'),
+        reading: String(raw.reading || '').trim(),
+        hanviet: String(raw.hanviet || '').trim(),
+        meaning: String(raw.meaning || '').trim()
+    };
+}
+
+function loadWritingList() {
+    try {
+        const saved = localStorage.getItem(WRITING_STORAGE_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+                writingList = parsed.filter(isValidWritingEntry).map(normalizeWritingEntry);
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn('Dữ liệu Luyện Viết trong localStorage bị hỏng, bắt đầu danh sách rỗng:', e);
+    }
+    writingList = [];
+}
+
+function saveWritingList() {
+    try {
+        localStorage.setItem(WRITING_STORAGE_KEY, JSON.stringify(writingList));
+    } catch (e) {
+        console.error('Không thể lưu danh sách Luyện Viết:', e);
+        showToast('Lỗi: Không thể lưu danh sách (bộ nhớ trình duyệt đầy)', 'error');
     }
 }
 
-function speak(text, lang) {
-    if (!text) return;
-    if (!('speechSynthesis' in window)) {
-        showToast('Trình duyệt không hỗ trợ phát âm (Text-to-Speech)', 'error');
+function setWritingMsg(text, type) {
+    const el = document.getElementById('writing-msg');
+    if (!el) return;
+    el.innerText = text || '';
+    el.style.color = type === 'error' ? 'var(--danger-color)' : (type === 'success' ? 'var(--success-color)' : 'var(--text-muted)');
+}
+
+/** Bấm "Dùng thử demo" — chỉ điền textarea, KHÔNG tự thêm vào danh sách (đúng mục 5 spec). */
+function fillWritingDemo() {
+    const demo = [
+        { word: '안녕하세요', reading: 'annyeonghaseyo', hanviet: '', meaning: 'Xin chào' },
+        { word: '감사합니다', reading: 'gamsahamnida', hanviet: 'CẢM TẠ', meaning: 'Cảm ơn' },
+        { word: '학교', reading: 'hakgyo', hanviet: 'HỌC HIỆU', meaning: 'Trường học' },
+        { word: '선생님', reading: 'seonsaengnim', hanviet: 'TIÊN SINH', meaning: 'Giáo viên' },
+        { word: '학생', reading: 'haksaeng', hanviet: 'HỌC SINH', meaning: 'Học sinh' },
+        { word: '친구', reading: 'chingu', hanviet: 'THÂN HỮU', meaning: 'Bạn bè' },
+        { word: '가족', reading: 'gajok', hanviet: 'GIA TỘC', meaning: 'Gia đình' },
+        { word: '사랑', reading: 'sarang', hanviet: '', meaning: 'Tình yêu' },
+        { word: '음식', reading: 'eumsik', hanviet: 'ẨM THỰC', meaning: 'Đồ ăn' },
+        { word: '공부', reading: 'gongbu', hanviet: 'CÔNG PHU', meaning: 'Học tập' }
+    ];
+    const textarea = document.getElementById('writing-textarea');
+    if (textarea) textarea.value = JSON.stringify(demo, null, 2);
+    setWritingMsg('Đã điền dữ liệu demo — bấm "Thêm vào danh sách" để sử dụng.', 'info');
+}
+
+/**
+ * Cố gắng parse nội dung textarea thành mảng entry hợp lệ.
+ * Trả về { entries, error } — error khác null nếu parse thất bại hoàn toàn.
+ * Đúng mục 24 spec: JSON sai không được crash, phải báo lỗi rõ ràng.
+ */
+function parseWritingInput(raw) {
+    const trimmed = (raw || '').trim();
+    if (!trimmed) return { entries: [], error: null };
+
+    let parsed;
+    try {
+        parsed = JSON.parse(trimmed);
+    } catch (e) {
+        return { entries: [], error: 'JSON không hợp lệ. Vui lòng kiểm tra dấu ngoặc hoặc dấu phẩy.' };
+    }
+
+    const arr = Array.isArray(parsed) ? parsed : [parsed];
+    const validEntries = [];
+    let hasInvalid = false;
+    arr.forEach(item => {
+        if (isValidWritingEntry(item)) {
+            validEntries.push(normalizeWritingEntry(item));
+        } else {
+            hasInvalid = true;
+        }
+    });
+
+    if (validEntries.length === 0) {
+        return { entries: [], error: hasInvalid ? 'Một mục không có trường "word".' : 'Không tìm thấy từ vựng hợp lệ nào.' };
+    }
+    return { entries: validEntries, error: null };
+}
+
+function addWritingFromTextarea() {
+    const textarea = document.getElementById('writing-textarea');
+    const raw = textarea ? textarea.value : '';
+
+    if (!raw.trim()) {
+        setWritingMsg('Vui lòng nhập dữ liệu trước khi thêm.', 'error');
         return;
     }
-    stopAllSpeech();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang || 'ko-KR';
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
-}
 
-/* ==========================================================================
-   17. EVENT LISTENERS — nối TOÀN BỘ nút thực tế có trong index.html
-   ========================================================================== */
-function on(id, event, handler) {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener(event, handler);
-}
+    const { entries, error } = parseWritingInput(raw);
+    if (error) {
+        setWritingMsg('⚠️ ' + error, 'error');
+        return;
+    }
 
-function setupEventListeners() {
-    // --- Top bar ---
-    on('btn-open-add', 'click', openAddModal);
-    on('btn-export-import', 'click', openExportImportMenu);
-    on('btn-toggle-theme', 'click', toggleTheme);
-
-    // --- Category bar ---
-    document.querySelectorAll('.cat-chip[data-cat]').forEach(btn => {
-        btn.addEventListener('click', () => switchCategory(btn.dataset.cat));
-    });
-
-    // --- Mode switcher ---
-    document.querySelectorAll('.mode-switcher button[data-mode]').forEach(btn => {
-        btn.addEventListener('click', () => switchMode(btn.dataset.mode));
-    });
-
-    // --- Mode 1: Tra từ ---
-    on('btn-dict-search', 'click', performDictSearch);
-    on('dict-input', 'keypress', (e) => { if (e.key === 'Enter') performDictSearch(); });
-    on('btn-dict-speak', 'click', speakDictResult);
-    on('btn-dict-add', 'click', saveDictResultToDeck);
-
-    // --- Mode 2: Flashcard ---
-    on('btn-search-word', 'click', searchFlashcard);
-    on('search-input', 'keypress', (e) => { if (e.key === 'Enter') searchFlashcard(); });
-    on('flashcard', 'click', flipCard);
-    on('btn-card-audio', 'click', (e) => {
-        e.stopPropagation(); // Tránh click vào nút loa cũng kích hoạt flipCard() của thẻ cha
-        playCardAudio();
-    });
-    on('btn-prev-card', 'click', prevCard);
-    on('btn-flip-card', 'click', flipCard);
-    on('btn-next-card', 'click', nextCard);
-    on('btn-fav', 'click', toggleFavorite);
-    on('btn-hard', 'click', toggleHard);
-    on('btn-delete-word', 'click', deleteCurrentCard);
-
-    // --- Mode 3: Mini Games ---
-    document.querySelectorAll('.game-selector button[data-sub]').forEach(btn => {
-        btn.addEventListener('click', () => switchSubGame(btn.dataset.sub));
-    });
-    // Nối từ
-    on('btn-refresh-match', 'click', startMatchGame);
-    // Gõ phím
-    on('btn-typing-submit', 'click', checkTypingAnswer);
-    on('typing-input', 'keypress', (e) => { if (e.key === 'Enter') checkTypingAnswer(); });
-    on('btn-typing-listen', 'click', playTypingListen);
-    // Luyện nói
-    on('btn-next-speak', 'click', startSpeakingGame);
-    on('btn-speak-sample', 'click', playSpeakSample);
-    on('btn-mic', 'click', toggleMicRecording);
-
-    // --- Mode 4: AI Chat ---
-    on('btn-save-key', 'click', saveGeminiApiKey);
-    document.querySelectorAll('.scen-chip[data-scen]').forEach(btn => {
-        btn.addEventListener('click', () => switchScenario(btn.dataset.scen));
-    });
-    on('btn-chat-send', 'click', sendChatMessage);
-    on('chat-input', 'keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
-    on('btn-chat-mic', 'click', toggleChatMic);
-
-    // --- Mode 5: Voice AI ---
-    document.querySelectorAll('.scen-chip[data-vscen]').forEach(btn => {
-        btn.addEventListener('click', () => switchVoiceScenario(btn.dataset.vscen));
-    });
-    on('btn-voice-call', 'click', toggleVoiceCall);
-
-    // --- Modal thêm từ ---
-    on('btn-close-modal', 'click', closeAddModal);
-    on('btn-cancel-modal', 'click', closeAddModal);
-    on('btn-save-modal', 'click', saveNewWordFromModal);
-    on('add-modal', 'click', (e) => {
-        // Bấm ra ngoài modal-body (vào lớp overlay) thì đóng modal
-        if (e.target && e.target.id === 'add-modal') closeAddModal();
-    });
-
-    // --- Import file ---
-    on('import-file', 'change', handleImportFile);
-
-    // --- Phím tắt bàn phím (chỉ hoạt động khi đang ở Flashcard, tránh xung đột
-    //     với việc gõ chữ trong các ô input ở mode khác) ---
-    document.addEventListener('keydown', (e) => {
-        if (activeMode !== 'flashcard') return;
-        const tag = document.activeElement && document.activeElement.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA') return; // Đang gõ trong ô input thì không kích hoạt phím tắt
-
-        if (e.key === 'ArrowRight') nextCard();
-        else if (e.key === 'ArrowLeft') prevCard();
-        else if (e.key === ' ') {
-            e.preventDefault();
-            flipCard();
+    // Chống trùng: 1 từ (theo "word") đã có trong danh sách thì bỏ qua, không thêm lại.
+    const existingWords = new Set(writingList.map(e => e.word));
+    let addedCount = 0;
+    entries.forEach(entry => {
+        if (!existingWords.has(entry.word)) {
+            writingList.push(entry);
+            existingWords.add(entry.word);
+            addedCount++;
         }
     });
 
-    // --- Dừng mọi tiến trình nền khi người dùng rời/ẩn tab, tránh ghi âm/timer
-    //     tiếp tục chạy ngầm gây treo khi quay lại. Voice AI KHÔNG bị dừng ở
-    //     đây — một cuộc gọi thoại là hành động có chủ đích kéo dài, tự động
-    //     ngắt chỉ vì người dùng lướt sang tab khác vài giây (kiểm tra tin
-    //     nhắn, đổi ứng dụng trên điện thoại...) sẽ làm gián đoạn trải
-    //     nghiệm khó chịu hơn nhiều so với lợi ích tiết kiệm được. ---
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            stopAllSpeech();
-            stopSpeakingRecognition();
-            stopChatRecognition();
-        }
-    });
+    saveWritingList();
+    renderWritingList();
 
-    // --- Đóng sạch WebSocket của Voice AI khi người dùng đóng hẳn tab/trình
-    //     duyệt trong lúc đang gọi, tránh phiên bị treo phía server (và tốn
-    //     phí API vô ích) do không ai chủ động đóng kết nối. ---
-    window.addEventListener('beforeunload', () => {
-        if (voiceState === 'connected' || voiceState === 'connecting') {
-            stopVoiceCall();
-        }
+    if (addedCount === 0) {
+        setWritingMsg('Các từ này đã có sẵn trong danh sách.', 'error');
+    } else {
+        setWritingMsg('✓ Đã thêm ' + addedCount + ' từ vựng thành công!', 'success');
+        if (textarea) textarea.value = '';
+    }
+}
+
+function clearWritingTextarea() {
+    const textarea = document.getElementById('writing-textarea');
+    if (textarea) textarea.value = '';
+    setWritingMsg('');
+}
+
+function removeWritingEntry(index) {
+    if (index < 0 || index >= writingList.length) return;
+    writingList.splice(index, 1);
+    saveWritingList();
+    renderWritingList();
+}
+
+function clearAllWritingEntries() {
+    if (writingList.length === 0) return;
+    if (!window.confirm('Xóa toàn bộ ' + writingList.length + ' từ vựng khỏi danh sách?')) return;
+    writingList = [];
+    saveWritingList();
+    renderWritingList();
+    setWritingMsg('Đã xóa toàn bộ danh sách.', 'info');
+}
+
+/** Vẽ lại toàn bộ khối danh sách từ vựng (STT | Korean | Reading | Hán-Việt | Nghĩa | Xóa). */
+function renderWritingList() {
+    const titleEl = document.getElementById('writing-list-title');
+    const emptyHint = document.getElementById('writing-empty-hint');
+    const itemsBox = document.getElementById('writing-list-items');
+    const clearAllBtn = document.getElementById('btn-writing-clear-all');
+    if (!itemsBox) return;
+
+    itemsBox.innerHTML = '';
+
+    if (writingList.length === 0) {
+        if (titleEl) titleEl.innerText = 'Chưa có từ vựng';
+        if (emptyHint) emptyHint.style.display = 'block';
+        if (clearAllBtn) clearAllBtn.style.display = 'none';
+        return;
+    }
+
+    if (titleEl) titleEl.innerText = writingList.length + ' từ vựng';
+    if (emptyHint) emptyHint.style.display = 'none';
+    if (clearAllBtn) clearAllBtn.style.display = 'inline-block';
+
+    writingList.forEach((entry, idx) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; gap:6px; padding:7px 8px; background:var(--bg-color); border-radius:8px; font-size:12px;';
+
+        const numSpan = document.createElement('span');
+        numSpan.style.cssText = 'width:18px; flex-shrink:0; color:var(--text-muted); font-weight:600;';
+        numSpan.innerText = (idx + 1) + '.';
+
+        const infoDiv = document.createElement('div');
+        infoDiv.style.cssText = 'flex:1; min-width:0;';
+        const line1 = document.createElement('div');
+        line1.style.cssText = 'font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+        line1.innerText = entry.word + (entry.reading ? '  (' + entry.reading + ')' : '');
+        const line2 = document.createElement('div');
+        line2.style.cssText = 'color:var(--text-muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+        line2.innerText = [entry.hanviet, entry.meaning].filter(Boolean).join(' — ') || '—';
+        infoDiv.appendChild(line1);
+        infoDiv.appendChild(line2);
+
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '<i class="fas fa-times"></i>';
+        delBtn.style.cssText = 'border:none; background:none; color:var(--danger-color); cursor:pointer; font-size:13px; flex-shrink:0; padding:4px 6px;';
+        delBtn.onclick = () => removeWritingEntry(idx);
+
+        row.appendChild(numSpan);
+        row.appendChild(infoDiv);
+        row.appendChild(delBtn);
+        itemsBox.appendChild(row);
     });
 }
 
-/* ==========================================================================
-   18. BOOTSTRAP
-   ========================================================================== */
-document.addEventListener('DOMContentLoaded', () => {
-    loadTheme();
-    loadData();
-    loadGeminiApiKey();
-    updateDailyStreak();
-    setupEventListeners();
-    switchMode('dict'); // Khớp đúng trạng thái mặc định trong HTML (mode-dict active-mode)
-});
+function showWritingHelp() {
+    window.alert(
+        'Cách dùng:\n\n' +
+        '1. Dán danh sách JSON dạng:\n[{"word":"학교","reading":"hakgyo","hanviet":"HỌC HIỆU","meaning":"Trường học"}]\n\n' +
+        '2. Hoặc dán văn bản bất kỳ rồi bấm "AI Format" để AI tự chuẩn hóa.\n\n' +
+        '3. Bấm "Thêm vào danh sách", sau đó "Tạo bản viết tay" để xem trước và xuất file.'
+    );
+}
+
+/* --------------------------------------------------------------------------
+   17.1 AI Format — chuẩn hóa text thô thành JSON qua Gemini (dùng chung
+   callGeminiAPI() đã có, không bịa dữ liệu khi không chắc chắn theo mục 7)
+   -------------------------------------------------------------------------- */
+async function aiFormatWritingInput() {
+    if (isWritingAiFormatting) return;
+
+    const textarea = document.getElementById('writing-textarea');
+    const raw = textarea ? textarea.value.trim() : '';
+    if (!raw) {
+        setWritingMsg('Vui lòng dán nội dung cần chuẩn hóa trước.', 'error');
+        return;
+    }
+
+    isWritingAiFormatting = true;
+    const btn = document.getElementById('btn-writing-ai-format');
+    if (btn) btn.disabled = true;
+    setWritingMsg('AI đang chuẩn hóa dữ liệu...', 'info');
+
+    const prompt = 'Người dùng dán đoạn văn bản sau, có thể chứa từ vựng tiếng Hàn xen lẫn text khác:\n\n"""\n' + raw + '\n"""\n\n' +
+        'Hãy trích xuất TỪNG từ/cụm từ tiếng Hàn xuất hiện trong đó và chuẩn hóa thành JSON. Với mỗi từ, chỉ điền "reading" (phiên âm La-tinh), "hanviet" (âm Hán-Việt NẾU từ đó là từ Hán-Hàn có âm Hán-Việt rõ ràng, để trống "" nếu là từ thuần Hàn hoặc không chắc chắn), và "meaning" (nghĩa tiếng Việt) khi bạn CHẮC CHẮN — không bịa đặt nếu không rõ, để trống chuỗi rỗng "" thay vì đoán bừa.\n\n' +
+        'Trả lời DUY NHẤT một mảng JSON hợp lệ, không markdown, không giải thích, theo đúng cấu trúc:\n' +
+        '[{"word": "<từ tiếng Hàn>", "reading": "<phiên âm>", "hanviet": "<âm Hán-Việt hoặc rỗng>", "meaning": "<nghĩa tiếng Việt hoặc rỗng>"}]';
+
+    try {
+        const rawResult = await callGeminiAPI(prompt);
+        const cleaned = rawResult.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+        const firstBracket = cleaned.indexOf('[');
+        const lastBracket = cleaned.lastIndexOf(']');
+        const jsonSlice = (firstBracket !== -1 && lastBracket !== -1) ? cleaned.slice(firstBracket, lastBracket + 1) : cleaned;
+
+        const parsed = JSON.parse(jsonSlice);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+            throw new Error('AI không trích xuất được từ vựng nào từ nội dung đã cho.');
+        }
+
+        const validEntries = parsed.filter(isValidWritingEntry).map(normalizeWritingEntry);
+        if (validEntries.length === 0) {
+            throw new Error('AI không trả về kết quả hợp lệ.');
+        }
+
+        // Hiển thị kết quả trong textarea để người dùng KIỂM TRA trước — không
+        // tự động thêm vào danh sách (đúng mục 7 spec).
+        if (textarea) textarea.value = JSON.stringify(validEntries, null, 2);
+        setWritingMsg('✓ AI đã chuẩn hóa ' + validEntries.length + ' từ. Vui lòng kiểm tra rồi bấm "Thêm vào danh sách".', 'success');
+    } catch (err) {
+        console.error('Lỗi AI Format:', err);
+        setWritingMsg('⚠️ ' + (err.message || 'Lỗi khi gọi AI Format'), 'error');
+    } finally {
+        isWritingAiFormatting = false;
+        if (btn) btn.disabled = false;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   17.2 Chuyển màn hình + xây dựng Worksheet Data Model (nguồn chung cho cả
+   Preview / DOCX / PDF — đúng mục 20 spec: 3 nơi phải luôn khớp nội dung)
+   -------------------------------------------------------------------------- */
+function openWritingPreview() {
+    if (writingList.length === 0) {
+        setWritingMsg('⚠️ Chưa có từ vựng. Hãy thêm từ vựng trước.', 'error');
+        return;
+    }
+
+    document.getElementById('writing-list-screen').style.display = 'none';
+    document.getElementById('writing-preview-screen').style.display = 'block';
+    renderWritingA4Preview();
+}
+
+function backToWritingList() {
+    document.getElementById('writing-preview-screen').style.display = 'none';
+    document.getElementById('writing-list-screen').style.display = 'block';
+}
+
+function toggleWritingConfigPanel() {
+    const panel = document.getElementById('writing-config-panel');
+    if (!panel) return;
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+/** Đọc toàn bộ input cấu hình trên UI vào writingConfig, rồi vẽ lại preview. */
+function applyWritingConfigFromUi() {
+    const orientationEl = document.getElementById('cfg-orientation');
+    const modeEl = document.getElementById('cfg-mode');
+    const rowsEl = document.getElementById('cfg-rows');
+    const readingEl = document.getElementById('cfg-show-reading');
+    const hanvietEl = document.getElementById('cfg-show-hanviet');
+    const meaningEl = document.getElementById('cfg-show-meaning');
+
+    if (orientationEl) writingConfig.orientation = orientationEl.value;
+    if (modeEl) writingConfig.mode = modeEl.value;
+    if (rowsEl) {
+        const n = parseInt(rowsEl.value, 10);
+        writingConfig.rowsPerWord = Number.isFinite(n) && n >= 1 && n <= 6 ? n : 2;
+    }
+    if (readingEl) writingConfig.showReading = readingEl.checked;
+    if (hanvietEl) writingConfig.showHanviet = hanvietEl.checked;
+    if (meaningEl) writingConfig.showMeaning = meaningEl.checked;
+
+    renderWritingA4Preview();
+}
+
+/**
+ * Tách 1 từ tiếng Hàn thành mảng các ÂM TIẾT (không phải Jamo rời) — Unicode
+ * Hangul syllable đã compose sẵn nên duyệt string sau khi normalize('NFC') là
+ * đủ chính xác: "안녕하세요" -> ["안","녕","하","세","요"], "학교" -> ["학","교"].
+ * Ký tự không phải Hangul (số, chữ Latin, dấu câu...) vẫn tách đúng theo từng
+ * ký tự đơn, không gây lỗi.
+ */
+function splitIntoSyllables(word) {
+    return [...String(word || '').normalize('NFC')];
+}
+
+/**
+ * Xây dựng Worksheet Data Model: chia writingList thành các TRANG A4, mỗi
+ * trang chứa các MỤC (1 mục = 1 từ), không cắt đôi 1 mục giữa 2 trang (mục 17
+ * spec) — ước lượng chiều cao từng mục rồi gói theo thuật toán "bin packing"
+ * đơn giản (greedy: hết chỗ trên trang hiện tại thì chuyển nguyên mục sang
+ * trang mới).
+ */
+function buildWorksheetPages() {
+    // Chiều cao khả dụng trên 1 trang A4 sau khi trừ margin, tính theo đơn vị
+    // "điểm ước lượng" (không cần chính xác tuyệt đối vì Preview/PDF dùng CSS
+    // đo thật, đây chỉ dùng để QUYẾT ĐỊNH mục nào rơi vào trang nào).
+    const PAGE_CAPACITY = writingConfig.orientation === 'landscape' ? 480 : 720;
+    const HEADER_HEIGHT = 60;
+    const ROW_HEIGHT = 46;
+
+    const pages = [];
+    let currentPage = [];
+    let currentHeight = 0;
+
+    writingList.forEach(entry => {
+        const itemHeight = HEADER_HEIGHT + (writingConfig.rowsPerWord * ROW_HEIGHT);
+
+        // Nếu mục không vừa trang hiện tại (và trang hiện tại không rỗng),
+        // chuyển toàn bộ mục sang trang mới — không bao giờ cắt đôi 1 mục.
+        if (currentHeight + itemHeight > PAGE_CAPACITY && currentPage.length > 0) {
+            pages.push(currentPage);
+            currentPage = [];
+            currentHeight = 0;
+        }
+
+        currentPage.push({
+            word: entry.word,
+            syllables: splitIntoSyllables(entry.word),
+            reading: entry.reading,
+            hanviet: entry.hanviet,
+            meaning: entry.meaning
+        });
+        currentHeight += itemHeight;
+    });
+
+    if (currentPage.length > 0) pages.push(currentPage);
+    if (pages.length === 0) pages.push([]);
+    return pages;
+}
+
+/** Dựng 1 "ô luyện viết" (div vuông, có thể chứa chữ mẫu mờ để đồ theo). */
+function buildTraceCellElement(char, showGhost) {
+    const cell = document.createElement('div');
+    cell.style.cssText = 'width:38px; height:38px; border:1px solid #999; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;';
+    if (showGhost && char) {
+        cell.style.color = '#c8c8c8';
+        cell.innerText = char;
+    }
+    return cell;
+}
+
+/** Dựng 1 trang A4 (DOM element) từ danh sách mục — dùng chung cho Preview và PDF (html2canvas chụp đúng element này). */
+function buildA4PageElement(pageItems, pageNumber, totalPages) {
+    const isLandscape = writingConfig.orientation === 'landscape';
+    const page = document.createElement('div');
+    page.className = 'writing-a4-page';
+    // Margin KHÔNG đặt ở đây — để CSS class .writing-a4-page kiểm soát, vì
+    // các breakpoint responsive (@media max-width:480px...) cần ghi đè margin
+    // theo tỷ lệ scale khác nhau. Inline style có độ ưu tiên cao hơn class
+    // trong file .css nên nếu margin bị set ở đây, mọi rule responsive trong
+    // style.css sẽ vô tác dụng — đây chính là lỗi đã xảy ra và được sửa.
+    page.style.cssText = 'width:' + (isLandscape ? '297mm' : '210mm') + '; height:' + (isLandscape ? '210mm' : '297mm') +
+        '; background:white; padding:14mm 12mm; box-sizing:border-box; box-shadow:0 2px 10px rgba(0,0,0,0.3); font-family:' + WRITING_FONT_STACK + '; color:#1a1a1a; position:relative;';
+
+    pageItems.forEach(item => {
+        const block = document.createElement('div');
+        block.style.cssText = 'margin-bottom:14px;';
+
+        const headerRow = document.createElement('div');
+        headerRow.style.cssText = 'display:flex; align-items:baseline; gap:8px; margin-bottom:4px; flex-wrap:wrap;';
+
+        const wordSpan = document.createElement('span');
+        wordSpan.style.cssText = 'font-size:20px; font-weight:700;';
+        wordSpan.innerText = item.word;
+        headerRow.appendChild(wordSpan);
+
