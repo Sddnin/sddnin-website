@@ -175,3 +175,33 @@ button:disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: 
 
 .game-feedback { text-align: center; min-height: 24px; font-weight: 600; margin-top: 10px; font-size: 13px; }
 .footer { margin-top: 20px; font-size: 12px; color: var(--text-muted); text-align: center; }
+
+/* === LUYỆN VIẾT (worksheet A4) === */
+#writing-a4-scroll { -webkit-overflow-scrolling: touch; }
+#writing-a4-pages { display: flex; flex-direction: column; align-items: center; }
+.writing-a4-page { margin: 0 auto 16px auto; flex-shrink: 0; }
+
+/* Trên màn hình nhỏ, thu nhỏ trang A4 để vừa khung xem (vẫn giữ đúng tỷ lệ
+   210:297 vì kích thước gốc không đổi, chỉ thu nhỏ để hiển thị). Dùng CSS
+   "zoom" thay vì "transform: scale()" — zoom co lại cả LAYOUT BOX thật của
+   phần tử (không chỉ hiệu ứng thị giác), nên không cần margin âm bù trừ hay
+   lo phần tử bị đẩy lệch tâm; trang tự chiếm đúng không gian đã co nhỏ trong
+   flexbox. zoom được hỗ trợ trên mọi trình duyệt hiện đại (Chrome/Edge/
+   Safari/Firefox 126+). Người dùng vẫn cuộn ngang được để xem chi tiết nếu
+   cần (mục 30 spec). */
+@media (max-width: 480px) {
+    .writing-a4-page { zoom: 0.42; }
+    #writing-a4-scroll { padding: 8px 0 8px 0; }
+}
+@media (min-width: 481px) and (max-width: 700px) {
+    .writing-a4-page { zoom: 0.6; }
+}
+
+/* === IN (mục 21 spec: chỉ in worksheet, không in UI app, A4 100%) === */
+@media print {
+    body * { visibility: hidden; }
+    #writing-a4-pages, #writing-a4-pages * { visibility: visible; }
+    #writing-a4-pages { position: absolute; left: 0; top: 0; width: 100%; }
+    .writing-a4-page { box-shadow: none !important; transform: none !important; margin: 0 !important; page-break-after: always; }
+    @page { size: A4; margin: 0; }
+}
