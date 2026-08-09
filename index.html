@@ -33,6 +33,7 @@
         <button id="mode-game" data-mode="game"><i class="fas fa-gamepad"></i> Mini Games</button>
         <button id="mode-aichat" data-mode="aichat"><i class="fas fa-comments"></i> AI Chat</button>
         <button id="mode-voice" data-mode="voice"><i class="fas fa-satellite-dish"></i> Voice AI</button>
+        <button id="mode-writing" data-mode="writing"><i class="fas fa-pen-nib"></i> Luyện Viết</button>
     </div>
 
     <!-- MODE 1: TRA TỪ -->
@@ -237,6 +238,106 @@
         <div id="voice-fb" class="game-feedback"></div>
     </div>
 
+    <!-- MODE 6: LUYỆN VIẾT (Tạo worksheet luyện viết tay A4 — xuất Word/PDF thật, in được) -->
+    <div id="writing-main-container" class="content-card" style="max-width: 480px;">
+
+        <!-- === MÀN HÌNH A: NHẬP + DANH SÁCH TỪ VỰNG === -->
+        <div id="writing-list-screen">
+            <div style="text-align:center; margin-bottom: 14px;">
+                <div style="font-size:17px; font-weight:700; color:var(--primary-color);">Tạo file luyện viết</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Dán danh sách từ vựng dạng JSON, sau đó tạo bản check hoặc bản viết tay để in.</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <div style="font-size:13px; font-weight:700;">Nhập từ vựng (JSON) <i class="fas fa-question-circle" id="btn-writing-help" style="color:var(--text-muted); cursor:pointer; font-weight:400;"></i></div>
+                <button id="btn-writing-demo" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-play"></i> Dùng thử demo</button>
+            </div>
+
+            <textarea id="writing-textarea" rows="6" placeholder='Dán data thô (text bất kỳ) rồi bấm AI Format, hoặc dán JSON dạng
+[{"word":"...","reading":"...","hanviet":"...","meaning":"..."}, ...]' style="width:100%; padding:10px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); border-radius:12px; outline:none; font-size:13px; resize:vertical; font-family: 'Consolas', monospace; margin-bottom:8px;"></textarea>
+
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px;">
+                <button id="btn-writing-add" style="flex:1; min-width:120px; padding:9px 10px; border:none; background:var(--primary-color); color:white; border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-plus"></i> Thêm vào danh sách</button>
+                <button id="btn-writing-ai-format" style="flex:1; min-width:100px; padding:9px 10px; border:1px solid #6c5ce7; background:none; color:#6c5ce7; border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-magic"></i> AI Format</button>
+                <button id="btn-writing-clear-input" style="padding:9px 12px; border:1px solid var(--border-color); background:none; color:var(--text-muted); border-radius:14px; cursor:pointer; font-size:12px;"><i class="fas fa-times"></i> Xóa ô nhập</button>
+            </div>
+
+            <div id="writing-msg" class="game-feedback" style="min-height:18px; margin-top:-8px; margin-bottom:8px;"></div>
+
+            <div style="border-top:1px solid var(--border-color); padding-top:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div id="writing-list-title" style="font-size:13px; font-weight:700;">Chưa có từ vựng</div>
+                    <button id="btn-writing-clear-all" style="border:none; background:none; color:var(--danger-color); cursor:pointer; font-size:12px; font-weight:600; display:none;"><i class="fas fa-trash"></i> Xóa tất cả</button>
+                </div>
+                <div id="writing-empty-hint" style="text-align:center; color:var(--text-muted); font-size:12px; padding: 16px 0;">Nhập JSON ở trên để thêm từ vựng vào danh sách.</div>
+                <div id="writing-list-items" style="display:flex; flex-direction:column; gap:6px; max-height:260px; overflow-y:auto;"></div>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:18px;">
+                <button id="btn-writing-check" style="flex:1; padding:11px; border:1px solid var(--border-color); background:none; color:var(--text-color); border-radius:16px; cursor:pointer; font-weight:600; font-size:13px;"><i class="fas fa-clipboard-check"></i> Tạo file check</button>
+                <button id="btn-writing-create" style="flex:1.4; padding:11px; border:none; background:linear-gradient(145deg, #8e24aa, #ab47bc); color:white; border-radius:16px; cursor:pointer; font-weight:700; font-size:13px; box-shadow:0 4px 12px rgba(142,36,170,0.3);"><i class="fas fa-pen-nib"></i> Tạo bản viết tay</button>
+            </div>
+        </div>
+
+        <!-- === MÀN HÌNH B: PREVIEW A4 === -->
+        <div id="writing-preview-screen" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <button id="btn-writing-back" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600; font-size:13px;"><i class="fas fa-arrow-left"></i> Quay lại</button>
+                <button id="btn-writing-config-toggle" style="border:none; background:none; color:var(--text-muted); cursor:pointer; font-size:13px;"><i class="fas fa-sliders-h"></i> Cấu hình</button>
+            </div>
+
+            <div id="writing-config-panel" style="display:none; background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:12px; font-size:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label>Khổ giấy</label>
+                    <select id="cfg-orientation" style="padding:4px 8px; border-radius:8px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color);">
+                        <option value="portrait">A4 Dọc</option>
+                        <option value="landscape">A4 Ngang</option>
+                    </select>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label>Chế độ luyện</label>
+                    <select id="cfg-mode" style="padding:4px 8px; border-radius:8px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color);">
+                        <option value="trace">Đồ theo chữ mờ</option>
+                        <option value="free">Ô trống tự viết</option>
+                        <option value="both">Cả hai</option>
+                    </select>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label>Số dòng luyện / từ</label>
+                    <input type="number" id="cfg-rows" min="1" max="6" value="2" style="width:50px; padding:4px; border-radius:8px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color); text-align:center;">
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label>Hiện phiên âm</label>
+                    <input type="checkbox" id="cfg-show-reading" checked>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label>Hiện Hán-Việt</label>
+                    <input type="checkbox" id="cfg-show-hanviet" checked>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <label>Hiện nghĩa</label>
+                    <input type="checkbox" id="cfg-show-meaning" checked>
+                </div>
+            </div>
+
+            <div id="writing-a4-scroll" style="width:100%; overflow-x:auto; background:#525659; border-radius:10px; padding:16px 0;">
+                <div id="writing-a4-pages"></div>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:14px;">
+                <button id="btn-writing-save-word" style="flex:1; padding:11px 6px; border:none; background:#2b579a; color:white; border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-file-word"></i> Lưu Word</button>
+                <button id="btn-writing-save-pdf" style="flex:1; padding:11px 6px; border:none; background:#c0392b; color:white; border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-file-pdf"></i> Lưu PDF</button>
+                <button id="btn-writing-print" style="flex:1; padding:11px 6px; border:1px solid var(--border-color); background:none; color:var(--text-color); border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-print"></i> In</button>
+            </div>
+
+            <div id="writing-export-status" style="text-align:center; font-size:12px; font-weight:600; margin-top:10px; min-height:16px;"></div>
+        </div>
+
+        <div style="text-align:center; font-size:11px; color:var(--text-muted); margin-top:14px; border-top:1px solid var(--border-color); padding-top:10px;">
+            <i class="fas fa-print"></i> Bản in được tối ưu cho khổ giấy A4 (210×297mm).
+        </div>
+    </div>
+
     <div class="modal-overlay" id="add-modal">
         <div class="modal-body">
             <div class="modal-title">Thêm từ mới <i class="fas fa-times" style="cursor:pointer;" id="btn-close-modal"></i></div>
@@ -254,6 +355,18 @@
     <input type="file" id="import-file" style="display:none;" accept=".json">
 
     <div class="footer">© 2026 Korean Engine 3.0 • Optimized for GitHub Pages</div>
+
+    <!-- Thư viện cho tính năng Luyện Viết: docx (tạo file Word thật), jsPDF + html2canvas
+         (tạo file PDF thật từ khối HTML đã render, dùng font hệ thống của trình duyệt nên
+         không cần nhúng font Hangul rời — tránh phụ thuộc CDN font nặng/kém ổn định),
+         FileSaver (lưu file xuống máy). docx không có trên cdnjs nên dùng jsDelivr (CDN
+         khác, cũng ổn định lâu năm) cho riêng thư viện này. Nếu 1 script lỗi tải, app.js
+         tự kiểm tra và báo rõ thay vì crash im lặng (xem hàm areWritingLibsLoaded trong
+         app.js). -->
+    <script src="https://cdn.jsdelivr.net/npm/docx@9/build/index.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <script src="js/app.js"></script>
 </body>
