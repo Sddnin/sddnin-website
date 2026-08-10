@@ -1,6 +1,6 @@
 /**
- * Học Tiếng Hàn 2.0 — Main Application
- * =======================================
+ * Học Tiếng Hàn 2.0 — Gemini 3.x
+ * ==================================
  */
 
 // ===================== SAMPLE DATA =====================
@@ -77,810 +77,533 @@ const SAMPLE = [
   {id:70,front:"미래",back:"Tương lai",roman:"mirae",category:"daily",level:"advanced",topik:"topik2",partOfSpeech:"Danh từ",example:"미래가 밝아요.",exampleMeaning:"Tương lai tươi sáng.",hanViet:"未來"}
 ];
 
-// ===================== WORD NORMALIZER =====================
+// ===================== NORMALIZER =====================
 function normWord(w) {
-  return {
-    fav: false, hard: false, learned: false,
-    correctCount: 0, wrongCount: 0,
-    lastReviewed: null, nextReview: null,
-    createdAt: Date.now(), srBox: 1,
-    ...w
-  };
+  return {fav:false,hard:false,learned:false,correctCount:0,wrongCount:0,lastReviewed:null,nextReview:null,createdAt:Date.now(),srBox:1,...w};
 }
 
-// ===================== MAIN APP =====================
+// ===================== APP =====================
 const A = {
   s: {
-    words: [], cat: 'all', view: 'dict',
-    streak: 0, lastStudy: null, daily: {},
+    words:[], cat:'all', view:'dict', streak:0, lastStudy:null, daily:{},
     settings: {
-      theme: 'light', ttsSpeed: '0.8', autoTTS: false,
-      sessionSize: 20, priorHard: false,
-      apiKey: '', chatModel: 'gemini-2.0-flash',
-      voiceModel: 'gemini-2.0-flash-live-001'
+      theme:'light', ttsSpeed:'0.8', autoTTS:false,
+      sessionSize:20, priorHard:false,
+      apiKey:'', chatModel:'gemini-3.6-flash',
+      voiceModel:'gemini-3.1-flash-live-preview'
     }
   },
 
   // ==================== INIT ====================
   init() {
-    this.load();
-    this.renderCatBar();
-    this.renderChatModels();
-    this.renderChatScenes();
-    this.updateHeader();
-    this.renderDict();
-    this.fc.init();
-    this.stats.render();
-    this.settingsUI();
-    this.applyTheme();
-
-    document.getElementById('searchInput').addEventListener('input', this.debounce(() => this.renderDict(), 200));
-    document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') this.chat.send(); });
-    document.addEventListener('keydown', e => this.hotkey(e));
-
-    if ('speechSynthesis' in window) {
-      speechSynthesis.getVoices();
-      speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
-    }
+    this.load(); this.renderCatBar(); this.renderChatModels();
+    this.renderChatScenes(); this.updateHeader(); this.renderDict();
+    this.fc.init(); this.stats.render(); this.settingsUI(); this.applyTheme();
+    document.getElementById('searchInput').addEventListener('input', this.debounce(()=>this.renderDict(), 200));
+    document.getElementById('chatInput').addEventListener('keydown', e=>{if(e.key==='Enter')this.chat.send()});
+    document.addEventListener('keydown', e=>this.hotkey(e));
+    if('speechSynthesis' in window){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}
   },
 
   // ==================== STORAGE ====================
   load() {
     try {
       const d = localStorage.getItem('krApp2');
-      if (d) {
+      if(d) {
         const p = JSON.parse(d);
-        this.s.words = (p.words || []).map(w => ({ ...normWord({}), ...w }));
-        this.s.streak = p.streak || 0;
-        this.s.lastStudy = p.lastStudy || null;
-        this.s.daily = p.daily || {};
-        if (p.settings) this.s.settings = { ...this.s.settings, ...p.settings };
+        this.s.words = (p.words||[]).map(w=>({...normWord({}),...w}));
+        this.s.streak = p.streak||0; this.s.lastStudy = p.lastStudy||null;
+        this.s.daily = p.daily||{};
+        if(p.settings) this.s.settings = {...this.s.settings, ...p.settings};
       }
-      if (!this.s.words.length) {
-        this.s.words = SAMPLE.map(w => normWord(w));
-        this.save();
-      }
-    } catch (e) {
-      console.error('Load err:', e);
-      this.s.words = SAMPLE.map(w => normWord(w));
-    }
+      if(!this.s.words.length) { this.s.words = SAMPLE.map(w=>normWord(w)); this.save(); }
+    } catch(e) { console.error('Load err:',e); this.s.words = SAMPLE.map(w=>normWord(w)); }
   },
 
   save() {
-    try {
-      localStorage.setItem('krApp2', JSON.stringify({
-        words: this.s.words,
-        streak: this.s.streak,
-        lastStudy: this.s.lastStudy,
-        daily: this.s.daily,
-        settings: this.s.settings
-      }));
-    } catch (e) { console.error('Save err:', e); }
+    try { localStorage.setItem('krApp2', JSON.stringify({words:this.s.words,streak:this.s.streak,lastStudy:this.s.lastStudy,daily:this.s.daily,settings:this.s.settings})); }
+    catch(e) { console.error('Save err:',e); }
   },
 
   // ==================== STREAK ====================
   checkStreak() {
     const t = new Date().toDateString();
-    if (this.s.lastStudy) {
-      const d = Math.floor((new Date(t) - new Date(this.s.lastStudy)) / 864e5);
-      if (d > 1) this.s.streak = 0;
-    }
+    if(this.s.lastStudy) { const d=Math.floor((new Date(t)-new Date(this.s.lastStudy))/864e5); if(d>1) this.s.streak=0; }
     document.getElementById('hStreak').textContent = this.s.streak;
   },
 
   recordActivity() {
-    const t = new Date().toISOString().slice(0, 10);
-    const ts = new Date().toDateString();
-    if (this.s.lastStudy !== ts) {
-      if (this.s.lastStudy) {
-        const d = Math.floor((new Date(ts) - new Date(this.s.lastStudy)) / 864e5);
-        this.s.streak = d <= 1 ? this.s.streak + 1 : 1;
-      } else {
-        this.s.streak = 1;
-      }
-      this.s.lastStudy = ts;
+    const t=new Date().toISOString().slice(0,10), ts=new Date().toDateString();
+    if(this.s.lastStudy!==ts) {
+      if(this.s.lastStudy) { const d=Math.floor((new Date(ts)-new Date(this.s.lastStudy))/864e5); this.s.streak=d<=1?this.s.streak+1:1; }
+      else this.s.streak=1;
+      this.s.lastStudy=ts;
     }
-    this.s.daily[t] = (this.s.daily[t] || 0) + 1;
-    document.getElementById('hStreak').textContent = this.s.streak;
-    this.save();
+    this.s.daily[t]=(this.s.daily[t]||0)+1;
+    document.getElementById('hStreak').textContent=this.s.streak; this.save();
   },
 
-  // ==================== NAVIGATION ====================
+  // ==================== NAV ====================
   nav(v) {
-    this.s.view = v;
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    const target = document.getElementById('v-' + v);
-    if (target) target.classList.add('active');
-    document.querySelectorAll('.bottom-nav button').forEach(b =>
-      b.classList.toggle('active', b.dataset.v === v)
-    );
-    if (v === 'stats') this.stats.render();
-    if (v === 'flashcard') this.fc.init();
+    this.s.view=v;
+    document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+    const tgt=document.getElementById('v-'+v); if(tgt) tgt.classList.add('active');
+    document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
+    if(v==='stats') this.stats.render();
+    if(v==='flashcard') this.fc.init();
   },
 
   // ==================== THEME ====================
   applyTheme() {
-    const t = this.s.settings.theme;
-    document.documentElement.dataset.theme = t;
-    document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
-    this.setToggle('tDark', t === 'dark');
+    const t=this.s.settings.theme; document.documentElement.dataset.theme=t;
+    document.getElementById('themeBtn').textContent=t==='dark'?'☀️':'🌙';
+    this.setToggle('tDark',t==='dark');
   },
-
-  toggleTheme() {
-    this.s.settings.theme = this.s.settings.theme === 'dark' ? 'light' : 'dark';
-    this.applyTheme();
-    this.save();
-  },
+  toggleTheme() { this.s.settings.theme=this.s.settings.theme==='dark'?'light':'dark'; this.applyTheme(); this.save(); },
 
   // ==================== CATEGORY ====================
   renderCatBar() {
-    const cs = [
-      { id: 'all', l: 'Tất cả', i: '📚' },
-      { id: 'topik1', l: 'TOPIK I', i: '📗' },
-      { id: 'topik2', l: 'TOPIK II', i: '📕' },
-      { id: 'beginner', l: 'Sơ cấp', i: '🌱' },
-      { id: 'intermediate', l: 'Trung cấp', i: '🌿' },
-      { id: 'advanced', l: 'Cao cấp', i: '🌳' },
-      { id: 'fav', l: 'Yêu thích', i: '❤️' },
-      { id: 'hard', l: 'Từ khó', i: '⚠️' },
-      { id: 'new', l: 'Từ mới', i: '✨' }
-    ];
-    document.getElementById('catBar').innerHTML = cs.map(c =>
-      `<button data-c="${c.id}" class="${c.id === 'all' ? 'active' : ''}" onclick="A.setCat('${c.id}')">${c.i} ${c.l}</button>`
-    ).join('');
+    const cs=[{id:'all',l:'Tất cả',i:'📚'},{id:'topik1',l:'TOPIK I',i:'📗'},{id:'topik2',l:'TOPIK II',i:'📕'},
+      {id:'beginner',l:'Sơ cấp',i:'🌱'},{id:'intermediate',l:'Trung cấp',i:'🌿'},{id:'advanced',l:'Cao cấp',i:'🌳'},
+      {id:'fav',l:'Yêu thích',i:'❤️'},{id:'hard',l:'Từ khó',i:'⚠️'},{id:'new',l:'Từ mới',i:'✨'}];
+    document.getElementById('catBar').innerHTML=cs.map(c=>
+      `<button data-c="${c.id}" class="${c.id==='all'?'active':''}" onclick="A.setCat('${c.id}')">${c.i} ${c.l}</button>`).join('');
   },
-
   setCat(c) {
-    this.s.cat = c;
-    document.querySelectorAll('.cat-bar button').forEach(b =>
-      b.classList.toggle('active', b.dataset.c === c)
-    );
-    this.renderDict();
-    this.fc.init();
+    this.s.cat=c;
+    document.querySelectorAll('.cat-bar button').forEach(b=>b.classList.toggle('active',b.dataset.c===c));
+    this.renderDict(); this.fc.init();
   },
-
   filtered() {
-    const c = this.s.cat, w = this.s.words;
-    if (c === 'all') return w;
-    if (c === 'fav') return w.filter(x => x.fav);
-    if (c === 'hard') return w.filter(x => x.hard);
-    if (c === 'new') return w.filter(x => !x.learned);
-    if (c === 'topik1') return w.filter(x => x.topik === 'topik1');
-    if (c === 'topik2') return w.filter(x => x.topik === 'topik2');
-    return w.filter(x => x.level === c);
+    const c=this.s.cat, w=this.s.words;
+    if(c==='all') return w;
+    if(c==='fav') return w.filter(x=>x.fav);
+    if(c==='hard') return w.filter(x=>x.hard);
+    if(c==='new') return w.filter(x=>!x.learned);
+    if(c==='topik1') return w.filter(x=>x.topik==='topik1');
+    if(c==='topik2') return w.filter(x=>x.topik==='topik2');
+    return w.filter(x=>x.level===c);
   },
 
   // ==================== DICTIONARY ====================
   renderDict() {
-    const q = document.getElementById('searchInput').value.toLowerCase().trim();
-    let ws = this.filtered();
-    if (q) {
-      ws = ws.filter(w =>
-        w.front.includes(q) || w.back.toLowerCase().includes(q) ||
-        (w.roman && w.roman.toLowerCase().includes(q)) ||
-        (w.hanViet && w.hanViet.includes(q))
-      );
+    const q=document.getElementById('searchInput').value.toLowerCase().trim();
+    let ws=this.filtered();
+    if(q) {
+      ws=ws.filter(w=>w.front.includes(q)||w.back.toLowerCase().includes(q)||(w.roman&&w.roman.toLowerCase().includes(q))||(w.hanViet&&w.hanViet.includes(q)));
       document.getElementById('searchClear').classList.add('show');
-    } else {
-      document.getElementById('searchClear').classList.remove('show');
-    }
-    document.getElementById('resultCount').textContent = ws.length ? `${ws.length} từ` : '';
-    const el = document.getElementById('wordList');
-    if (!ws.length) {
-      el.innerHTML = '<div class="empty"><div class="e-icon">📭</div><p>Không tìm thấy từ nào</p></div>';
-      return;
-    }
-    el.innerHTML = ws.map(w => `
-      <div class="word-item" onclick="A.showWord(${w.id})">
-        <div class="w-main">
-          <div class="w-kr">${w.front} <span class="badge ${w.level}">${w.level === 'beginner' ? 'Sơ cấp' : w.level === 'intermediate' ? 'Trung cấp' : 'Cao cấp'}</span></div>
-          <div class="w-vi">${w.back}</div>
-          <div class="w-roman">${w.roman || ''}</div>
-        </div>
-        <div class="w-actions">
-          <button class="btn-icon" onclick="event.stopPropagation();A.tts('${w.front}')" title="Phát âm">🔊</button>
-          <button class="btn-icon" onclick="event.stopPropagation();A.toggleFav(${w.id})" title="Yêu thích">${w.fav ? '❤️' : '🤍'}</button>
-        </div>
-      </div>
-    `).join('');
-    document.getElementById('hTotal').textContent = this.s.words.length;
+    } else document.getElementById('searchClear').classList.remove('show');
+    document.getElementById('resultCount').textContent=ws.length?`${ws.length} từ`:'';
+    const el=document.getElementById('wordList');
+    if(!ws.length) { el.innerHTML='<div class="empty"><div class="e-icon">📭</div><p>Không tìm thấy từ nào</p></div>'; return; }
+    el.innerHTML=ws.map(w=>`<div class="word-item" onclick="A.showWord(${w.id})">
+      <div class="w-main"><div class="w-kr">${w.front} <span class="badge ${w.level}">${w.level==='beginner'?'Sơ cấp':w.level==='intermediate'?'Trung cấp':'Cao cấp'}</span></div>
+      <div class="w-vi">${w.back}</div><div class="w-roman">${w.roman||''}</div></div>
+      <div class="w-actions"><button class="btn-icon" onclick="event.stopPropagation();A.tts('${w.front}')" title="Phát âm">🔊</button>
+      <button class="btn-icon" onclick="event.stopPropagation();A.toggleFav(${w.id})" title="Yêu thích">${w.fav?'❤️':'🤍'}</button></div></div>`).join('');
+    document.getElementById('hTotal').textContent=this.s.words.length;
   },
-
-  clearSearch() {
-    document.getElementById('searchInput').value = '';
-    this.renderDict();
-  },
-
+  clearSearch() { document.getElementById('searchInput').value=''; this.renderDict(); },
   showWord(id) {
-    const w = this.s.words.find(x => x.id === id);
-    if (!w) return;
-    const srInfo = w.srBox >= 4 ? '✅ Đã thuộc' : w.srBox >= 2 ? '📖 Đang học' : '✨ Mới';
-    document.getElementById('modalBody').innerHTML = `
-      <h2>${w.front}</h2>
-      <div class="d-roman">${w.roman || ''}</div>
+    const w=this.s.words.find(x=>x.id===id); if(!w) return;
+    const srInfo=w.srBox>=4?'✅ Đã thuộc':w.srBox>=2?'📖 Đang học':'✨ Mới';
+    document.getElementById('modalBody').innerHTML=`
+      <h2>${w.front}</h2><div class="d-roman">${w.roman||''}</div>
       <div class="d-row"><span class="d-label">Nghĩa</span><span class="d-val">${w.back}</span></div>
-      <div class="d-row"><span class="d-label">Loại từ</span><span class="d-val">${w.partOfSpeech || '-'}</span></div>
+      <div class="d-row"><span class="d-label">Loại từ</span><span class="d-val">${w.partOfSpeech||'-'}</span></div>
       <div class="d-row"><span class="d-label">Cấp độ</span><span class="d-val"><span class="badge ${w.level}">${w.level}</span></span></div>
-      <div class="d-row"><span class="d-label">Trạng thái</span><span class="d-val">${srInfo} (Box ${w.srBox || 1})</span></div>
-      ${w.hanViet ? `<div class="d-row"><span class="d-label">Hán Việt</span><span class="d-val">${w.hanViet}</span></div>` : ''}
-      ${w.example ? `<div class="d-row"><span class="d-label">Ví dụ</span><span class="d-val">${w.example}<br><em style="color:var(--text3)">${w.exampleMeaning || ''}</em></span></div>` : ''}
+      <div class="d-row"><span class="d-label">Trạng thái</span><span class="d-val">${srInfo} (Box ${w.srBox||1})</span></div>
+      ${w.hanViet?`<div class="d-row"><span class="d-label">Hán Việt</span><span class="d-val">${w.hanViet}</span></div>`:''}
+      ${w.example?`<div class="d-row"><span class="d-label">Ví dụ</span><span class="d-val">${w.example}<br><em style="color:var(--text3)">${w.exampleMeaning||''}</em></span></div>`:''}
       <div class="d-actions">
         <button class="btn btn-primary btn-sm" onclick="A.tts('${w.front}')">🔊 Nghe</button>
-        <button class="btn btn-outline btn-sm" onclick="A.toggleFav(${w.id});A.showWord(${w.id})">${w.fav ? '❤️ Bỏ thích' : '🤍 Thích'}</button>
-        <button class="btn btn-outline btn-sm" onclick="A.toggleHard(${w.id});A.showWord(${w.id})">${w.hard ? '⚑ Bỏ khó' : '⚑ Khó'}</button>
+        <button class="btn btn-outline btn-sm" onclick="A.toggleFav(${w.id});A.showWord(${w.id})">${w.fav?'❤️ Bỏ thích':'🤍 Thích'}</button>
+        <button class="btn btn-outline btn-sm" onclick="A.toggleHard(${w.id});A.showWord(${w.id})">${w.hard?'⚑ Bỏ khó':'⚑ Khó'}</button>
         <button class="btn btn-outline btn-sm" onclick="A.copyWord(${w.id})">📋 Copy</button>
         <button class="btn btn-outline btn-sm" onclick="A.explainAI(${w.id})">🤖 AI giải thích</button>
-      </div>
-      <div id="aiExplain" class="mt-8"></div>
-    `;
+      </div><div id="aiExplain" class="mt-8"></div>`;
     document.getElementById('wordModal').classList.add('show');
   },
-
   closeModal() { document.getElementById('wordModal').classList.remove('show'); },
   closeAddModal() { document.getElementById('addModal').classList.remove('show'); },
-
-  toggleFav(id) {
-    const w = this.s.words.find(x => x.id === id);
-    if (w) { w.fav = !w.fav; this.save(); this.renderDict(); this.toast(w.fav ? 'Đã thích' : 'Bỏ thích', 'success'); }
-  },
-
-  toggleHard(id) {
-    const w = this.s.words.find(x => x.id === id);
-    if (w) { w.hard = !w.hard; this.save(); this.renderDict(); this.toast(w.hard ? 'Đã đánh dấu khó' : 'Bỏ đánh dấu', 'info'); }
-  },
-
-  copyWord(id) {
-    const w = this.s.words.find(x => x.id === id);
-    if (w) navigator.clipboard.writeText(`${w.front} (${w.roman || ''}) - ${w.back}`).then(() => this.toast('Đã copy!', 'success'));
-  },
-
+  toggleFav(id) { const w=this.s.words.find(x=>x.id===id); if(w){w.fav=!w.fav;this.save();this.renderDict();this.toast(w.fav?'Đã thích':'Bỏ thích','success');} },
+  toggleHard(id) { const w=this.s.words.find(x=>x.id===id); if(w){w.hard=!w.hard;this.save();this.renderDict();this.toast(w.hard?'Đã đánh dấu khó':'Bỏ đánh dấu','info');} },
+  copyWord(id) { const w=this.s.words.find(x=>x.id===id); if(w) navigator.clipboard.writeText(`${w.front} (${w.roman||''}) - ${w.back}`).then(()=>this.toast('Đã copy!','success')); },
   async explainAI(id) {
-    const w = this.s.words.find(x => x.id === id);
-    if (!w) return;
-    const k = this.s.settings.apiKey;
-    if (!k) { this.toast('Nhập API Key trong Cài đặt', 'warning'); return; }
-    const el = document.getElementById('aiExplain');
-    el.innerHTML = '<div style="color:var(--text3)">🤖 Đang giải thích...</div>';
+    const w=this.s.words.find(x=>x.id===id); if(!w) return;
+    const k=this.s.settings.apiKey; if(!k){this.toast('Nhập API Key trong Cài đặt','warning');return;}
+    const el=document.getElementById('aiExplain'); el.innerHTML='<div style="color:var(--text3)">🤖 Đang giải thích...</div>';
     try {
-      const r = await this.gemini(
-        [{ role: 'user', parts: [{ text: `Giải thích từ tiếng Hàn "${w.front}" (${w.roman}) cho người Việt. Gồm: nghĩa chi tiết, cách dùng, ngữ pháp, từ đồng nghĩa, mẹo ghi nhớ. Ngắn gọn, tiếng Việt.` }] }],
-        k, 'gemini-2.0-flash'
-      );
-      el.innerHTML = `<div class="card" style="font-size:.88rem;line-height:1.7">${this.esc(r).replace(/\n/g, '<br>')}</div>`;
-    } catch (e) {
-      el.innerHTML = `<div style="color:var(--error)">⚠️ ${e.message}</div>`;
-    }
+      const r=await this.gemini([{role:'user',parts:[{text:`Giải thích từ tiếng Hàn "${w.front}" (${w.roman}) cho người Việt. Gồm: nghĩa chi tiết, cách dùng, ngữ pháp, từ đồng nghĩa, mẹo ghi nhớ. Ngắn gọn, tiếng Việt.`}]}],k,'gemini-3.6-flash');
+      el.innerHTML=`<div class="card" style="font-size:.88rem;line-height:1.7">${this.esc(r).replace(/\n/g,'<br>')}</div>`;
+    } catch(e) { el.innerHTML=`<div style="color:var(--error)">⚠️ ${e.message}</div>`; }
   },
 
   // ==================== ADD WORD ====================
   dict: {
     showAddWord() {
-      document.getElementById('addBody').innerHTML = `
-        <div class="add-form">
-          <input id="addKr" placeholder="Tiếng Hàn * (예: 사과)" required>
-          <input id="addVi" placeholder="Nghĩa tiếng Việt * (예: quả táo)" required>
-          <input id="addRoman" placeholder="Romanization (예: sagwa)">
-          <div class="form-row">
-            <select id="addLevel"><option value="beginner">Sơ cấp</option><option value="intermediate">Trung cấp</option><option value="advanced">Cao cấp</option></select>
-            <select id="addCat"><option value="custom">Tùy chỉnh</option><option value="greetings">Chào hỏi</option><option value="food">Đồ ăn</option><option value="family">Gia đình</option><option value="places">Địa điểm</option><option value="verbs">Động từ</option><option value="adjectives">Tính từ</option><option value="daily">Hàng ngày</option><option value="education">Giáo dục</option></select>
-          </div>
-          <input id="addPos" placeholder="Loại từ (예: Danh từ)">
-          <textarea id="addEx" placeholder="Ví dụ tiếng Hàn"></textarea>
-          <input id="addExVi" placeholder="Nghĩa ví dụ">
-          <button class="btn btn-primary" onclick="A.dict.addWord()" style="width:100%">➕ Thêm từ</button>
-        </div>`;
+      document.getElementById('addBody').innerHTML=`<div class="add-form">
+        <input id="addKr" placeholder="Tiếng Hàn * (예: 사과)" required>
+        <input id="addVi" placeholder="Nghĩa tiếng Việt * (예: quả táo)" required>
+        <input id="addRoman" placeholder="Romanization (예: sagwa)">
+        <div class="form-row">
+          <select id="addLevel"><option value="beginner">Sơ cấp</option><option value="intermediate">Trung cấp</option><option value="advanced">Cao cấp</option></select>
+          <select id="addCat"><option value="custom">Tùy chỉnh</option><option value="greetings">Chào hỏi</option><option value="food">Đồ ăn</option><option value="family">Gia đình</option><option value="places">Địa điểm</option><option value="verbs">Động từ</option><option value="adjectives">Tính từ</option><option value="daily">Hàng ngày</option><option value="education">Giáo dục</option></select>
+        </div>
+        <input id="addPos" placeholder="Loại từ (예: Danh từ)">
+        <textarea id="addEx" placeholder="Ví dụ tiếng Hàn"></textarea>
+        <input id="addExVi" placeholder="Nghĩa ví dụ">
+        <button class="btn btn-primary" onclick="A.dict.addWord()" style="width:100%">➕ Thêm từ</button></div>`;
       document.getElementById('addModal').classList.add('show');
     },
     addWord() {
-      const kr = document.getElementById('addKr').value.trim();
-      const vi = document.getElementById('addVi').value.trim();
-      if (!kr || !vi) { A.toast('Nhập từ và nghĩa!', 'error'); return; }
-      A.s.words.push(normWord({
-        id: Date.now(), front: kr, back: vi,
-        roman: document.getElementById('addRoman').value.trim(),
-        level: document.getElementById('addLevel').value,
-        category: document.getElementById('addCat').value,
-        partOfSpeech: document.getElementById('addPos').value.trim(),
-        example: document.getElementById('addEx').value.trim(),
-        exampleMeaning: document.getElementById('addExVi').value.trim(),
-        topik: 'custom', hanViet: ''
-      }));
-      A.save(); A.renderDict(); A.closeAddModal();
-      A.toast(`Đã thêm "${kr}"!`, 'success');
+      const kr=document.getElementById('addKr').value.trim(), vi=document.getElementById('addVi').value.trim();
+      if(!kr||!vi){A.toast('Nhập từ và nghĩa!','error');return;}
+      A.s.words.push(normWord({id:Date.now(),front:kr,back:vi,roman:document.getElementById('addRoman').value.trim(),
+        level:document.getElementById('addLevel').value,category:document.getElementById('addCat').value,
+        partOfSpeech:document.getElementById('addPos').value.trim(),example:document.getElementById('addEx').value.trim(),
+        exampleMeaning:document.getElementById('addExVi').value.trim(),topik:'custom',hanViet:''}));
+      A.save(); A.renderDict(); A.closeAddModal(); A.toast(`Đã thêm "${kr}"!`,'success');
     }
   },
 
   // ==================== TTS ====================
   tts(text) {
-    if (!text || !('speechSynthesis' in window)) return;
+    if(!text||!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ko-KR';
-    u.rate = parseFloat(this.s.settings.ttsSpeed) || 0.8;
-    const v = speechSynthesis.getVoices().find(x => x.lang.startsWith('ko'));
-    if (v) u.voice = v;
+    const u=new SpeechSynthesisUtterance(text); u.lang='ko-KR'; u.rate=parseFloat(this.s.settings.ttsSpeed)||0.8;
+    const v=speechSynthesis.getVoices().find(x=>x.lang.startsWith('ko')); if(v) u.voice=v;
     speechSynthesis.speak(u);
   },
 
   // ==================== FLASHCARD ====================
   fc: {
-    idx: 0, words: [], flipped: false, mode: 'all',
-    init() { this.loadWords(); this.idx = 0; this.flipped = false; this.render(); this.setupSwipe(); },
+    idx:0, words:[], flipped:false, mode:'all',
+    init() { this.loadWords(); this.idx=0; this.flipped=false; this.render(); this.setupSwipe(); },
     loadWords() {
-      const ws = A.filtered();
-      if (this.mode === 'due') {
-        const now = Date.now();
-        this.words = ws.filter(w => !w.nextReview || w.nextReview <= now);
-      } else this.words = [...ws];
+      const ws=A.filtered();
+      if(this.mode==='due') { const now=Date.now(); this.words=ws.filter(w=>!w.nextReview||w.nextReview<=now); }
+      else this.words=[...ws];
       this.renderModeBar();
     },
     renderModeBar() {
-      const due = A.filtered().filter(w => !w.nextReview || w.nextReview <= Date.now()).length;
-      document.getElementById('fcModeBar').innerHTML = `
-        <button class="${this.mode === 'all' ? 'active' : ''}" onclick="A.fc.setMode('all')">Tất cả</button>
-        <button class="${this.mode === 'due' ? 'active' : ''}" onclick="A.fc.setMode('due')">Ôn tập ${due ? `<span class="fc-due-badge">${due}</span>` : ''}</button>`;
+      const due=A.filtered().filter(w=>!w.nextReview||w.nextReview<=Date.now()).length;
+      document.getElementById('fcModeBar').innerHTML=`
+        <button class="${this.mode==='all'?'active':''}" onclick="A.fc.setMode('all')">Tất cả</button>
+        <button class="${this.mode==='due'?'active':''}" onclick="A.fc.setMode('due')">Ôn tập ${due?`<span class="fc-due-badge">${due}</span>`:''}</button>`;
     },
-    setMode(m) { this.mode = m; this.init(); },
+    setMode(m) { this.mode=m; this.init(); },
     cur() { return this.words[this.idx]; },
     render() {
-      const w = this.cur();
-      if (!w) {
-        document.getElementById('fcFront').textContent = 'Không có từ';
-        document.getElementById('fcBack').textContent = '';
-        document.getElementById('fcRoman').textContent = '';
-        document.getElementById('fcPos').textContent = '';
-        document.getElementById('fcProg').textContent = '0/0';
-        return;
-      }
-      document.getElementById('fcFront').textContent = w.front;
-      document.getElementById('fcBack').textContent = w.back;
-      document.getElementById('fcRoman').textContent = w.roman || '';
-      document.getElementById('fcPos').textContent = w.partOfSpeech || '';
-      document.getElementById('fcProg').textContent = `${this.idx + 1} / ${this.words.length}`;
-      document.getElementById('fcFill').style.width = `${((this.idx + 1) / this.words.length) * 100}%`;
-      document.getElementById('fcFav').textContent = w.fav ? '❤️' : '🤍';
-      document.getElementById('fcHard').style.opacity = w.hard ? 1 : .4;
-      const fc = document.getElementById('flashcard');
-      fc.classList.toggle('flipped', this.flipped);
-      if (this.flipped && A.s.settings.autoTTS) A.tts(w.front);
+      const w=this.cur();
+      if(!w) { document.getElementById('fcFront').textContent='Không có từ'; document.getElementById('fcBack').textContent=''; document.getElementById('fcRoman').textContent=''; document.getElementById('fcPos').textContent=''; document.getElementById('fcProg').textContent='0/0'; return; }
+      document.getElementById('fcFront').textContent=w.front;
+      document.getElementById('fcBack').textContent=w.back;
+      document.getElementById('fcRoman').textContent=w.roman||'';
+      document.getElementById('fcPos').textContent=w.partOfSpeech||'';
+      document.getElementById('fcProg').textContent=`${this.idx+1} / ${this.words.length}`;
+      document.getElementById('fcFill').style.width=`${((this.idx+1)/this.words.length)*100}%`;
+      document.getElementById('fcFav').textContent=w.fav?'❤️':'🤍';
+      document.getElementById('fcHard').style.opacity=w.hard?1:.4;
+      document.getElementById('flashcard').classList.toggle('flipped',this.flipped);
+      if(this.flipped&&A.s.settings.autoTTS) A.tts(w.front);
     },
     flip() {
-      this.flipped = !this.flipped;
-      document.getElementById('flashcard').classList.toggle('flipped', this.flipped);
-      if (this.flipped) {
-        const w = this.cur();
-        if (w) { w.lastReviewed = Date.now(); A.save(); }
-      }
+      this.flipped=!this.flipped;
+      document.getElementById('flashcard').classList.toggle('flipped',this.flipped);
+      if(this.flipped) { const w=this.cur(); if(w){w.lastReviewed=Date.now();A.save();} }
     },
-    next() { if (!this.words.length) return; this.idx = (this.idx + 1) % this.words.length; this.flipped = false; this.render(); A.recordActivity(); },
-    prev() { if (!this.words.length) return; this.idx = (this.idx - 1 + this.words.length) % this.words.length; this.flipped = false; this.render(); },
-    toggleFav() {
-      const w = this.cur(); if (!w) return;
-      const o = A.s.words.find(x => x.id === w.id);
-      if (o) { o.fav = !o.fav; w.fav = o.fav; A.save(); this.render(); A.renderDict(); }
-    },
-    markHard() {
-      const w = this.cur(); if (!w) return;
-      const o = A.s.words.find(x => x.id === w.id);
-      if (o) { o.hard = !o.hard; w.hard = o.hard; A.save(); this.render(); }
-    },
+    next() { if(!this.words.length)return; this.idx=(this.idx+1)%this.words.length; this.flipped=false; this.render(); A.recordActivity(); },
+    prev() { if(!this.words.length)return; this.idx=(this.idx-1+this.words.length)%this.words.length; this.flipped=false; this.render(); },
+    toggleFav() { const w=this.cur(); if(w){const o=A.s.words.find(x=>x.id===w.id);if(o){o.fav=!o.fav;w.fav=o.fav;A.save();this.render();A.renderDict();}} },
+    markHard() { const w=this.cur(); if(w){const o=A.s.words.find(x=>x.id===w.id);if(o){o.hard=!o.hard;w.hard=o.hard;A.save();this.render();}} },
     markCorrect() {
-      const w = this.cur(); if (!w) return;
-      const o = A.s.words.find(x => x.id === w.id);
-      if (o) {
-        o.srBox = Math.min((o.srBox || 1) + 1, 5);
-        const days = [0, 1, 3, 7, 14];
-        o.nextReview = Date.now() + (days[o.srBox - 1] || 14) * 864e5;
-        o.correctCount++; o.lastReviewed = Date.now();
-        if (o.srBox >= 4) o.learned = true;
-        A.save();
-      }
+      const w=this.cur(); if(!w)return; const o=A.s.words.find(x=>x.id===w.id);
+      if(o){o.srBox=Math.min((o.srBox||1)+1,5);const days=[0,1,3,7,14];o.nextReview=Date.now()+(days[o.srBox-1]||14)*864e5;o.correctCount++;o.lastReviewed=Date.now();if(o.srBox>=4)o.learned=true;A.save();}
       this.next();
     },
     markWrong() {
-      const w = this.cur(); if (!w) return;
-      const o = A.s.words.find(x => x.id === w.id);
-      if (o) { o.srBox = 1; o.nextReview = Date.now(); o.wrongCount++; o.lastReviewed = Date.now(); A.save(); }
+      const w=this.cur(); if(!w)return; const o=A.s.words.find(x=>x.id===w.id);
+      if(o){o.srBox=1;o.nextReview=Date.now();o.wrongCount++;o.lastReviewed=Date.now();A.save();}
       this.next();
     },
     setupSwipe() {
-      const el = document.getElementById('fcContainer');
-      const fc = document.getElementById('flashcard');
-      const lh = document.querySelector('.fc-swipe-hint.left');
-      const rh = document.querySelector('.fc-swipe-hint.right');
-      let startX = 0, dx = 0, moving = false;
-      el.addEventListener('touchstart', e => { startX = e.touches[0].clientX; moving = false; fc.style.transition = 'none'; }, { passive: true });
-      el.addEventListener('touchmove', e => {
-        dx = e.touches[0].clientX - startX;
-        const dy = e.touches[0].clientY - startY;
-        if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy)) {
-          moving = true;
-          fc.style.transform = `translateX(${dx * .7}px) rotate(${dx * .04}deg)`;
-          if (dx > 40) rh.style.opacity = Math.min((dx - 40) / 40, 1); else rh.style.opacity = 0;
-          if (dx < -40) lh.style.opacity = Math.min((-dx - 40) / 40, 1); else lh.style.opacity = 0;
+      const el=document.getElementById('fcContainer'), fc=document.getElementById('flashcard');
+      const lh=document.querySelector('.fc-swipe-hint.left'), rh=document.querySelector('.fc-swipe-hint.right');
+      let startX=0, startY=0, dx=0, moving=false;
+      el.addEventListener('touchstart', e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY;moving=false;fc.style.transition='none';},{passive:true});
+      el.addEventListener('touchmove', e=>{
+        dx=e.touches[0].clientX-startX; const dy=e.touches[0].clientY-startY;
+        if(Math.abs(dx)>15&&Math.abs(dx)>Math.abs(dy)){
+          moving=true; fc.style.transform=`translateX(${dx*.7}px) rotate(${dx*.04}deg)`;
+          if(dx>40) rh.style.opacity=Math.min((dx-40)/40,1); else rh.style.opacity=0;
+          if(dx<-40) lh.style.opacity=Math.min((-dx-40)/40,1); else lh.style.opacity=0;
         }
-      }, { passive: true });
-      el.addEventListener('touchend', () => {
-        fc.style.transition = 'transform .35s var(--ease)';
-        if (moving && Math.abs(dx) > 70) { dx > 0 ? this.prev() : this.next(); }
-        fc.style.transform = this.flipped ? 'rotateY(180deg)' : '';
-        lh.style.opacity = 0; rh.style.opacity = 0;
-        if (!moving && Math.abs(dx) < 10) this.flip();
-        dx = 0;
+      },{passive:true});
+      el.addEventListener('touchend', ()=>{
+        fc.style.transition='transform .35s var(--ease)';
+        if(moving&&Math.abs(dx)>70){dx>0?this.prev():this.next();}
+        fc.style.transform=this.flipped?'rotateY(180deg)':'';
+        lh.style.opacity=0; rh.style.opacity=0;
+        if(!moving&&Math.abs(dx)<10) this.flip();
+        dx=0;
       });
     }
   },
 
   // ==================== GAMES ====================
   game: {
-    score: 0, streak: 0, type: '', _c: [],
+    score:0, streak:0, type:'', _c:[],
     start(t) {
-      this.type = t; this.score = 0; this.streak = 0; this.cleanup();
-      document.getElementById('gameSelect').style.display = 'none';
-      document.getElementById('gameArea').classList.add('active');
-      this.updScore();
-      if (t === 'quiz') this.initQuiz();
-      else if (t === 'match') this.initMatch();
-      else if (t === 'typing') this.initTyping();
-      else if (t === 'speak') this.initSpeak();
+      this.type=t;this.score=0;this.streak=0;this.cleanup();
+      document.getElementById('gameSelect').style.display='none';
+      document.getElementById('gameArea').classList.add('active'); this.updScore();
+      if(t==='quiz') this.initQuiz(); else if(t==='match') this.initMatch();
+      else if(t==='typing') this.initTyping(); else if(t==='speak') this.initSpeak();
     },
-    back() { this.cleanup(); document.getElementById('gameSelect').style.display = ''; document.getElementById('gameArea').classList.remove('active'); document.getElementById('gameContent').innerHTML = ''; },
-    cleanup() { this._c.forEach(f => f()); this._c = []; try { if (A._sr) A._sr.stop(); } catch (e) {} },
-    updScore() { document.getElementById('gScore').textContent = `🎯 ${this.score}`; document.getElementById('gStreak').textContent = `🔥 ${this.streak}`; },
-    shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; },
-    sim(a, b) {
-      if (!a || !b) return 0; a = a.toLowerCase().trim(); b = b.toLowerCase().trim();
-      if (a === b) return 1;
-      const l = a.length > b.length ? a : b, s = a.length > b.length ? b : a;
-      if (!l.length) return 1;
-      let m = 0; for (let i = 0; i < s.length; i++) if (l.includes(s[i])) m++;
-      return m / l.length;
-    },
-    // QUIZ
-    initQuiz() {
-      const ws = A.filtered(); if (ws.length < 4) { A.toast('Cần ít nhất 4 từ', 'warning'); this.back(); return; }
-      this._qw = this.shuffle([...ws]).slice(0, 20); this._qi = 0; this.nextQ();
-    },
+    back() { this.cleanup();document.getElementById('gameSelect').style.display='';document.getElementById('gameArea').classList.remove('active');document.getElementById('gameContent').innerHTML=''; },
+    cleanup() { this._c.forEach(f=>f());this._c=[];try{if(A._sr)A._sr.stop();}catch(e){} },
+    updScore() { document.getElementById('gScore').textContent=`🎯 ${this.score}`;document.getElementById('gStreak').textContent=`🔥 ${this.streak}`; },
+    shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; },
+    sim(a,b) { if(!a||!b)return 0;a=a.toLowerCase().trim();b=b.toLowerCase().trim();if(a===b)return 1;const l=a.length>b.length?a:b,s=a.length>b.length?b:a;if(!l.length)return 1;let m=0;for(let i=0;i<s.length;i++)if(l.includes(s[i]))m++;return m/l.length; },
+    initQuiz() { const ws=A.filtered();if(ws.length<4){A.toast('Cần ít nhất 4 từ','warning');this.back();return;} this._qw=this.shuffle([...ws]).slice(0,20);this._qi=0;this.nextQ(); },
     nextQ() {
-      if (this._qi >= this._qw.length) { this.showResult(); return; }
-      const w = this._qw[this._qi], all = A.s.words, opts = [w];
-      while (opts.length < 4) { const r = all[Math.floor(Math.random() * all.length)]; if (!opts.find(o => o.id === r.id)) opts.push(r); }
-      const sh = this.shuffle(opts);
-      document.getElementById('gameContent').innerHTML = `
-        <div class="quiz-q">${w.front}</div><div class="quiz-sub">${w.roman || ''}</div>
-        ${sh.map((o, i) => `<button class="quiz-opt" data-id="${o.id}" onclick="A.game.ansQuiz(${o.id},${w.id},this)">${String.fromCharCode(65 + i)}. ${o.back}</button>`).join('')}`;
+      if(this._qi>=this._qw.length){this.showResult();return;}
+      const w=this._qw[this._qi],all=A.s.words,opts=[w];
+      while(opts.length<4){const r=all[Math.floor(Math.random()*all.length)];if(!opts.find(o=>o.id===r.id))opts.push(r);}
+      const sh=this.shuffle(opts);
+      document.getElementById('gameContent').innerHTML=`<div class="quiz-q">${w.front}</div><div class="quiz-sub">${w.roman||''}</div>
+        ${sh.map((o,i)=>`<button class="quiz-opt" data-id="${o.id}" onclick="A.game.ansQuiz(${o.id},${w.id},this)">${String.fromCharCode(65+i)}. ${o.back}</button>`).join('')}`;
     },
-    ansQuiz(sid, cid, btn) {
-      document.querySelectorAll('.quiz-opt').forEach(o => { o.classList.add('done'); if (+o.dataset.id === cid) o.classList.add('correct'); });
-      if (sid === cid) { btn.classList.add('correct'); this.score += 10; this.streak++; const w = A.s.words.find(x => x.id === cid); if (w) { w.correctCount++; w.learned = true; w.lastReviewed = Date.now(); } }
-      else { btn.classList.add('wrong'); this.streak = 0; const w = A.s.words.find(x => x.id === cid); if (w) w.wrongCount++; }
-      A.save(); this.updScore(); A.recordActivity(); this._qi++; setTimeout(() => this.nextQ(), 1100);
+    ansQuiz(sid,cid,btn) {
+      document.querySelectorAll('.quiz-opt').forEach(o=>{o.classList.add('done');if(+o.dataset.id===cid)o.classList.add('correct');});
+      if(sid===cid){btn.classList.add('correct');this.score+=10;this.streak++;const w=A.s.words.find(x=>x.id===cid);if(w){w.correctCount++;w.learned=true;w.lastReviewed=Date.now();}}
+      else{btn.classList.add('wrong');this.streak=0;const w=A.s.words.find(x=>x.id===cid);if(w)w.wrongCount++;}
+      A.save();this.updScore();A.recordActivity();this._qi++;setTimeout(()=>this.nextQ(),1100);
     },
-    // MATCH
     initMatch() {
-      const ws = A.filtered(); if (ws.length < 4) { A.toast('Cần ít nhất 4 từ', 'warning'); this.back(); return; }
-      const sel = this.shuffle([...ws]).slice(0, 6); this._mp = sel; this._msel = null; this._mc = 0; this._mt = sel.length;
-      const kr = this.shuffle([...sel]), vi = this.shuffle([...sel]);
-      document.getElementById('gameContent').innerHTML = `<div class="match-grid">
-        <div class="match-col" id="mk">${kr.map(w => `<div class="match-item" data-id="${w.id}" data-col="k" onclick="A.game.matchClk(this)">${w.front}</div>`).join('')}</div>
-        <div class="match-col" id="mv">${vi.map(w => `<div class="match-item" data-id="${w.id}" data-col="v" onclick="A.game.matchClk(this)">${w.back}</div>`).join('')}</div></div>`;
+      const ws=A.filtered();if(ws.length<4){A.toast('Cần ít nhất 4 từ','warning');this.back();return;}
+      const sel=this.shuffle([...ws]).slice(0,6);this._msel=null;this._mc=0;this._mt=sel.length;
+      const kr=this.shuffle([...sel]),vi=this.shuffle([...sel]);
+      document.getElementById('gameContent').innerHTML=`<div class="match-grid">
+        <div class="match-col">${kr.map(w=>`<div class="match-item" data-id="${w.id}" data-col="k" onclick="A.game.matchClk(this)">${w.front}</div>`).join('')}</div>
+        <div class="match-col">${vi.map(w=>`<div class="match-item" data-id="${w.id}" data-col="v" onclick="A.game.matchClk(this)">${w.back}</div>`).join('')}</div></div>`;
     },
     matchClk(el) {
-      if (el.classList.contains('matched')) return;
-      const col = el.dataset.col;
-      if (this._msel && this._msel.dataset.col === col) { document.querySelectorAll('.match-item.sel').forEach(e => e.classList.remove('sel')); this._msel = el; el.classList.add('sel'); return; }
-      el.classList.add('sel');
-      if (!this._msel) { this._msel = el; return; }
-      const f = this._msel, s = el;
-      if (f.dataset.id === s.dataset.id) {
-        f.classList.add('matched'); s.classList.add('matched'); f.classList.remove('sel'); s.classList.remove('sel');
-        this._mc++; this.score += 15; this.streak++; this.updScore(); A.recordActivity();
-        if (this._mc >= this._mt) setTimeout(() => { document.getElementById('gameContent').innerHTML += `<div class="game-result"><div class="r-icon">🎉</div><div class="r-score">${this.score} điểm</div><button class="btn btn-primary" onclick="A.game.initMatch()">Chơi lại</button></div>`; }, 400);
+      if(el.classList.contains('matched'))return; const col=el.dataset.col;
+      if(this._msel&&this._msel.dataset.col===col){document.querySelectorAll('.match-item.sel').forEach(e=>e.classList.remove('sel'));this._msel=el;el.classList.add('sel');return;}
+      el.classList.add('sel'); if(!this._msel){this._msel=el;return;}
+      const f=this._msel,s=el;
+      if(f.dataset.id===s.dataset.id){
+        f.classList.add('matched');s.classList.add('matched');f.classList.remove('sel');s.classList.remove('sel');
+        this._mc++;this.score+=15;this.streak++;this.updScore();A.recordActivity();
+        if(this._mc>=this._mt)setTimeout(()=>{document.getElementById('gameContent').innerHTML+=`<div class="game-result"><div class="r-icon">🎉</div><div class="r-score">${this.score} điểm</div><button class="btn btn-primary" onclick="A.game.initMatch()">Chơi lại</button></div>`;},400);
       } else {
-        f.classList.add('wrong-anim'); s.classList.add('wrong-anim'); this.streak = 0; this.updScore();
-        setTimeout(() => { f.classList.remove('sel', 'wrong-anim'); s.classList.remove('sel', 'wrong-anim'); }, 400);
+        f.classList.add('wrong-anim');s.classList.add('wrong-anim');this.streak=0;this.updScore();
+        setTimeout(()=>{f.classList.remove('sel','wrong-anim');s.classList.remove('sel','wrong-anim');},400);
       }
-      this._msel = null;
+      this._msel=null;
     },
-    // TYPING
-    initTyping() {
-      const ws = A.filtered(); if (!ws.length) { A.toast('Không có từ', 'warning'); this.back(); return; }
-      this._tw = this.shuffle([...ws]).slice(0, 15); this._ti = 0; this.nextTyping();
-    },
+    initTyping() { const ws=A.filtered();if(!ws.length){A.toast('Không có từ','warning');this.back();return;} this._tw=this.shuffle([...ws]).slice(0,15);this._ti=0;this.nextTyping(); },
     nextTyping() {
-      if (this._ti >= this._tw.length) { this.showResult(); return; }
-      const w = this._tw[this._ti];
-      document.getElementById('gameContent').innerHTML = `
-        <div class="quiz-q">${w.back}</div><div class="quiz-sub">${w.roman || ''}</div>
+      if(this._ti>=this._tw.length){this.showResult();return;}
+      const w=this._tw[this._ti];
+      document.getElementById('gameContent').innerHTML=`<div class="quiz-q">${w.back}</div><div class="quiz-sub">${w.roman||''}</div>
         <input type="text" class="type-input" id="typeIn" placeholder="Nhập tiếng Hàn..." autocomplete="off">
         <button class="btn btn-primary" style="width:100%" onclick="A.game.chkType()">Kiểm tra ▶</button><div id="typeRes"></div>`;
-      const inp = document.getElementById('typeIn'); inp.focus();
-      inp.addEventListener('keydown', e => { if (e.key === 'Enter') A.game.chkType(); });
+      const inp=document.getElementById('typeIn');inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')A.game.chkType();});
     },
     chkType() {
-      const inp = document.getElementById('typeIn'), w = this._tw[this._ti], ans = inp.value.trim(), el = document.getElementById('typeRes');
-      if (!ans) return;
-      if (ans === w.front) { el.innerHTML = '<div class="type-result" style="background:var(--success-light);color:#065f46">✅ Chính xác!</div>'; this.score += 20; this.streak++; const o = A.s.words.find(x => x.id === w.id); if (o) { o.correctCount++; o.learned = true; } }
-      else {
-        const s = this.sim(ans, w.front);
-        if (s > .6) { el.innerHTML = `<div class="type-result" style="background:var(--warn-light);color:#92400e">⚠️ Gần đúng! → ${w.front}</div>`; this.score += 5; }
-        else { el.innerHTML = `<div class="type-result" style="background:var(--error-light);color:#991b1b">❌ Sai! → ${w.front}</div>`; this.streak = 0; const o = A.s.words.find(x => x.id === w.id); if (o) o.wrongCount++; }
-      }
-      A.save(); this.updScore(); A.recordActivity(); this._ti++; setTimeout(() => this.nextTyping(), 1400);
+      const inp=document.getElementById('typeIn'),w=this._tw[this._ti],ans=inp.value.trim(),el=document.getElementById('typeRes');
+      if(!ans)return;
+      if(ans===w.front){el.innerHTML='<div class="type-result" style="background:var(--success-light);color:#065f46">✅ Chính xác!</div>';this.score+=20;this.streak++;const o=A.s.words.find(x=>x.id===w.id);if(o){o.correctCount++;o.learned=true;}}
+      else{const s=this.sim(ans,w.front);if(s>.6){el.innerHTML=`<div class="type-result" style="background:var(--warn-light);color:#92400e">⚠️ Gần đúng! → ${w.front}</div>`;this.score+=5;}else{el.innerHTML=`<div class="type-result" style="background:var(--error-light);color:#991b1b">❌ Sai! → ${w.front}</div>`;this.streak=0;const o=A.s.words.find(x=>x.id===w.id);if(o)o.wrongCount++;}}
+      A.save();this.updScore();A.recordActivity();this._ti++;setTimeout(()=>this.nextTyping(),1400);
     },
-    // SPEAKING
     initSpeak() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { document.getElementById('gameContent').innerHTML = '<div class="empty"><div class="e-icon">🎤</div><p>Không hỗ trợ.<br>Dùng Chrome.</p></div>'; return; }
-      const ws = A.filtered(); if (!ws.length) { A.toast('Không có từ', 'warning'); this.back(); return; }
-      this._sw = this.shuffle([...ws]).slice(0, 10); this._si = 0; this.nextSpeak();
+      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+      if(!SR){document.getElementById('gameContent').innerHTML='<div class="empty"><div class="e-icon">🎤</div><p>Không hỗ trợ.<br>Dùng Chrome.</p></div>';return;}
+      const ws=A.filtered();if(!ws.length){A.toast('Không có từ','warning');this.back();return;}
+      this._sw=this.shuffle([...ws]).slice(0,10);this._si=0;this.nextSpeak();
     },
     nextSpeak() {
-      if (this._si >= this._sw.length) { this.showResult(); return; }
-      const w = this._sw[this._si];
-      document.getElementById('gameContent').innerHTML = `
-        <div class="quiz-q">${w.front}</div><div class="quiz-sub">${w.back} (${w.roman || ''})</div>
+      if(this._si>=this._sw.length){this.showResult();return;}
+      const w=this._sw[this._si];
+      document.getElementById('gameContent').innerHTML=`<div class="quiz-q">${w.front}</div><div class="quiz-sub">${w.back} (${w.roman||''})</div>
         <div class="text-center"><button class="btn-icon" onclick="A.tts('${w.front}')" style="font-size:1.4rem">🔊 Nghe mẫu</button></div>
         <div class="text-center"><button class="speak-mic" id="sMic" onclick="A.game.startListen()">🎤</button></div>
         <div id="speakRes" class="text-center mt-16"></div>`;
     },
     startListen() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = new SR();
-      rec.lang = 'ko-KR'; rec.interimResults = false; rec.maxAlternatives = 3;
-      const btn = document.getElementById('sMic'), res = document.getElementById('speakRes');
-      btn.classList.add('rec'); res.innerHTML = '<div style="color:var(--text3)">🎤 Đang nghe...</div>';
-      rec.onresult = e => {
-        const said = e.results[0][0].transcript, conf = Math.round(e.results[0][0].confidence * 100);
-        const w = this._sw[this._si], s = this.sim(said, w.front), sc = Math.round(s * 60 + conf * .4);
-        if (s >= .8) { this.score += Math.round(sc / 5); this.streak++; res.innerHTML = `<div class="card"><div style="color:var(--text3);font-size:.78rem">Bạn nói</div><div style="font-size:1.1rem;margin:6px 0">${said}</div><div style="font-size:2rem;font-weight:700;color:var(--success)">🎯 ${sc}/100</div><div style="color:var(--success)">Tuyệt vời!</div></div>`; }
-        else if (s >= .5) { this.score += Math.round(sc / 10); res.innerHTML = `<div class="card"><div style="color:var(--text3);font-size:.78rem">Bạn nói</div><div style="font-size:1.1rem;margin:6px 0">${said}</div><div style="font-size:2rem;font-weight:700;color:var(--warn)">🎯 ${sc}/100</div><div style="color:var(--warn)">Khá tốt!</div></div>`; }
-        else { this.streak = 0; res.innerHTML = `<div class="card"><div style="color:var(--text3);font-size:.78rem">Bạn nói</div><div style="font-size:1.1rem;margin:6px 0">${said || '?'}</div><div style="font-size:2rem;font-weight:700;color:var(--error)">🎯 ${sc}/100</div><div style="color:var(--error)">Thử lại!</div></div>`; }
-        const o = A.s.words.find(x => x.id === w.id); if (o) { if (s >= .8) o.correctCount++; else o.wrongCount++; }
-        A.save(); this.updScore(); A.recordActivity(); this._si++; setTimeout(() => this.nextSpeak(), 2200);
+      const SR=window.SpeechRecognition||window.webkitSpeechRecognition,rec=new SR();
+      rec.lang='ko-KR';rec.interimResults=false;rec.maxAlternatives=3;
+      const btn=document.getElementById('sMic'),res=document.getElementById('speakRes');
+      btn.classList.add('rec');res.innerHTML='<div style="color:var(--text3)">🎤 Đang nghe...</div>';
+      rec.onresult=e=>{
+        const said=e.results[0][0].transcript,conf=Math.round(e.results[0][0].confidence*100);
+        const w=this._sw[this._si],s=this.sim(said,w.front),sc=Math.round(s*60+conf*.4);
+        if(s>=.8){this.score+=Math.round(sc/5);this.streak++;res.innerHTML=`<div class="card"><div style="color:var(--text3);font-size:.78rem">Bạn nói</div><div style="font-size:1.1rem;margin:6px 0">${said}</div><div style="font-size:2rem;font-weight:700;color:var(--success)">🎯 ${sc}/100</div><div style="color:var(--success)">Tuyệt vời!</div></div>`;}
+        else if(s>=.5){this.score+=Math.round(sc/10);res.innerHTML=`<div class="card"><div style="color:var(--text3);font-size:.78rem">Bạn nói</div><div style="font-size:1.1rem;margin:6px 0">${said}</div><div style="font-size:2rem;font-weight:700;color:var(--warn)">🎯 ${sc}/100</div><div style="color:var(--warn)">Khá tốt!</div></div>`;}
+        else{this.streak=0;res.innerHTML=`<div class="card"><div style="color:var(--text3);font-size:.78rem">Bạn nói</div><div style="font-size:1.1rem;margin:6px 0">${said||'?'}</div><div style="font-size:2rem;font-weight:700;color:var(--error)">🎯 ${sc}/100</div><div style="color:var(--error)">Thử lại!</div></div>`;}
+        const o=A.s.words.find(x=>x.id===w.id);if(o){if(s>=.8)o.correctCount++;else o.wrongCount++;}
+        A.save();this.updScore();A.recordActivity();this._si++;setTimeout(()=>this.nextSpeak(),2200);
       };
-      rec.onerror = e => { res.innerHTML = `<div style="color:var(--error)">⚠️ ${e.error}</div>`; };
-      rec.onend = () => btn.classList.remove('rec');
-      rec.start(); A._sr = rec;
+      rec.onerror=e=>{res.innerHTML=`<div style="color:var(--error)">⚠️ ${e.error}</div>`;};
+      rec.onend=()=>btn.classList.remove('rec');rec.start();A._sr=rec;
     },
-    showResult() {
-      document.getElementById('gameContent').innerHTML = `<div class="game-result"><div class="r-icon">🎉</div><div class="r-score">${this.score} điểm</div><p style="color:var(--text2);margin:8px 0">Streak: ${this.streak}</p><button class="btn btn-primary" onclick="A.game.start('${this.type}')">Chơi lại</button></div>`;
-    }
+    showResult() { document.getElementById('gameContent').innerHTML=`<div class="game-result"><div class="r-icon">🎉</div><div class="r-score">${this.score} điểm</div><p style="color:var(--text2);margin:8px 0">Streak: ${this.streak}</p><button class="btn btn-primary" onclick="A.game.start('${this.type}')">Chơi lại</button></div>`; }
   },
 
   // ==================== AI CHAT ====================
   chat: {
-    hist: [], scene: 'free', loading: false,
-    scenes: [
-      { id: 'free', l: '💬 Free Talk', sys: 'Bạn là giáo viên tiếng Hàn thân thiện. Nói tiếng Hàn đơn giản, giải thích tiếng Việt khi cần. Sửa lỗi nhẹ nhàng.' },
-      { id: 'cafe', l: '☕ Cafe', sys: 'Bạn là nhân viên quán cafe Hàn Quốc. Luyện gọi đồ uống bằng tiếng Hàn.' },
-      { id: 'school', l: '🏫 School', sys: 'Bạn là bạn học Hàn Quốc. Luyện hội thoại trường học, bài tập.' },
-      { id: 'travel', l: '✈️ Travel', sys: 'Bạn là hướng dẫn viên du lịch. Luyện hội thoại du lịch Hàn Quốc.' },
-      { id: 'topik', l: '📝 TOPIK', sys: 'Bạn là giáo viên luyện thi TOPIK. Đưa câu hỏi TOPIK, chấm bài, giải thích.' }
+    hist:[], scene:'free', loading:false,
+    scenes:[
+      {id:'free',l:'💬 Free Talk',sys:'Bạn là giáo viên tiếng Hàn thân thiện. Nói tiếng Hàn đơn giản, giải thích tiếng Việt khi cần. Sửa lỗi nhẹ nhàng.'},
+      {id:'cafe',l:'☕ Cafe',sys:'Bạn là nhân viên quán cafe Hàn Quốc. Luyện gọi đồ uống bằng tiếng Hàn.'},
+      {id:'school',l:'🏫 School',sys:'Bạn là bạn học Hàn Quốc. Luyện hội thoại trường học, bài tập.'},
+      {id:'travel',l:'✈️ Travel',sys:'Bạn là hướng dẫn viên du lịch. Luyện hội thoại du lịch Hàn Quốc.'},
+      {id:'topik',l:'📝 TOPIK',sys:'Bạn là giáo viên luyện thi TOPIK. Đưa câu hỏi TOPIK, chấm bài, giải thích.'}
     ],
-    render() {
-      document.getElementById('chatScenes').innerHTML = this.scenes.map(s =>
-        `<button class="${s.id === this.scene ? 'active' : ''}" onclick="A.chat.setScene('${s.id}')">${s.l}</button>`
-      ).join('');
-    },
-    setScene(id) {
-      this.scene = id; this.hist = []; this.render();
-      document.getElementById('chatMsgs').innerHTML = '';
-      this.hist.push({ role: 'user', parts: [{ text: 'Xin chào! Hãy bắt đầu.' }] });
-      this.sendToAI(true);
-    },
+    render() { document.getElementById('chatScenes').innerHTML=this.scenes.map(s=>`<button class="${s.id===this.scene?'active':''}" onclick="A.chat.setScene('${s.id}')">${s.l}</button>`).join(''); },
+    setScene(id) { this.scene=id;this.hist=[];this.render();document.getElementById('chatMsgs').innerHTML='';this.hist.push({role:'user',parts:[{text:'Xin chào! Hãy bắt đầu.'}]});this.sendToAI(true); },
     async send() {
-      const inp = document.getElementById('chatInput'), t = inp.value.trim();
-      if (!t || this.loading) return; inp.value = '';
-      const el = document.getElementById('chatMsgs');
-      el.innerHTML += `<div class="c-msg user">${this.esc(t)}</div>`;
-      this.hist.push({ role: 'user', parts: [{ text: t }] });
-      this.sendToAI(false);
+      const inp=document.getElementById('chatInput'),t=inp.value.trim();if(!t||this.loading)return;inp.value='';
+      document.getElementById('chatMsgs').innerHTML+=`<div class="c-msg user">${this.esc(t)}</div>`;
+      this.hist.push({role:'user',parts:[{text:t}]});this.sendToAI(false);
     },
     async sendToAI(greet) {
-      const k = A.s.settings.apiKey;
-      if (!k) { document.getElementById('chatMsgs').innerHTML += `<div class="c-msg ai"><span class="c-err">⚠️ Nhập API Key trong Cài đặt</span></div>`; return; }
-      this.loading = true;
-      const el = document.getElementById('chatMsgs');
-      if (!greet) el.innerHTML += `<div class="c-msg ai" id="aiTmp">🤖 Đang suy nghĩ...</div>`;
+      const k=A.s.settings.apiKey;if(!k){document.getElementById('chatMsgs').innerHTML+=`<div class="c-msg ai"><span class="c-err">⚠️ Nhập API Key trong Cài đặt</span></div>`;return;}
+      this.loading=true;const el=document.getElementById('chatMsgs');
+      if(!greet) el.innerHTML+=`<div class="c-msg ai" id="aiTmp">🤖 Đang suy nghĩ...</div>`;
       try {
-        const sc = this.scenes.find(s => s.id === this.scene);
-        const r = await A.gemini(this.hist, k, A.s.settings.chatModel, sc.sys);
-        this.hist.push({ role: 'model', parts: [{ text: r }] });
-        const tmp = document.getElementById('aiTmp');
-        if (tmp) { tmp.innerHTML = this.fmtResp(r); tmp.removeAttribute('id'); }
-      } catch (e) {
-        const tmp = document.getElementById('aiTmp');
-        if (tmp) { tmp.innerHTML = `<span class="c-err">⚠️ ${e.message}</span>`; tmp.removeAttribute('id'); }
-      }
-      this.loading = false;
-      el.scrollTop = el.scrollHeight;
+        const sc=this.scenes.find(s=>s.id===this.scene);
+        const r=await A.gemini(this.hist,k,A.s.settings.chatModel,sc.sys);
+        this.hist.push({role:'model',parts:[{text:r}]});
+        const tmp=document.getElementById('aiTmp');if(tmp){tmp.innerHTML=this.fmtResp(r);tmp.removeAttribute('id');}
+      } catch(e) { const tmp=document.getElementById('aiTmp');if(tmp){tmp.innerHTML=`<span class="c-err">⚠️ ${e.message}</span>`;tmp.removeAttribute('id');} }
+      this.loading=false;el.scrollTop=el.scrollHeight;
     },
-    fmtResp(t) {
-      return t.split('\n').map(l => {
-        if (l.match(/^[✔✅✓]/)) return `<div style="color:var(--success)">${this.esc(l)}</div>`;
-        if (l.match(/^[💡]/)) return `<div style="color:var(--warn)">${this.esc(l)}</div>`;
-        return this.esc(l);
-      }).join('<br>');
-    },
-    clear() { this.hist = []; document.getElementById('chatMsgs').innerHTML = ''; A.toast('Đã xóa chat', 'info'); },
-    esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    fmtResp(t) { return t.split('\n').map(l=>{if(l.match(/^[✔✅✓]/))return`<div style="color:var(--success)">${this.esc(l)}</div>`;if(l.match(/^[💡]/))return`<div style="color:var(--warn)">${this.esc(l)}</div>`;return this.esc(l);}).join('<br>'); },
+    clear() { this.hist=[];document.getElementById('chatMsgs').innerHTML='';A.toast('Đã xóa chat','info'); },
+    esc(s) { const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
   },
 
   renderChatModels() {
-    const ms = [
-      { id: 'gemini-2.5-flash', l: '2.5 Flash' },
-      { id: 'gemini-2.0-flash', l: '2.0 Flash' },
-      { id: 'gemini-2.5-flash-lite', l: '2.5 Lite' }
-    ];
-    document.getElementById('chatModels').innerHTML = ms.map(m =>
-      `<button class="${m.id === this.s.settings.chatModel ? 'active' : ''}" onclick="A.s.settings.chatModel='${m.id}';A.settings.save();A.renderChatModels()">${m.l}</button>`
-    ).join('');
+    const ms=[{id:'gemini-3.6-flash',l:'3.6 Flash'},{id:'gemini-3.5-flash-lite',l:'3.5 Lite'},{id:'gemini-3.1-flash-lite',l:'3.1 Lite'}];
+    document.getElementById('chatModels').innerHTML=ms.map(m=>
+      `<button class="${m.id===this.s.settings.chatModel?'active':''}" onclick="A.s.settings.chatModel='${m.id}';A.settings.save();A.renderChatModels()">${m.l}</button>`).join('');
   },
-
   renderChatScenes() { this.chat.render(); },
 
   // ==================== GEMINI API ====================
-  async gemini(contents, key, model, sys) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-    const body = {
-      contents: contents.map(c => ({ role: c.role === 'model' ? 'model' : 'user', parts: c.parts })),
-      generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
-    };
-    if (sys) body.systemInstruction = { parts: [{ text: sys }] };
-    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e?.error?.message || `API ${r.status}`); }
-    const d = await r.json();
-    return d.candidates?.[0]?.content?.parts?.[0]?.text || '(Không có phản hồi)';
+  async gemini(contents,key,model,sys) {
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    const body={contents:contents.map(c=>({role:c.role==='model'?'model':'user',parts:c.parts})),generationConfig:{temperature:0.8,maxOutputTokens:1024}};
+    if(sys) body.systemInstruction={parts:[{text:sys}]};
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||`API ${r.status}`);}
+    const d=await r.json();return d.candidates?.[0]?.content?.parts?.[0]?.text||'(Không có phản hồi)';
   },
 
   // ==================== VOICE CALL ====================
   voice: {
-    ws: null, actx: null, stream: null, worklet: null,
-    state: 'off', playCtx: null, queue: [], playing: false,
-    muted: false, speakerOn: true, timer: null, secs: 0,
+    ws:null, actx:null, stream:null, worklet:null,
+    state:'off', playCtx:null, queue:[], playing:false,
+    muted:false, speakerOn:true, timer:null, secs:0,
 
     async startCall() {
-      const k = A.s.settings.apiKey;
-      if (!k) { A.toast('Nhập API Key trong Cài đặt', 'warning'); return; }
-      if (this.state !== 'off') return;
-      this.state = 'connecting'; this.showOverlay();
-      this.setStatus('connecting', 'Đang kết nối...');
-      this.secs = 0; this.updateTimer();
-      document.getElementById('vcTranscript').innerHTML = '';
-      this.addTC('sys', 'Đang kết nối AI...');
+      const k=A.s.settings.apiKey;if(!k){A.toast('Nhập API Key trong Cài đặt','warning');return;}
+      if(this.state!=='off')return;
+      this.state='connecting';this.showOverlay();this.setStatus('connecting','Đang kết nối...');
+      this.secs=0;this.updateTimer();document.getElementById('vcTranscript').innerHTML='';
+      this.addTC('sys','Đang kết nối AI...');
       try {
-        this.stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true } });
-        this.actx = new AudioContext({ sampleRate: 16000 });
-
-        // Load PCM worklet dynamically
-        const blob = new Blob([
-          `class P extends AudioWorkletProcessor{constructor(){super();this._b=[];this._r=sampleRate/16000;this._a=0;this._n=0}process(i){const x=i[0]?.[0];if(!x)return true;for(let j=0;j<x.length;j++){this._a+=x[j];this._n++;if(this._n>=this._r){let s=this._a/this._n;s=Math.max(-1,Math.min(1,s));this._b.push(s<0?s*0x8000:s*0x7FFF);this._a=0;this._n=0}}while(this._b.length>=512){const c=new Int16Array(this._b.splice(0,512));this.port.postMessage(c.buffer,[c.buffer])}return true}}registerProcessor('pcm-processor',P);`
-        ], { type: 'application/javascript' });
-        const url = URL.createObjectURL(blob);
-        await this.actx.audioWorklet.addModule(url);
-        URL.revokeObjectURL(url);
-
-        const src = this.actx.createMediaStreamSource(this.stream);
-        this.worklet = new AudioWorkletNode(this.actx, 'pcm-processor');
-        this.worklet.port.onmessage = e => {
-          if (this.ws && this.ws.readyState === 1 && !this.muted) {
-            this.ws.send(JSON.stringify({ realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=16000', data: this.b64(e.data) }] } }));
+        this.stream=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1,echoCancellation:true,noiseSuppression:true}});
+        this.actx=new AudioContext({sampleRate:16000});
+        const blob=new Blob([`class P extends AudioWorkletProcessor{constructor(){super();this._b=[];this._r=sampleRate/16000;this._a=0;this._n=0}process(i){const x=i[0]?.[0];if(!x)return true;for(let j=0;j<x.length;j++){this._a+=x[j];this._n++;if(this._n>=this._r){let s=this._a/this._n;s=Math.max(-1,Math.min(1,s));this._b.push(s<0?s*0x8000:s*0x7FFF);this._a=0;this._n=0}}while(this._b.length>=512){const c=new Int16Array(this._b.splice(0,512));this.port.postMessage(c.buffer,[c.buffer])}return true}}registerProcessor('pcm-processor',P);`],{type:'application/javascript'});
+        const u=URL.createObjectURL(blob);await this.actx.audioWorklet.addModule(u);URL.revokeObjectURL(u);
+        const src=this.actx.createMediaStreamSource(this.stream);
+        this.worklet=new AudioWorkletNode(this.actx,'pcm-processor');
+        this.worklet.port.onmessage=e=>{
+          if(this.ws&&this.ws.readyState===1&&!this.muted){
+            this.ws.send(JSON.stringify({realtimeInput:{mediaChunks:[{mimeType:'audio/pcm;rate=16000',data:this.b64(e.data)}]}}));
           }
         };
         src.connect(this.worklet);
-        const gain = this.actx.createGain(); gain.gain.value = 0;
-        this.worklet.connect(gain); gain.connect(this.actx.destination);
-
-        const model = A.s.settings.voiceModel;
-        this.ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${k}`);
-        this.ws.onopen = () => {
-          this.ws.send(JSON.stringify({
-            setup: {
-              model: `models/${model}`,
-              generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Aoede' } } } },
-              systemInstruction: { parts: [{ text: 'Bạn là giáo viên tiếng Hàn thân thiện. Nói tiếng Hàn đơn giản, giải thích tiếng Việt khi cần. Giúp học viên luyện nghe nói. Sửa lỗi nhẹ nhàng.' }] }
-            }
-          }));
+        const gain=this.actx.createGain();gain.gain.value=0;this.worklet.connect(gain);gain.connect(this.actx.destination);
+        const model=A.s.settings.voiceModel;
+        this.ws=new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${k}`);
+        this.ws.onopen=()=>{
+          this.ws.send(JSON.stringify({setup:{
+            model:`models/${model}`,
+            generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Aoede'}}}},
+            systemInstruction:{parts:[{text:'Bạn là giáo viên tiếng Hàn thân thiện. Nói tiếng Hàn đơn giản, giải thích tiếng Việt khi cần. Giúp học viên luyện nghe nói. Sửa lỗi nhẹ nhàng.'}]}
+          }}));
         };
-        this.ws.onmessage = e => {
+        this.ws.onmessage=e=>{
           try {
-            const m = JSON.parse(e.data);
-            if (m.setupComplete) {
-              this.state = 'connected'; this.setStatus('connected', 'Đang nói chuyện');
-              this.startTimer(); document.getElementById('vcRing').classList.add('active');
-              document.getElementById('vcWave').classList.add('active');
-              this.addTC('sys', '🟢 Đã kết nối! Hãy nói tiếng Hàn.');
-              A.toast('Đã kết nối!', 'success'); return;
+            const m=JSON.parse(e.data);
+            if(m.setupComplete){this.state='connected';this.setStatus('connected','Đang nói chuyện');this.startTimer();document.getElementById('vcRing').classList.add('active');document.getElementById('vcWave').classList.add('active');this.addTC('sys','🟢 Đã kết nối! Hãy nói tiếng Hàn.');A.toast('Đã kết nối!','success');return;}
+            if(m.serverContent){
+              const parts=m.serverContent.modelTurn?.parts||[];
+              for(const p of parts){if(p.inlineData)this.playAudio(p.inlineData.data,p.inlineData.mimeType);if(p.text)this.addTC('ai',p.text);}
             }
-            if (m.serverContent) {
-              const parts = m.serverContent.modelTurn?.parts || [];
-              for (const p of parts) {
-                if (p.inlineData) this.playAudio(p.inlineData.data, p.inlineData.mimeType);
-                if (p.text) this.addTC('ai', p.text);
-              }
-            }
-          } catch (err) { console.error('WS msg err:', err); }
+          } catch(err){console.error('WS msg err:',err);}
         };
-        this.ws.onerror = () => { A.toast('Lỗi kết nối', 'error'); this.endCall(); };
-        this.ws.onclose = () => { if (this.state !== 'off') this.endCall(); };
-      } catch (e) {
-        console.error('Voice err:', e); A.toast(`Lỗi: ${e.message}`, 'error'); this.endCall();
-      }
+        this.ws.onerror=()=>{A.toast('Lỗi kết nối','error');this.endCall();};
+        this.ws.onclose=()=>{if(this.state!=='off')this.endCall();};
+      } catch(e){console.error('Voice err:',e);A.toast(`Lỗi: ${e.message}`,'error');this.endCall();}
     },
-
     endCall() {
-      this.state = 'off'; this.stopTimer(); this.hideOverlay();
-      if (this.ws) { try { this.ws.close(); } catch (e) {} this.ws = null; }
-      if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
-      if (this.actx) { try { this.actx.close(); } catch (e) {} this.actx = null; }
-      if (this.playCtx) { try { this.playCtx.close(); } catch (e) {} this.playCtx = null; }
-      this.worklet = null; this.queue = []; this.playing = false;
+      this.state='off';this.stopTimer();this.hideOverlay();
+      if(this.ws){try{this.ws.close();}catch(e){}this.ws=null;}
+      if(this.stream){this.stream.getTracks().forEach(t=>t.stop());this.stream=null;}
+      if(this.actx){try{this.actx.close();}catch(e){}this.actx=null;}
+      if(this.playCtx){try{this.playCtx.close();}catch(e){}this.playCtx=null;}
+      this.worklet=null;this.queue=[];this.playing=false;
     },
-
-    toggleMute() {
-      this.muted = !this.muted;
-      const btn = document.getElementById('vcMute');
-      btn.classList.toggle('on', this.muted); btn.textContent = this.muted ? '🔇' : '🎤';
-      if (this.stream) this.stream.getAudioTracks().forEach(t => t.enabled = !this.muted);
-    },
-
-    toggleSpeaker() {
-      this.speakerOn = !this.speakerOn;
-      document.getElementById('vcSpeaker').classList.toggle('on', !this.speakerOn);
-    },
-
+    toggleMute() { this.muted=!this.muted;const btn=document.getElementById('vcMute');btn.classList.toggle('on',this.muted);btn.textContent=this.muted?'🔇':'🎤';if(this.stream)this.stream.getAudioTracks().forEach(t=>t.enabled=!this.muted); },
+    toggleSpeaker() { this.speakerOn=!this.speakerOn;document.getElementById('vcSpeaker').classList.toggle('on',!this.speakerOn); },
     showOverlay() { document.getElementById('vcOverlay').classList.add('show'); },
-    hideOverlay() { document.getElementById('vcOverlay').classList.remove('show'); document.getElementById('vcRing').classList.remove('active'); document.getElementById('vcWave').classList.remove('active'); },
-    setStatus(cls, txt) { document.getElementById('vcDot').className = 'vc-dot ' + cls; document.getElementById('vcStatusText').textContent = txt; },
-    startTimer() { this.timer = setInterval(() => { this.secs++; this.updateTimer(); }, 1000); },
-    stopTimer() { if (this.timer) { clearInterval(this.timer); this.timer = null; } },
-    updateTimer() { const m = Math.floor(this.secs / 60), s = this.secs % 60; document.getElementById('vcTimer').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; },
-
-    addTC(role, txt) {
-      const el = document.getElementById('vcTranscript');
-      const cls = role === 'ai' ? 'tc-ai' : role === 'sys' ? 'tc-sys' : 'tc-user';
-      const prefix = role === 'ai' ? '🇰🇷 AI: ' : role === 'user' ? '🇻🇳 Bạn: ' : '';
-      el.innerHTML += `<div class="${cls}">${prefix}${txt}</div>`;
-      el.scrollTop = el.scrollHeight;
+    hideOverlay() { document.getElementById('vcOverlay').classList.remove('show');document.getElementById('vcRing').classList.remove('active');document.getElementById('vcWave').classList.remove('active'); },
+    setStatus(cls,txt) { document.getElementById('vcDot').className='vc-dot '+cls;document.getElementById('vcStatusText').textContent=txt; },
+    startTimer() { this.timer=setInterval(()=>{this.secs++;this.updateTimer();},1000); },
+    stopTimer() { if(this.timer){clearInterval(this.timer);this.timer=null;} },
+    updateTimer() { const m=Math.floor(this.secs/60),s=this.secs%60;document.getElementById('vcTimer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; },
+    addTC(role,txt) {
+      const el=document.getElementById('vcTranscript');
+      const cls=role==='ai'?'tc-ai':role==='sys'?'tc-sys':'tc-user';
+      const prefix=role==='ai'?'🇰🇷 AI: ':role==='user'?'🇻🇳 Bạn: ':'';
+      el.innerHTML+=`<div class="${cls}">${prefix}${txt}</div>`;el.scrollTop=el.scrollHeight;
     },
-
-    playAudio(b64, mime) {
-      if (!this.speakerOn) return;
-      this.queue.push({ b64, mime }); if (!this.playing) this._playNext();
-    },
-
+    playAudio(b64,mime) { if(!this.speakerOn)return;this.queue.push({b64,mime});if(!this.playing)this._playNext(); },
     async _playNext() {
-      if (!this.queue.length) { this.playing = false; return; }
-      this.playing = true; const { b64, mime } = this.queue.shift();
+      if(!this.queue.length){this.playing=false;return;}
+      this.playing=true;const{b64,mime}=this.queue.shift();
       try {
-        const rate = parseInt(mime.match(/rate=(\d+)/)?.[1] || '24000');
-        const raw = atob(b64); const bytes = new Uint8Array(raw.length);
-        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-        const i16 = new Int16Array(bytes.buffer); const f32 = new Float32Array(i16.length);
-        for (let i = 0; i < i16.length; i++) f32[i] = i16[i] / 32768;
-        if (!this.playCtx || this.playCtx.state === 'closed') this.playCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: rate });
-        const buf = this.playCtx.createBuffer(1, f32.length, rate); buf.getChannelData(0).set(f32);
-        const src = this.playCtx.createBufferSource(); src.buffer = buf; src.connect(this.playCtx.destination);
-        src.onended = () => this._playNext(); src.start();
-      } catch (e) { console.error('Play err:', e); this._playNext(); }
+        const rate=parseInt(mime.match(/rate=(\d+)/)?.[1]||'24000');
+        const raw=atob(b64);const bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+        const i16=new Int16Array(bytes.buffer);const f32=new Float32Array(i16.length);for(let i=0;i<i16.length;i++)f32[i]=i16[i]/32768;
+        if(!this.playCtx||this.playCtx.state==='closed')this.playCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:rate});
+        const buf=this.playCtx.createBuffer(1,f32.length,rate);buf.getChannelData(0).set(f32);
+        const src=this.playCtx.createBufferSource();src.buffer=buf;src.connect(this.playCtx.destination);
+        src.onended=()=>this._playNext();src.start();
+      } catch(e){console.error('Play err:',e);this._playNext();}
     },
-
-    b64(buf) { const b = new Uint8Array(buf); let s = ''; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
+    b64(buf) { const b=new Uint8Array(buf);let s='';for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s); }
   },
 
   // ==================== WRITING ====================
   writing: {
     gen() {
-      const ws = A.filtered(); if (!ws.length) { A.toast('Không có từ', 'warning'); return; }
-      const n = parseInt(document.getElementById('wrLines').value) || 10;
-      const trace = document.getElementById('wrTrace').checked;
-      const roman = document.getElementById('wrRoman').checked;
-      const meaning = document.getElementById('wrMeaning').checked;
-      const sel = []; for (let i = 0; i < n; i++) sel.push(ws[Math.floor(Math.random() * ws.length)]);
-      document.getElementById('wrPreview').innerHTML = sel.map(w => `<div class="wr-line">
-        ${trace ? `<div class="kr-w">${w.front}</div>` : ''}
-        <div class="guide">${roman ? `<div class="roman">${w.roman || ''}</div>` : ''}${meaning ? `<div class="meaning">${w.back}</div>` : ''}</div>
-        <div class="practice">${trace ? w.front : ''}</div></div>`).join('');
+      const ws=A.filtered();if(!ws.length){A.toast('Không có từ','warning');return;}
+      const n=parseInt(document.getElementById('wrLines').value)||10;
+      const trace=document.getElementById('wrTrace').checked,roman=document.getElementById('wrRoman').checked,meaning=document.getElementById('wrMeaning').checked;
+      const sel=[];for(let i=0;i<n;i++)sel.push(ws[Math.floor(Math.random()*ws.length)]);
+      document.getElementById('wrPreview').innerHTML=sel.map(w=>`<div class="wr-line">
+        ${trace?`<div class="kr-w">${w.front}</div>`:''}
+        <div class="guide">${roman?`<div class="roman">${w.roman||''}</div>`:''}${meaning?`<div class="meaning">${w.back}</div>`:''}</div>
+        <div class="practice">${trace?w.front:''}</div></div>`).join('');
     },
     print() { window.print(); }
   },
@@ -888,131 +611,88 @@ const A = {
   // ==================== STATISTICS ====================
   stats: {
     render() {
-      const ws = A.s.words;
-      const learned = ws.filter(w => w.learned).length;
-      const hard = ws.filter(w => w.hard).length;
-      const tc = ws.reduce((s, w) => s + (w.correctCount || 0), 0);
-      const tw = ws.reduce((s, w) => s + (w.wrongCount || 0), 0);
-      const acc = tc + tw > 0 ? Math.round(tc / (tc + tw) * 100) : 0;
-      document.getElementById('statsGrid').innerHTML = `
+      const ws=A.s.words,learned=ws.filter(w=>w.learned).length,hard=ws.filter(w=>w.hard).length;
+      const tc=ws.reduce((s,w)=>s+(w.correctCount||0),0),tw=ws.reduce((s,w)=>s+(w.wrongCount||0),0);
+      const acc=tc+tw>0?Math.round(tc/(tc+tw)*100):0;
+      document.getElementById('statsGrid').innerHTML=`
         <div class="st-card blue"><div class="st-icon">📚</div><div class="st-val">${ws.length}</div><div class="st-lbl">Tổng từ</div></div>
         <div class="st-card green"><div class="st-icon">🧠</div><div class="st-val">${learned}</div><div class="st-lbl">Đã thuộc</div></div>
         <div class="st-card yellow"><div class="st-icon">🎯</div><div class="st-val">${acc}%</div><div class="st-lbl">Chính xác</div></div>
         <div class="st-card red"><div class="st-icon">⚠️</div><div class="st-val">${hard}</div><div class="st-lbl">Từ khó</div></div>
         <div class="st-card purple"><div class="st-icon">🔥</div><div class="st-val">${A.s.streak}</div><div class="st-lbl">Streak</div></div>`;
-      // Activity chart
-      const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = d.toISOString().slice(0, 10); days.push({ l: d.toLocaleDateString('vi', { weekday: 'short' }), v: A.s.daily[k] || 0 }); }
-      const mx = Math.max(...days.map(d => d.v), 1);
-      document.getElementById('actChart').innerHTML = days.map(d => `<div class="b" style="height:${Math.max(d.v / mx * 100, 4)}%" data-v="${d.v}"></div>`).join('');
-      // Streak calendar
-      const cal = document.getElementById('streakCal'); let html = '';
-      for (let i = 27; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = d.toISOString().slice(0, 10); const active = A.s.daily[k] > 0; const today = i === 0; html += `<div class="sc-day${active ? ' active' : ''}${today ? ' today' : ''}" title="${k}">${d.getDate()}</div>`; }
-      cal.innerHTML = html;
-      // Level chart
-      const lv = { beginner: 0, intermediate: 0, advanced: 0 }; ws.forEach(w => { if (lv[w.level] !== undefined) lv[w.level]++; });
-      const ml = Math.max(...Object.values(lv), 1); const cl = { beginner: 'var(--primary)', intermediate: 'var(--warn)', advanced: 'var(--error)' };
-      document.getElementById('lvlChart').innerHTML = Object.entries(lv).map(([k, v]) => `<div style="flex:1;text-align:center"><div class="b" style="height:${Math.max(v / ml * 100, 4)}%;background:${cl[k]}" data-v="${v}"></div><div style="font-size:.6rem;margin-top:4px;color:var(--text3)">${k === 'beginner' ? 'Sơ cấp' : k === 'intermediate' ? 'Trung cấp' : 'Cao cấp'}</div></div>`).join('');
+      const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);days.push({l:d.toLocaleDateString('vi',{weekday:'short'}),v:A.s.daily[k]||0});}
+      const mx=Math.max(...days.map(d=>d.v),1);
+      document.getElementById('actChart').innerHTML=days.map(d=>`<div class="b" style="height:${Math.max(d.v/mx*100,4)}%" data-v="${d.v}"></div>`).join('');
+      const cal=document.getElementById('streakCal');let html='';
+      for(let i=27;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const active=A.s.daily[k]>0;const today=i===0;html+=`<div class="sc-day${active?' active':''}${today?' today':''}" title="${k}">${d.getDate()}</div>`;}
+      cal.innerHTML=html;
+      const lv={beginner:0,intermediate:0,advanced:0};ws.forEach(w=>{if(lv[w.level]!==undefined)lv[w.level]++;});
+      const ml=Math.max(...Object.values(lv),1);const cl={beginner:'var(--primary)',intermediate:'var(--warn)',advanced:'var(--error)'};
+      document.getElementById('lvlChart').innerHTML=Object.entries(lv).map(([k,v])=>`<div style="flex:1;text-align:center"><div class="b" style="height:${Math.max(v/ml*100,4)}%;background:${cl[k]}" data-v="${v}"></div><div style="font-size:.6rem;margin-top:4px;color:var(--text3)">${k==='beginner'?'Sơ cấp':k==='intermediate'?'Trung cấp':'Cao cấp'}</div></div>`).join('');
     }
   },
 
   // ==================== SETTINGS ====================
   settingsUI() {
-    const s = this.s.settings;
-    document.getElementById('sSpeed').value = s.ttsSpeed;
-    document.getElementById('sSession').value = s.sessionSize;
-    document.getElementById('sApiKey').value = s.apiKey;
-    document.getElementById('sChatModel').value = s.chatModel;
-    document.getElementById('sVoiceModel').value = s.voiceModel;
-    this.setToggle('tAutoTTS', s.autoTTS);
-    this.setToggle('tPriorHard', s.priorHard);
-    this.setToggle('tDark', s.theme === 'dark');
+    const s=this.s.settings;
+    document.getElementById('sSpeed').value=s.ttsSpeed;document.getElementById('sSession').value=s.sessionSize;
+    document.getElementById('sApiKey').value=s.apiKey;document.getElementById('sChatModel').value=s.chatModel;
+    document.getElementById('sVoiceModel').value=s.voiceModel;
+    this.setToggle('tAutoTTS',s.autoTTS);this.setToggle('tPriorHard',s.priorHard);this.setToggle('tDark',s.theme==='dark');
   },
-
   settings: {
     save() {
-      const s = A.s.settings;
-      s.ttsSpeed = document.getElementById('sSpeed').value;
-      s.sessionSize = document.getElementById('sSession').value;
-      s.apiKey = document.getElementById('sApiKey').value.trim();
-      s.chatModel = document.getElementById('sChatModel').value;
-      s.voiceModel = document.getElementById('sVoiceModel').value;
-      A.save(); A.renderChatModels();
+      const s=A.s.settings;s.ttsSpeed=document.getElementById('sSpeed').value;s.sessionSize=document.getElementById('sSession').value;
+      s.apiKey=document.getElementById('sApiKey').value.trim();s.chatModel=document.getElementById('sChatModel').value;s.voiceModel=document.getElementById('sVoiceModel').value;
+      A.save();A.renderChatModels();
     },
     toggleDark() { A.toggleTheme(); },
-    toggle(k) {
-      A.s.settings[k] = !A.s.settings[k];
-      A.setToggle('t' + k.charAt(0).toUpperCase() + k.slice(1), A.s.settings[k]);
-      A.save();
-    }
+    toggle(k) { A.s.settings[k]=!A.s.settings[k];A.setToggle('t'+k.charAt(0).toUpperCase()+k.slice(1),A.s.settings[k]);A.save(); }
   },
 
-  // ==================== IMPORT / EXPORT ====================
+  // ==================== IMPORT/EXPORT ====================
   data: {
     export() {
-      const d = { version: 2, exportDate: new Date().toISOString(), words: A.s.words, streak: A.s.streak, lastStudy: A.s.lastStudy, daily: A.s.daily, settings: A.s.settings };
-      const b = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
-      const u = URL.createObjectURL(b); const a = document.createElement('a');
-      a.href = u; a.download = `korean-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click();
-      URL.revokeObjectURL(u); A.toast('Đã xuất file!', 'success');
+      const d={version:2,exportDate:new Date().toISOString(),words:A.s.words,streak:A.s.streak,lastStudy:A.s.lastStudy,daily:A.s.daily,settings:A.s.settings};
+      const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+      const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`korean-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(u);A.toast('Đã xuất file!','success');
     },
     import(e) {
-      const f = e.target.files[0]; if (!f) return;
-      const r = new FileReader(); r.onload = ev => {
+      const f=e.target.files[0];if(!f)return;
+      const r=new FileReader();r.onload=ev=>{
         try {
-          const d = JSON.parse(ev.target.result);
-          if (!d.words || !Array.isArray(d.words)) throw new Error('File không hợp lệ');
-          let ok = 0, skip = 0;
-          d.words.forEach(w => { if (!w.front || !w.back) { skip++; return; } const ex = A.s.words.find(x => x.front === w.front); if (ex) Object.assign(ex, normWord({}), ex, w); else A.s.words.push(normWord(w)); ok++; });
-          if (d.streak) A.s.streak = d.streak;
-          if (d.daily) A.s.daily = { ...A.s.daily, ...d.daily };
-          if (d.settings) A.s.settings = { ...A.s.settings, ...d.settings };
-          A.save(); A.renderDict(); A.updateHeader(); A.settingsUI(); A.applyTheme(); A.fc.init(); A.stats.render();
-          A.toast(`Đã import ${ok} từ${skip ? `, bỏ qua ${skip}` : ''}`, 'success');
-        } catch (err) { A.toast(`Lỗi: ${err.message}`, 'error'); }
-      };
-      r.readAsText(f); e.target.value = '';
+          const d=JSON.parse(ev.target.result);if(!d.words||!Array.isArray(d.words))throw new Error('File không hợp lệ');
+          let ok=0,skip=0;
+          d.words.forEach(w=>{if(!w.front||!w.back){skip++;return;}const ex=A.s.words.find(x=>x.front===w.front);if(ex)Object.assign(ex,normWord({}),ex,w);else A.s.words.push(normWord(w));ok++;});
+          if(d.streak)A.s.streak=d.streak;if(d.daily)A.s.daily={...A.s.daily,...d.daily};if(d.settings)A.s.settings={...A.s.settings,...d.settings};
+          A.save();A.renderDict();A.updateHeader();A.settingsUI();A.applyTheme();A.fc.init();A.stats.render();
+          A.toast(`Đã import ${ok} từ${skip?`, bỏ qua ${skip}`:''}`,'success');
+        } catch(err){A.toast(`Lỗi: ${err.message}`,'error');}
+      };r.readAsText(f);e.target.value='';
     },
-    reset() {
-      if (!confirm('Xóa TẤT CẢ dữ liệu? Không thể hoàn tác.')) return;
-      if (!confirm('Xác nhận lần 2?')) return;
-      localStorage.removeItem('krApp2'); location.reload();
-    }
+    reset() { if(!confirm('Xóa TẤT CẢ dữ liệu?'))return;if(!confirm('Xác nhận lần 2?'))return;localStorage.removeItem('krApp2');location.reload(); }
   },
 
   // ==================== HELPERS ====================
-  updateHeader() {
-    document.getElementById('hTotal').textContent = this.s.words.length;
-    document.getElementById('hStreak').textContent = this.s.streak;
-    this.checkStreak();
-  },
-
-  toast(m, t = 'info') {
-    const c = document.getElementById('toastBox');
-    const el = document.createElement('div');
-    el.className = 'toast ' + t; el.textContent = m;
-    c.appendChild(el); setTimeout(() => el.remove(), 3200);
-  },
-
-  esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; },
-
-  debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; },
-
-  setToggle(id, on) { const el = document.getElementById(id); if (el) el.classList.toggle('on', on); },
-
+  updateHeader() { document.getElementById('hTotal').textContent=this.s.words.length;document.getElementById('hStreak').textContent=this.s.streak;this.checkStreak(); },
+  toast(m,t='info') { const c=document.getElementById('toastBox'),el=document.createElement('div');el.className='toast '+t;el.textContent=m;c.appendChild(el);setTimeout(()=>el.remove(),3200); },
+  esc(s) { const d=document.createElement('div');d.textContent=s;return d.innerHTML; },
+  debounce(fn,ms) { let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);}; },
+  setToggle(id,on) { const el=document.getElementById(id);if(el)el.classList.toggle('on',on); },
   hotkey(e) {
-    if (this.s.view === 'flashcard') {
-      if (e.key === 'ArrowLeft') { e.preventDefault(); this.fc.prev(); }
-      if (e.key === 'ArrowRight') { e.preventDefault(); this.fc.next(); }
-      if (e.key === ' ') { e.preventDefault(); this.fc.flip(); }
-      if (e.key === 'f') this.fc.toggleFav();
-      if (e.key === 'ArrowUp') { e.preventDefault(); this.fc.markCorrect(); }
-      if (e.key === 'ArrowDown') { e.preventDefault(); this.fc.markWrong(); }
+    if(this.s.view==='flashcard'){
+      if(e.key==='ArrowLeft'){e.preventDefault();this.fc.prev();}
+      if(e.key==='ArrowRight'){e.preventDefault();this.fc.next();}
+      if(e.key===' '){e.preventDefault();this.fc.flip();}
+      if(e.key==='f')this.fc.toggleFav();
+      if(e.key==='ArrowUp'){e.preventDefault();this.fc.markCorrect();}
+      if(e.key==='ArrowDown'){e.preventDefault();this.fc.markWrong();}
     }
   }
 };
 
-// ==================== STARTUP ====================
-document.addEventListener('DOMContentLoaded', () => {
+// ==================== START ====================
+document.addEventListener('DOMContentLoaded',()=>{
   A.init();
-  document.getElementById('themeBtn').addEventListener('click', () => A.toggleTheme());
+  document.getElementById('themeBtn').addEventListener('click',()=>A.toggleTheme());
 });
