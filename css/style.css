@@ -205,3 +205,15 @@ button:disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: 
     .writing-a4-page { box-shadow: none !important; transform: none !important; margin: 0 !important; page-break-after: always; }
     @page { size: A4; margin: 0; }
 }
+
+/* === PHÒNG NGỪA: icon Font Awesome dùng làm nút bấm trực tiếp (có id riêng,
+   không có <button> cha bao quanh) phải luôn có vùng bấm tối thiểu, kể cả
+   khi CDN Font Awesome tải chậm/lỗi khiến icon chưa kịp render — nếu không,
+   thẻ <i> rỗng sẽ co về 0x0px và hoàn toàn không bấm được (bug thật đã xảy
+   ra với nút đóng modal, xem btn-close-modal). Quy tắc chung: bất kỳ icon
+   nào KHÔNG nằm trong <button> vẫn cần đủ diện tích để bấm ngay khi trang
+   vừa tải xong, không phụ thuộc mạng ngoài. */
+i.fas:not(button i), i.fab:not(button i), i.far:not(button i) {
+    min-width: 1em;
+    min-height: 1em;
+}
