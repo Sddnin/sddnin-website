@@ -1,2395 +1,1018 @@
-/* ==========================================================================
-   HỌC TIẾNG HÀN 3.0 — app.js
-   Flashcard + 4 Mini Games + Gemini AI (Tra từ / AI Chat / Chấm phát âm)
-
-   Cấu trúc file (đọc theo thứ tự):
-     1. APP STATE
-     2. DATA MANAGEMENT (localStorage) — an toàn tuyệt đối
-     3. UTILITY & TIMERS — clearGameTimers dùng chung cho mọi mini-game
-     4. THEME (Dark/Light)
-     5. NAVIGATION (Mode switcher + Category filter)
-     6. FLASHCARD SYSTEM
-     7. MODAL: Thêm từ mới
-     8. EXPORT / IMPORT JSON
-     9. DICTIONARY (Tra từ bằng Gemini AI)
-    10. MINI GAME 1: Trắc nghiệm (Quiz)
-    11. MINI GAME 2: Nối từ (Cross-match 2 cột, đúng cấu trúc HTML thật)
-    12. MINI GAME 3: Gõ phím (Typing)
-    13. MINI GAME 4: Luyện nói (SpeechRecognition + Gemini chấm điểm %)
-    14. GEMINI AI CORE (gọi API dùng chung cho mọi tính năng ở trên)
-    15. AI CHAT (hội thoại luyện tiếng Hàn theo kịch bản)
-    16. VOICE AI (Gemini 3.1 Flash Live — voice-to-voice 2 chiều qua WebSocket)
-    17. LUYỆN VIẾT (Tạo worksheet A4 — xuất Word/PDF thật, in được)
-    18. TEXT-TO-SPEECH (phát âm mẫu)
-    19. EVENT LISTENERS (setupEventListeners — nối TOÀN BỘ nút trong HTML)
-    20. BOOTSTRAP
-   ========================================================================== */
-
-/* ==========================================================================
-   1. APP STATE
-   ========================================================================== */
-let masterDeck = [];          // Toàn bộ từ vựng đã lưu (nguồn sự thật duy nhất)
-let filteredDeck = [];        // Danh sách sau khi lọc theo category — Flashcard chạy trên deck này
-let currentIndex = 0;         // Vị trí thẻ hiện tại trong filteredDeck
-let activeCategory = 'ALL';   // Category đang chọn ở category-bar
-let activeMode = 'dict';      // Mode hiện tại: dict | flashcard | game | aichat
-let activeSubGame = 'speaking'; // Sub-game hiện tại trong Mini Games (HTML mặc định active là speaking)
-
-// Timer/interval dùng chung cho MỌI mini-game — clearGameTimers() dọn tất cả
-let gameTimers = [];
-
-// --- Quiz (Trắc nghiệm) ---
-let isProcessingQuiz = false; // Chặn double-click / double-submit khi đang xử lý đáp án
-let currentQuiz = null;
-let quizScore = 0;
-let quizStreak = 0;
-
-// --- Match (Nối từ — cấu trúc cross-match 2 cột) ---
-let isProcessingMatch = false; // Chặn double-click khi 1 cặp đang trong quá trình xử lý
-let matchPairs = [];           // [{id, kr, vi}] — cặp từ đang chơi trong lượt hiện tại
-let matchSelectedKr = null;    // Phần tử <div> cột Hàn đang được chọn
-let matchSelectedVi = null;    // Phần tử <div> cột Việt đang được chọn
-let matchRemaining = 0;        // Số cặp còn lại chưa nối đúng trong lượt này
-
-// --- Typing (Gõ phím) ---
-let currentTypingWord = null;
-let typingScore = 0;
-let isProcessingTyping = false; // Chặn double-submit khi đang chuyển câu
-
-// --- Speaking (Luyện nói) ---
-let currentSpeakingWord = null;
-let speechRecognizer = null;    // Instance SpeechRecognition (khởi tạo 1 lần, tái sử dụng)
-let isRecording = false;
-let isEvaluatingSpeech = false; // Chặn bấm mic liên tục trong lúc đang gọi AI chấm điểm
-
-// --- AI Chat ---
-let activeScenario = 'free';
-let isSendingChatMessage = false; // Chặn double-send
-let chatRecognizer = null;
-let isChatRecording = false;
-
-// --- Voice AI (Gemini 3.1 Flash Live — voice-to-voice 2 chiều qua WebSocket) ---
-let voiceScenario = 'free';        // Kịch bản đang chọn (dùng chung 4 kịch bản với AI Chat)
-let voiceSocket = null;            // Kết nối WebSocket tới Gemini Live API
-let voiceState = 'idle';           // idle | connecting | connected | error — trạng thái tổng của phiên gọi
-let voiceAudioContextIn = null;    // AudioContext để capture mic (đầu vào)
-let voiceAudioContextOut = null;   // AudioContext riêng để phát audio Gemini trả về (đầu ra) — tách riêng
-                                    // khỏi context đầu vào vì 2 context có thể cần sample rate khác nhau
-                                    // (mic ở sample rate thiết bị, output cố định 24kHz theo Gemini)
-let voiceMicStream = null;         // MediaStream từ getUserMedia, cần giữ lại để tắt đúng track khi ngắt
-let voiceWorkletNode = null;       // AudioWorkletNode chạy pcm-capture-processor
-let voiceOutputQueueTime = 0;      // Mốc thời gian (audioContext.currentTime) để xếp hàng phát audio
-                                    // tuần tự không chồng lấn, vì audio Gemini trả về theo từng chunk rời rạc
-let voiceSetupComplete = false;    // true sau khi nhận được setupComplete từ server, chỉ khi đó mới được
-                                    // gửi audio — gửi sớm hơn sẽ bị server từ chối hoặc bỏ qua
-let voiceReconnectTimer = null;    // Timer cho việc tự động thử kết nối lại sau khi nhận GoAway
-
-// --- Dictionary (Tra từ) ---
-let isDictSearching = false;
-let lastDictResult = null; // Kết quả tra gần nhất để nút "Lưu vào bộ từ vựng" dùng
-
-// --- Luyện Viết (worksheet A4 — xuất Word/PDF thật) ---
-let writingList = [];              // [{word, reading, hanviet, meaning}] — nguồn dữ liệu duy nhất
-                                    // cho worksheet, độc lập hoàn toàn với masterDeck
-let writingConfig = {              // Cấu hình worksheet — có mặc định tối ưu cho in, người dùng
-    orientation: 'portrait',       // không bắt buộc phải chỉnh mới xuất được (mục 16 spec)
-    mode: 'trace',                 // trace | free | both
-    rowsPerWord: 2,
-    showReading: true,
-    showHanviet: true,
-    showMeaning: true
-};
-let isWritingExporting = false;    // Chặn bấm liên tục gây tạo file trùng (mục 27 spec)
-let isWritingAiFormatting = false; // Chặn bấm đúp AI Format
-
-/* ==========================================================================
-   2. DATA MANAGEMENT (LOCALSTORAGE) — an toàn tuyệt đối
-   ========================================================================== */
-
 /**
- * Kiểm tra 1 object có đủ hình dạng hợp lệ của 1 thẻ từ vựng hay không.
- * Dùng để lọc bỏ rác/hỏng khi đọc từ localStorage, tránh việc 1 phần tử
- * hỏng làm sập toàn bộ app (ví dụ: c.front.trim() nếu c.front undefined).
+ * Học Tiếng Hàn 2.0 — Main Application
+ * =======================================
  */
-function isValidCard(c) {
-    return !!(c && typeof c === 'object' && typeof c.front === 'string' && c.front.trim() !== '' && typeof c.back === 'string');
+
+// ===================== SAMPLE DATA =====================
+const SAMPLE = [
+  {id:1,front:"안녕하세요",back:"Xin chào",roman:"annyeonghaseyo",category:"greetings",level:"beginner",topik:"topik1",partOfSpeech:"Cảm từ",example:"안녕하세요, 만나서 반갑습니다.",exampleMeaning:"Xin chào, rất vui được gặp bạn.",hanViet:"安宁哈塞哟"},
+  {id:2,front:"감사합니다",back:"Cảm ơn",roman:"gamsahamnida",category:"greetings",level:"beginner",topik:"topik1",partOfSpeech:"Cảm từ",example:"도와주셔서 감사합니다.",exampleMeaning:"Cảm ơn bạn đã giúp đỡ.",hanViet:"感谢합니다"},
+  {id:3,front:"죄송합니다",back:"Xin lỗi",roman:"joesonghamnida",category:"greetings",level:"beginner",topik:"topik1",partOfSpeech:"Cảm từ",example:"늦어서 죄송합니다.",exampleMeaning:"Xin lỗi vì đến muộn.",hanViet:"罪悚합니다"},
+  {id:4,front:"안녕히 가세요",back:"Tạm biệt (người đi)",roman:"annyeonghi gaseyo",category:"greetings",level:"beginner",topik:"topik1",partOfSpeech:"Cụm từ",example:"안녕히 가세요, 내일 봐요.",exampleMeaning:"Tạm biệt, hẹn gặp lại.",hanViet:""},
+  {id:5,front:"네",back:"Vâng",roman:"ne",category:"greetings",level:"beginner",topik:"topik1",partOfSpeech:"Cảm từ",example:"네, 알겠습니다.",exampleMeaning:"Vâng, tôi hiểu rồi.",hanViet:""},
+  {id:6,front:"아니요",back:"Không",roman:"aniyo",category:"greetings",level:"beginner",topik:"topik1",partOfSpeech:"Cảm từ",example:"아니요, 괜찮아요.",exampleMeaning:"Không, không sao.",hanViet:""},
+  {id:7,front:"하나",back:"Một",roman:"hana",category:"numbers",level:"beginner",topik:"topik1",partOfSpeech:"Số đếm",example:"하나, 둘, 셋!",exampleMeaning:"Một, hai, ba!",hanViet:"一"},
+  {id:8,front:"둘",back:"Hai",roman:"dul",category:"numbers",level:"beginner",topik:"topik1",partOfSpeech:"Số đếm",example:"사과 두 개 주세요.",exampleMeaning:"Cho tôi hai quả táo.",hanViet:"二"},
+  {id:9,front:"셋",back:"Ba",roman:"set",category:"numbers",level:"beginner",topik:"topik1",partOfSpeech:"Số đếm",example:"셋까지 세어 보세요.",exampleMeaning:"Đếm đến ba.",hanViet:"三"},
+  {id:10,front:"열",back:"Mười",roman:"yeol",category:"numbers",level:"beginner",topik:"topik1",partOfSpeech:"Số đếm",example:"열 번 연습했어요.",exampleMeaning:"Luyện mười lần.",hanViet:"十"},
+  {id:11,front:"엄마",back:"Mẹ",roman:"eomma",category:"family",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"엄마가 요리해요.",exampleMeaning:"Mẹ đang nấu ăn.",hanViet:""},
+  {id:12,front:"아빠",back:"Bố",roman:"appa",category:"family",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"아빠는 회사에 있어요.",exampleMeaning:"Bố ở công ty.",hanViet:""},
+  {id:13,front:"형",back:"Anh trai (nam gọi)",roman:"hyeong",category:"family",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"형이 학생이에요.",exampleMeaning:"Anh trai là học sinh.",hanViet:"兄"},
+  {id:14,front:"누나",back:"Chị gái (nam gọi)",roman:"nuna",category:"family",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"누나는 대학생이에요.",exampleMeaning:"Chị là sinh viên.",hanViet:""},
+  {id:15,front:"오빠",back:"Anh trai (nữ gọi)",roman:"oppa",category:"family",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"오빠, 어디 가요?",exampleMeaning:"Anh ơi, đi đâu vậy?",hanViet:""},
+  {id:16,front:"언니",back:"Chị gái (nữ gọi)",roman:"eonni",category:"family",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"언니랑 같이 가요.",exampleMeaning:"Đi cùng chị gái.",hanViet:""},
+  {id:17,front:"밥",back:"Cơm",roman:"bap",category:"food",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"밥 먹었어요?",exampleMeaning:"Ăn cơm chưa?",hanViet:"飯"},
+  {id:18,front:"물",back:"Nước",roman:"mul",category:"food",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"물 한 잔 주세요.",exampleMeaning:"Cho tôi cốc nước.",hanViet:""},
+  {id:19,front:"김치",back:"Kim chi",roman:"gimchi",category:"food",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"김치가 맛있어요.",exampleMeaning:"Kim chi ngon.",hanViet:""},
+  {id:20,front:"고기",back:"Thịt",roman:"gogi",category:"food",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"고기를 구워요.",exampleMeaning:"Nướng thịt.",hanViet:"肉"},
+  {id:21,front:"커피",back:"Cà phê",roman:"keopi",category:"food",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"커피 한 잔 할까요?",exampleMeaning:"Uống cà phê nhé?",hanViet:""},
+  {id:22,front:"빵",back:"Bánh mì",roman:"ppang",category:"food",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"빵을 사요.",exampleMeaning:"Mua bánh mì.",hanViet:""},
+  {id:23,front:"맥주",back:"Bia",roman:"maekju",category:"food",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"맥주 두 병 주세요.",exampleMeaning:"Hai chai bia.",hanViet:"麥酒"},
+  {id:24,front:"학교",back:"Trường học",roman:"hakgyo",category:"places",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"학교에 가요.",exampleMeaning:"Đi đến trường.",hanViet:"學校"},
+  {id:25,front:"집",back:"Nhà",roman:"jip",category:"places",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"집에 가고 싶어요.",exampleMeaning:"Muốn về nhà.",hanViet:""},
+  {id:26,front:"회사",back:"Công ty",roman:"hoesa",category:"places",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"회사에서 일해요.",exampleMeaning:"Làm ở công ty.",hanViet:"會社"},
+  {id:27,front:"병원",back:"Bệnh viện",roman:"byeongwon",category:"places",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"병원에 가야 해요.",exampleMeaning:"Phải đi bệnh viện.",hanViet:"病院"},
+  {id:28,front:"공항",back:"Sân bay",roman:"gonghang",category:"places",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"공항에서 만나요.",exampleMeaning:"Gặp ở sân bay.",hanViet:"空港"},
+  {id:29,front:"은행",back:"Ngân hàng",roman:"eunhaeng",category:"places",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"은행에 돈을 찾아요.",exampleMeaning:"Rút tiền ở ngân hàng.",hanViet:"銀行"},
+  {id:30,front:"좋다",back:"Tốt, hay",roman:"jota",category:"adjectives",level:"beginner",topik:"topik1",partOfSpeech:"Tính từ",example:"날씨가 좋아요.",exampleMeaning:"Thời tiết đẹp.",hanViet:""},
+  {id:31,front:"크다",back:"Lớn",roman:"keuda",category:"adjectives",level:"beginner",topik:"topik1",partOfSpeech:"Tính từ",example:"이 집은 커요.",exampleMeaning:"Ngôi nhà to.",hanViet:"巨"},
+  {id:32,front:"작다",back:"Nhỏ",roman:"jakda",category:"adjectives",level:"beginner",topik:"topik1",partOfSpeech:"Tính từ",example:"고양이가 작아요.",exampleMeaning:"Mèo nhỏ.",hanViet:"小"},
+  {id:33,front:"예쁘다",back:"Đẹp, xinh",roman:"yeppeuda",category:"adjectives",level:"beginner",topik:"topik1",partOfSpeech:"Tính từ",example:"꽃이 예뻐요.",exampleMeaning:"Hoa đẹp.",hanViet:""},
+  {id:34,front:"맛있다",back:"Ngon",roman:"masitda",category:"adjectives",level:"beginner",topik:"topik1",partOfSpeech:"Tính từ",example:"이 음식이 맛있어요.",exampleMeaning:"Món ăn ngon.",hanViet:""},
+  {id:35,front:"비싸다",back:"Đắt",roman:"bissada",category:"adjectives",level:"beginner",topik:"topik1",partOfSpeech:"Tính từ",example:"이 가방이 비싸요.",exampleMeaning:"Túi này đắt.",hanViet:""},
+  {id:36,front:"싸다",back:"Rẻ",roman:"ssada",category:"adjectives",level:"beginner",topik:"topik1",partOfSpeech:"Tính từ",example:"여기 싸고 맛있어요.",exampleMeaning:"Rẻ mà ngon.",hanViet:""},
+  {id:37,front:"가다",back:"Đi",roman:"gada",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"학교에 가요.",exampleMeaning:"Đi đến trường.",hanViet:""},
+  {id:38,front:"오다",back:"Đến",roman:"oda",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"친구가 집에 와요.",exampleMeaning:"Bạn đến nhà.",hanViet:""},
+  {id:39,front:"먹다",back:"Ăn",roman:"meokda",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"점심을 먹어요.",exampleMeaning:"Ăn trưa.",hanViet:"吃"},
+  {id:40,front:"마시다",back:"Uống",roman:"masida",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"물을 마셔요.",exampleMeaning:"Uống nước.",hanViet:""},
+  {id:41,front:"보다",back:"Xem",roman:"boda",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"영화를 봐요.",exampleMeaning:"Xem phim.",hanViet:""},
+  {id:42,front:"읽다",back:"Đọc",roman:"ikda",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"책을 읽어요.",exampleMeaning:"Đọc sách.",hanViet:"讀"},
+  {id:43,front:"쓰다",back:"Viết",roman:"sseuda",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"편지를 써요.",exampleMeaning:"Viết thư.",hanViet:""},
+  {id:44,front:"듣다",back:"Nghe",roman:"deutda",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"음악을 들어요.",exampleMeaning:"Nghe nhạc.",hanViet:""},
+  {id:45,front:"말하다",back:"Nói",roman:"malhada",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"한국어로 말해요.",exampleMeaning:"Nói bằng tiếng Hàn.",hanViet:""},
+  {id:46,front:"하다",back:"Làm",roman:"hada",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"숙제를 해요.",exampleMeaning:"Làm bài tập.",hanViet:""},
+  {id:47,front:"사다",back:"Mua",roman:"sada",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"옷을 사요.",exampleMeaning:"Mua quần áo.",hanViet:""},
+  {id:48,front:"만나다",back:"Gặp",roman:"mannada",category:"verbs",level:"beginner",topik:"topik1",partOfSpeech:"Động từ",example:"친구를 만나요.",exampleMeaning:"Gặp bạn.",hanViet:""},
+  {id:49,front:"오늘",back:"Hôm nay",roman:"oneul",category:"time",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"오늘 날씨가 좋아요.",exampleMeaning:"Hôm nay trời đẹp.",hanViet:""},
+  {id:50,front:"내일",back:"Ngày mai",roman:"naeil",category:"time",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"내일 만나요.",exampleMeaning:"Ngày mai gặp nhé.",hanViet:""},
+  {id:51,front:"어제",back:"Hôm qua",roman:"eoje",category:"time",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"어제 비가 왔어요.",exampleMeaning:"Hôm qua trời mưa.",hanViet:""},
+  {id:52,front:"지금",back:"Bây giờ",roman:"jigeum",category:"time",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"지금 뭐 해요?",exampleMeaning:"Bây giờ làm gì?",hanViet:"只今"},
+  {id:53,front:"친구",back:"Bạn bè",roman:"chingu",category:"daily",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"친구가 많아요.",exampleMeaning:"Có nhiều bạn.",hanViet:"親舊"},
+  {id:54,front:"선생님",back:"Giáo viên",roman:"seonsaengnim",category:"education",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"선생님께 질문해요.",exampleMeaning:"Hỏi giáo viên.",hanViet:"先生"},
+  {id:55,front:"학생",back:"Học sinh",roman:"haksaeng",category:"education",level:"beginner",topik:"topik1",partOfSpeech:"Danh từ",example:"저는 학생이에요.",exampleMeaning:"Tôi là học sinh.",hanViet:"學生"},
+  {id:56,front:"여행",back:"Du lịch",roman:"yeohaeng",category:"travel",level:"intermediate",topik:"topik2",partOfSpeech:"Danh từ",example:"한국으로 여행 가고 싶어요.",exampleMeaning:"Muốn đi du lịch Hàn Quốc.",hanViet:"旅行"},
+  {id:57,front:"문화",back:"Văn hóa",roman:"munhwa",category:"culture",level:"intermediate",topik:"topik2",partOfSpeech:"Danh từ",example:"한국 문화가 좋아요.",exampleMeaning:"Văn hóa Hàn hay.",hanViet:"文化"},
+  {id:58,front:"시험",back:"Kỳ thi",roman:"siheom",category:"education",level:"intermediate",topik:"topik2",partOfSpeech:"Danh từ",example:"내일 시험이 있어요.",exampleMeaning:"Mai có thi.",hanViet:"試驗"},
+  {id:59,front:"취미",back:"Sở thích",roman:"chwimi",category:"daily",level:"intermediate",topik:"topik2",partOfSpeech:"Danh từ",example:"취미가 뭐예요?",exampleMeaning:"Sở thích là gì?",hanViet:"趣味"},
+  {id:60,front:"약속",back:"Hẹn",roman:"yaksok",category:"daily",level:"intermediate",topik:"topik2",partOfSpeech:"Danh từ",example:"약속이 있어요.",exampleMeaning:"Có hẹn.",hanViet:"約束"},
+  {id:61,front:"날씨",back:"Thời tiết",roman:"nalssi",category:"daily",level:"intermediate",topik:"topik2",partOfSpeech:"Danh từ",example:"날씨가 추워요.",exampleMeaning:"Trời lạnh.",hanViet:""},
+  {id:62,front:"생각하다",back:"Nghĩ",roman:"saenggakada",category:"verbs",level:"intermediate",topik:"topik2",partOfSpeech:"Động từ",example:"좋은 생각이에요.",exampleMeaning:"Ý hay đấy.",hanViet:"生覺"},
+  {id:63,front:"중요하다",back:"Quan trọng",roman:"jungyohada",category:"adjectives",level:"intermediate",topik:"topik2",partOfSpeech:"Tính từ",example:"이것이 중요해요.",exampleMeaning:"Điều này quan trọng.",hanViet:"重要"},
+  {id:64,front:"어렵다",back:"Khó",roman:"eoryeopda",category:"adjectives",level:"intermediate",topik:"topik2",partOfSpeech:"Tính từ",example:"한국어가 어려워요.",exampleMeaning:"Tiếng Hàn khó.",hanViet:""},
+  {id:65,front:"쉽다",back:"Dễ",roman:"swipda",category:"adjectives",level:"intermediate",topik:"topik2",partOfSpeech:"Tính từ",example:"이 문제는 쉬워요.",exampleMeaning:"Bài này dễ.",hanViet:""},
+  {id:66,front:"행복하다",back:"Hạnh phúc",roman:"haengbokada",category:"adjectives",level:"advanced",topik:"topik2",partOfSpeech:"Tính từ",example:"행복하세요!",exampleMeaning:"Chúc hạnh phúc!",hanViet:"幸福"},
+  {id:67,front:"경험",back:"Kinh nghiệm",roman:"gyeongheom",category:"daily",level:"advanced",topik:"topik2",partOfSpeech:"Danh từ",example:"좋은 경험이었어요.",exampleMeaning:"Trải nghiệm tốt.",hanViet:"經驗"},
+  {id:68,front:"발전",back:"Phát triển",roman:"baljeon",category:"daily",level:"advanced",topik:"topik2",partOfSpeech:"Danh từ",example:"많이 발전했어요.",exampleMeaning:"Phát triển nhiều.",hanViet:"發展"},
+  {id:69,front:"기억하다",back:"Nhớ",roman:"gieokada",category:"verbs",level:"advanced",topik:"topik2",partOfSpeech:"Động từ",example:"이름을 기억해요.",exampleMeaning:"Nhớ tên.",hanViet:"記憶"},
+  {id:70,front:"미래",back:"Tương lai",roman:"mirae",category:"daily",level:"advanced",topik:"topik2",partOfSpeech:"Danh từ",example:"미래가 밝아요.",exampleMeaning:"Tương lai tươi sáng.",hanViet:"未來"}
+];
+
+// ===================== WORD NORMALIZER =====================
+function normWord(w) {
+  return {
+    fav: false, hard: false, learned: false,
+    correctCount: 0, wrongCount: 0,
+    lastReviewed: null, nextReview: null,
+    createdAt: Date.now(), srBox: 1,
+    ...w
+  };
 }
 
-/**
- * Chuẩn hoá 1 thẻ: đảm bảo đủ field, đúng kiểu dữ liệu, không bao giờ undefined.
- * Mọi nơi tạo/đọc thẻ trong app đều đi qua hàm này để đồng nhất cấu trúc.
- */
-function normalizeCard(raw) {
-    return {
-        front: String(raw.front || '').trim(),
-        back: String(raw.back || '').trim(),
-        roman: String(raw.roman || '').trim(),
-        category: String(raw.category || 'Chung').trim(),
-        fav: raw.fav === true,
-        hard: raw.hard === true
-    };
-}
+// ===================== MAIN APP =====================
+const A = {
+  s: {
+    words: [], cat: 'all', view: 'dict',
+    streak: 0, lastStudy: null, daily: {},
+    settings: {
+      theme: 'light', ttsSpeed: '0.8', autoTTS: false,
+      sessionSize: 20, priorHard: false,
+      apiKey: '', chatModel: 'gemini-2.0-flash',
+      voiceModel: 'gemini-2.0-flash-live-001'
+    }
+  },
 
-function loadData() {
-    let loaded = [];
+  // ==================== INIT ====================
+  init() {
+    this.load();
+    this.renderCatBar();
+    this.renderChatModels();
+    this.renderChatScenes();
+    this.updateHeader();
+    this.renderDict();
+    this.fc.init();
+    this.stats.render();
+    this.settingsUI();
+    this.applyTheme();
+
+    document.getElementById('searchInput').addEventListener('input', this.debounce(() => this.renderDict(), 200));
+    document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') this.chat.send(); });
+    document.addEventListener('keydown', e => this.hotkey(e));
+
+    if ('speechSynthesis' in window) {
+      speechSynthesis.getVoices();
+      speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+    }
+  },
+
+  // ==================== STORAGE ====================
+  load() {
     try {
-        const saved = localStorage.getItem('masterDeck');
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed)) {
-                loaded = parsed.filter(isValidCard).map(normalizeCard);
-            }
-        }
+      const d = localStorage.getItem('krApp2');
+      if (d) {
+        const p = JSON.parse(d);
+        this.s.words = (p.words || []).map(w => ({ ...normWord({}), ...w }));
+        this.s.streak = p.streak || 0;
+        this.s.lastStudy = p.lastStudy || null;
+        this.s.daily = p.daily || {};
+        if (p.settings) this.s.settings = { ...this.s.settings, ...p.settings };
+      }
+      if (!this.s.words.length) {
+        this.s.words = SAMPLE.map(w => normWord(w));
+        this.save();
+      }
     } catch (e) {
-        console.warn('Dữ liệu localStorage bị hỏng, khôi phục dữ liệu mẫu:', e);
-        loaded = [];
+      console.error('Load err:', e);
+      this.s.words = SAMPLE.map(w => normWord(w));
     }
+  },
 
-    if (loaded.length === 0) {
-        loaded = getSampleData();
-    }
-
-    masterDeck = loaded;
-    saveData(); // Ghi lại bản đã chuẩn hoá + đồng bộ filteredDeck ngay từ đầu
-}
-
-function saveData() {
+  save() {
     try {
-        localStorage.setItem('masterDeck', JSON.stringify(masterDeck));
-    } catch (e) {
-        console.error('Không thể lưu vào localStorage (có thể đã đầy):', e);
-        showToast('Lỗi: Không thể lưu dữ liệu (bộ nhớ trình duyệt đầy)', 'error');
+      localStorage.setItem('krApp2', JSON.stringify({
+        words: this.s.words,
+        streak: this.s.streak,
+        lastStudy: this.s.lastStudy,
+        daily: this.s.daily,
+        settings: this.s.settings
+      }));
+    } catch (e) { console.error('Save err:', e); }
+  },
+
+  // ==================== STREAK ====================
+  checkStreak() {
+    const t = new Date().toDateString();
+    if (this.s.lastStudy) {
+      const d = Math.floor((new Date(t) - new Date(this.s.lastStudy)) / 864e5);
+      if (d > 1) this.s.streak = 0;
     }
-    applyCategoryFilter(); // Luôn đồng bộ filteredDeck sau mỗi lần thay đổi masterDeck
+    document.getElementById('hStreak').textContent = this.s.streak;
+  },
 
-    // Cập nhật số đếm ở nút "Thẻ Bài (N)" ngay tại đây, KHÔNG chỉ trong
-    // updateCard() — vì updateCard() chỉ chạy khi người dùng đã từng mở
-    // Flashcard. Nếu chỉ dựa vào đó, badge sẽ hiện sai "0" ngay từ lúc mở
-    // app (mode mặc định là Tra Từ) cho tới khi người dùng lần đầu bấm
-    // sang Flashcard — gọi trực tiếp ở đây đảm bảo badge luôn đúng ngay
-    // từ giây đầu tiên, bất kể đang ở mode nào.
-    setElementText('count-badge', masterDeck.length);
-}
-
-function getSampleData() {
-    return [
-        { front: '안녕하세요', back: 'Xin chào', roman: 'An-nyeong-ha-se-yo', category: 'Giao tiếp', fav: false, hard: false },
-        { front: '감사합니다', back: 'Cảm ơn', roman: 'Gam-sa-ham-ni-da', category: 'Giao tiếp', fav: false, hard: false },
-        { front: '사과', back: 'Quả táo', roman: 'Sa-gwa', category: 'Du lịch', fav: false, hard: false },
-        { front: '물', back: 'Nước', roman: 'Mul', category: 'Du lịch', fav: false, hard: false },
-        { front: '학교', back: 'Trường học', roman: 'Hak-gyo', category: 'TOPIK 1', fav: false, hard: false },
-        { front: '사랑해요', back: 'Anh/Em yêu em/anh', roman: 'Sa-rang-hae-yo', category: 'Giao tiếp', fav: true, hard: false }
-    ];
-}
-
-/**
- * Lọc masterDeck theo activeCategory và ghi vào filteredDeck.
- * Đây là NƠI DUY NHẤT được phép gán lại filteredDeck, để đảm bảo
- * mọi thao tác thêm/sửa/xoá từ đều tự động phản ánh đúng vào Flashcard.
- */
-function applyCategoryFilter() {
-    if (!Array.isArray(masterDeck)) masterDeck = [];
-
-    if (activeCategory === 'ALL') {
-        filteredDeck = [...masterDeck];
-    } else if (activeCategory === 'Yêu thích') {
-        filteredDeck = masterDeck.filter(c => c.fav);
-    } else {
-        filteredDeck = masterDeck.filter(c => c.category === activeCategory);
+  recordActivity() {
+    const t = new Date().toISOString().slice(0, 10);
+    const ts = new Date().toDateString();
+    if (this.s.lastStudy !== ts) {
+      if (this.s.lastStudy) {
+        const d = Math.floor((new Date(ts) - new Date(this.s.lastStudy)) / 864e5);
+        this.s.streak = d <= 1 ? this.s.streak + 1 : 1;
+      } else {
+        this.s.streak = 1;
+      }
+      this.s.lastStudy = ts;
     }
+    this.s.daily[t] = (this.s.daily[t] || 0) + 1;
+    document.getElementById('hStreak').textContent = this.s.streak;
+    this.save();
+  },
 
-    // currentIndex có thể vượt quá độ dài mới sau khi lọc/xoá — kẹp lại an toàn
-    if (filteredDeck.length === 0) {
-        currentIndex = 0;
-    } else if (currentIndex >= filteredDeck.length) {
-        currentIndex = filteredDeck.length - 1;
-    } else if (currentIndex < 0) {
-        currentIndex = 0;
-    }
-}
-
-/* ==========================================================================
-   3. UTILITY & TIMERS
-   ========================================================================== */
-function setGameTimeout(callback, delay) {
-    const timer = setTimeout(() => {
-        // Tự loại timer khỏi mảng theo dõi sau khi chạy xong, tránh mảng phình to
-        gameTimers = gameTimers.filter(t => t !== timer);
-        callback();
-    }, delay);
-    gameTimers.push(timer);
-    return timer;
-}
-
-/** Dọn dẹp TOÀN BỘ timer đang chờ của mọi mini-game. Gọi mỗi khi rời màn hình game
- *  hoặc chuyển sub-game, để tránh: 2 vòng lặp game chạy chồng nhau, timer cũ
- *  gọi vào DOM của sub-game khác (kẹt trạng thái / treo giao diện). */
-function clearGameTimers() {
-    gameTimers.forEach(timer => clearTimeout(timer));
-    gameTimers = [];
-}
-
-/** Reset toàn bộ cờ "đang xử lý" của mọi mini-game — gọi kèm clearGameTimers()
- *  khi chuyển sub-game để đảm bảo không bị kẹt ở trạng thái "đang chấm điểm"
- *  của sub-game trước đó khi quay lại. */
-function resetProcessingFlags() {
-    isProcessingQuiz = false;
-    isProcessingMatch = false;
-    isProcessingTyping = false;
-    // isEvaluatingSpeech và isRecording được xử lý riêng trong stopSpeakingRecognition()
-    // vì chúng gắn với SpeechRecognition đang chạy thật sự (cần dừng, không chỉ reset cờ)
-}
-
-function setElementText(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.innerText = text;
-}
-
-function setElementHTML(id, html) {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = html;
-}
-
-function showToast(message, type) {
-    // Hiển thị phản hồi nhẹ nhàng không chặn UI (thay thế alert()).
-    let toast = document.getElementById('app-toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'app-toast';
-        toast.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:10px 20px; border-radius:20px; color:white; font-size:13px; font-weight:600; z-index:1000; box-shadow:0 4px 15px rgba(0,0,0,0.2); max-width:90%; text-align:center; transition:opacity 0.3s;';
-        document.body.appendChild(toast);
-    }
-    toast.style.background = type === 'error' ? 'var(--danger-color, #e74c3c)' : (type === 'success' ? 'var(--success-color, #2ecc71)' : '#333');
-    toast.innerText = message;
-    toast.style.opacity = '1';
-    toast.style.display = 'block';
-
-    if (toast._hideTimer) clearTimeout(toast._hideTimer);
-    toast._hideTimer = setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => { if (toast) toast.style.display = 'none'; }, 300);
-    }, 2600);
-}
-
-/* ==========================================================================
-   3.5. STREAK TRACKING (số ngày học liên tiếp — hiển thị ở #daily-streak)
-   ========================================================================== */
-
-/** Trả về chuỗi ngày dạng YYYY-MM-DD theo giờ địa phương, dùng làm khoá so sánh ngày. */
-function getLocalDateKey(date) {
-    const d = date || new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return year + '-' + month + '-' + day;
-}
-
-/**
- * Cập nhật số ngày học liên tiếp mỗi khi mở app:
- * - Nếu hôm nay đã tính rồi (mở app nhiều lần trong ngày) -> giữ nguyên streak.
- * - Nếu lần truy cập gần nhất là hôm qua -> streak + 1 (duy trì chuỗi).
- * - Nếu cách xa hơn 1 ngày (bỏ lỡ) -> reset streak về 1 (bắt đầu chuỗi mới).
- * - Nếu chưa từng có dữ liệu -> khởi tạo streak = 1.
- */
-function updateDailyStreak() {
-    let streak = 1;
-    try {
-        const todayKey = getLocalDateKey();
-        const lastVisit = localStorage.getItem('lastVisitDate');
-        const savedStreak = parseInt(localStorage.getItem('dailyStreak'), 10);
-        const validSavedStreak = Number.isFinite(savedStreak) && savedStreak > 0 ? savedStreak : 1;
-
-        if (lastVisit === todayKey) {
-            streak = validSavedStreak; // Đã mở app hôm nay rồi, giữ nguyên
-        } else {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayKey = getLocalDateKey(yesterday);
-
-            streak = (lastVisit === yesterdayKey) ? validSavedStreak + 1 : 1;
-
-            localStorage.setItem('lastVisitDate', todayKey);
-            localStorage.setItem('dailyStreak', String(streak));
-        }
-    } catch (e) {
-        console.warn('Không thể tính streak (localStorage lỗi):', e);
-        streak = 1;
-    }
-
-    setElementText('daily-streak', streak);
-}
-
-/* ==========================================================================
-   4. THEME (Dark / Light)
-   ========================================================================== */
-function loadTheme() {
-    let isDark = false;
-    try {
-        isDark = localStorage.getItem('theme') === 'dark';
-    } catch (e) { /* localStorage không khả dụng — mặc định sáng */ }
-    applyTheme(isDark);
-}
-
-function applyTheme(isDark) {
-    document.body.classList.toggle('dark-mode', isDark);
-    const icon = document.getElementById('theme-icon');
-    if (icon) {
-        icon.classList.toggle('fa-moon', !isDark);
-        icon.classList.toggle('fa-sun', isDark);
-    }
-}
-
-function toggleTheme() {
-    const isDark = !document.body.classList.contains('dark-mode');
-    applyTheme(isDark);
-    try {
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    } catch (e) { /* bỏ qua nếu không lưu được, giao diện vẫn đổi đúng trong phiên này */ }
-}
-
-/* ==========================================================================
-   5. NAVIGATION (Mode switcher + Category filter)
-   ========================================================================== */
-const MODE_CONTAINER_IDS = {
-    dict: 'dict-container',
-    flashcard: 'fc-main-wrapper',
-    game: 'game-main-container',
-    aichat: 'aichat-main-container',
-    voice: 'voice-main-container',
-    writing: 'writing-main-container'
-};
-
-function switchMode(mode) {
-    if (!MODE_CONTAINER_IDS[mode]) return;
-
-    // Rời khỏi mode game: dừng mọi timer/cờ xử lý đang chạy để tránh
-    // treo giao diện khi quay lại. Luôn dừng ghi âm/phát âm khi đổi mode
-    // bất kể đang ở mode nào, để không rò rỉ tiến trình nền sang mode mới.
-    if (activeMode === 'game') {
-        clearGameTimers();
-        resetProcessingFlags();
-    }
-    stopSpeakingRecognition();
-    stopChatRecognition();
-    stopAllSpeech();
-
-    // Rời khỏi Voice AI (hoặc chuyển sang mode khác trong khi cuộc gọi đang
-    // chạy): luôn đóng phiên WebSocket + tắt mic ngay lập tức. Cuộc gọi
-    // thoại là tiến trình nền "nặng" nhất trong toàn app (WebSocket sống +
-    // mic đang mở liên tục) — để nó chạy ngầm khi người dùng đã chuyển màn
-    // hình vừa tốn phí API vô ích vừa vi phạm nguyên tắc "không rò rỉ tiến
-    // trình nền sang mode khác" đã áp dụng cho mọi tính năng ghi âm khác.
-    if (activeMode === 'voice' && mode !== 'voice') {
-        stopVoiceCall();
-    }
-
-    activeMode = mode;
-
-    Object.entries(MODE_CONTAINER_IDS).forEach(([key, id]) => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = (key === mode) ? 'block' : 'none';
-    });
-
-    document.querySelectorAll('.mode-switcher button[data-mode]').forEach(btn => {
-        btn.classList.toggle('active-mode', btn.dataset.mode === mode);
-    });
-
-    if (mode === 'flashcard') {
-        updateCard();
-    } else if (mode === 'game') {
-        // Vào lại Mini Games luôn khởi động đúng sub-game đang active, tránh
-        // trường hợp màn hình trống vì timer trước đó bị clear giữa chừng.
-        switchSubGame(activeSubGame);
-    }
-}
-
-function switchCategory(cat) {
-    activeCategory = cat;
-    document.querySelectorAll('.cat-chip[data-cat]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.cat === cat);
-    });
-    applyCategoryFilter();
-    currentIndex = 0;
-    if (activeMode === 'flashcard') updateCard();
-}
-
-/* ==========================================================================
-   6. FLASHCARD SYSTEM
-   ========================================================================== */
-
-/** Cập nhật toàn bộ UI thẻ hiện tại. LUÔN reset mặt thẻ về mặt trước trước,
- *  để không bao giờ xảy ra tình trạng thẻ mới hiện ra nhưng vẫn đang lật mặt sau. */
-function updateCard() {
-    const card = document.getElementById('flashcard');
-    if (card) card.classList.remove('is-flipped');
-
-    if (!Array.isArray(filteredDeck) || filteredDeck.length === 0) {
-        setElementText('front-text', 'Chưa có từ vựng');
-        setElementText('back-text', 'Vui lòng thêm từ mới');
-        setElementText('front-roman', '');
-        setElementText('back-roman', '');
-        setElementText('front-cat', 'Rỗng');
-        setElementText('back-cat', 'Rỗng');
-        setElementText('current-idx', '0');
-        setElementText('total-idx', '0');
-
-        const fill = document.getElementById('progress-fill');
-        if (fill) fill.style.width = '0%';
-
-        const btnFav = document.getElementById('btn-fav');
-        if (btnFav) btnFav.className = '';
-        const btnHard = document.getElementById('btn-hard');
-        if (btnHard) btnHard.className = '';
-
-        setElementText('count-badge', masterDeck.length);
-        return;
-    }
-
-    // Kẹp currentIndex an toàn (phòng trường hợp deck đổi kích thước từ nơi khác)
-    if (currentIndex >= filteredDeck.length) currentIndex = 0;
-    if (currentIndex < 0) currentIndex = filteredDeck.length - 1;
-
-    const c = filteredDeck[currentIndex];
-    setElementText('front-text', c.front || '');
-    setElementText('back-text', c.back || '');
-    setElementText('front-roman', c.roman || '');
-    setElementText('back-roman', c.roman || '');
-    setElementText('front-cat', c.category || 'Chủ đề');
-    setElementText('back-cat', c.category || 'Chủ đề');
-    setElementText('current-idx', currentIndex + 1);
-    setElementText('total-idx', filteredDeck.length);
-
-    const fill = document.getElementById('progress-fill');
-    if (fill) fill.style.width = ((currentIndex + 1) / filteredDeck.length * 100) + '%';
-
-    const btnFav = document.getElementById('btn-fav');
-    if (btnFav) btnFav.className = c.fav ? 'active-love' : '';
-
-    const btnHard = document.getElementById('btn-hard');
-    if (btnHard) btnHard.className = c.hard ? 'active-hard' : '';
-
-    setElementText('count-badge', masterDeck.length);
-}
-
-function nextCard() {
-    if (!Array.isArray(filteredDeck) || filteredDeck.length === 0) return;
-    currentIndex = (currentIndex + 1) % filteredDeck.length;
-    updateCard();
-}
-
-function prevCard() {
-    if (!Array.isArray(filteredDeck) || filteredDeck.length === 0) return;
-    currentIndex = (currentIndex - 1 + filteredDeck.length) % filteredDeck.length;
-    updateCard();
-}
-
-function flipCard() {
-    if (!Array.isArray(filteredDeck) || filteredDeck.length === 0) return;
-    const card = document.getElementById('flashcard');
-    if (card) card.classList.toggle('is-flipped');
-}
-
-/** Tìm từ trong flashcard theo tiếng Hàn/Việt/phiên âm, nhảy đến thẻ đầu tiên khớp. */
-function searchFlashcard() {
-    const input = document.getElementById('search-input');
-    if (!input) return;
-    const q = input.value.trim().toLowerCase();
-    if (!q) return;
-
-    if (!Array.isArray(filteredDeck) || filteredDeck.length === 0) {
-        showToast('Không có từ vựng nào trong danh mục hiện tại', 'error');
-        return;
-    }
-
-    const idx = filteredDeck.findIndex(c =>
-        (c.front || '').toLowerCase().includes(q) ||
-        (c.back || '').toLowerCase().includes(q) ||
-        (c.roman || '').toLowerCase().includes(q)
+  // ==================== NAVIGATION ====================
+  nav(v) {
+    this.s.view = v;
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('v-' + v);
+    if (target) target.classList.add('active');
+    document.querySelectorAll('.bottom-nav button').forEach(b =>
+      b.classList.toggle('active', b.dataset.v === v)
     );
+    if (v === 'stats') this.stats.render();
+    if (v === 'flashcard') this.fc.init();
+  },
 
-    if (idx === -1) {
-        showToast('Không tìm thấy từ phù hợp', 'error');
-        return;
+  // ==================== THEME ====================
+  applyTheme() {
+    const t = this.s.settings.theme;
+    document.documentElement.dataset.theme = t;
+    document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+    this.setToggle('tDark', t === 'dark');
+  },
+
+  toggleTheme() {
+    this.s.settings.theme = this.s.settings.theme === 'dark' ? 'light' : 'dark';
+    this.applyTheme();
+    this.save();
+  },
+
+  // ==================== CATEGORY ====================
+  renderCatBar() {
+    const cs = [
+      { id: 'all', l: 'Tất cả', i: '📚' },
+      { id: 'topik1', l: 'TOPIK I', i: '📗' },
+      { id: 'topik2', l: 'TOPIK II', i: '📕' },
+      { id: 'beginner', l: 'Sơ cấp', i: '🌱' },
+      { id: 'intermediate', l: 'Trung cấp', i: '🌿' },
+      { id: 'advanced', l: 'Cao cấp', i: '🌳' },
+      { id: 'fav', l: 'Yêu thích', i: '❤️' },
+      { id: 'hard', l: 'Từ khó', i: '⚠️' },
+      { id: 'new', l: 'Từ mới', i: '✨' }
+    ];
+    document.getElementById('catBar').innerHTML = cs.map(c =>
+      `<button data-c="${c.id}" class="${c.id === 'all' ? 'active' : ''}" onclick="A.setCat('${c.id}')">${c.i} ${c.l}</button>`
+    ).join('');
+  },
+
+  setCat(c) {
+    this.s.cat = c;
+    document.querySelectorAll('.cat-bar button').forEach(b =>
+      b.classList.toggle('active', b.dataset.c === c)
+    );
+    this.renderDict();
+    this.fc.init();
+  },
+
+  filtered() {
+    const c = this.s.cat, w = this.s.words;
+    if (c === 'all') return w;
+    if (c === 'fav') return w.filter(x => x.fav);
+    if (c === 'hard') return w.filter(x => x.hard);
+    if (c === 'new') return w.filter(x => !x.learned);
+    if (c === 'topik1') return w.filter(x => x.topik === 'topik1');
+    if (c === 'topik2') return w.filter(x => x.topik === 'topik2');
+    return w.filter(x => x.level === c);
+  },
+
+  // ==================== DICTIONARY ====================
+  renderDict() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    let ws = this.filtered();
+    if (q) {
+      ws = ws.filter(w =>
+        w.front.includes(q) || w.back.toLowerCase().includes(q) ||
+        (w.roman && w.roman.toLowerCase().includes(q)) ||
+        (w.hanViet && w.hanViet.includes(q))
+      );
+      document.getElementById('searchClear').classList.add('show');
+    } else {
+      document.getElementById('searchClear').classList.remove('show');
     }
-
-    currentIndex = idx;
-    updateCard();
-}
-
-function toggleFavorite() {
-    if (!Array.isArray(filteredDeck) || filteredDeck.length === 0) return;
-    const current = filteredDeck[currentIndex];
-    const target = masterDeck.find(c => c === current || (c.front === current.front && c.back === current.back));
-    if (!target) return;
-    target.fav = !target.fav;
-    saveData();
-    updateCard();
-}
-
-function toggleHard() {
-    if (!Array.isArray(filteredDeck) || filteredDeck.length === 0) return;
-    const current = filteredDeck[currentIndex];
-    const target = masterDeck.find(c => c === current || (c.front === current.front && c.back === current.back));
-    if (!target) return;
-    target.hard = !target.hard;
-    saveData();
-    updateCard();
-}
-
-function deleteCurrentCard() {
-    if (!Array.isArray(filteredDeck) || filteredDeck.length === 0) return;
-    const current = filteredDeck[currentIndex];
-
-    const idxInMaster = masterDeck.findIndex(c => c === current || (c.front === current.front && c.back === current.back));
-    if (idxInMaster === -1) return;
-
-    if (!window.confirm('Xóa từ "' + current.front + '" khỏi bộ từ vựng?')) return;
-
-    masterDeck.splice(idxInMaster, 1);
-    saveData(); // saveData() tự gọi applyCategoryFilter() và kẹp currentIndex an toàn
-    updateCard();
-    showToast('Đã xóa từ', 'success');
-}
-
-function playCardAudio() {
-    if (!Array.isArray(filteredDeck) || filteredDeck.length === 0) return;
-    const c = filteredDeck[currentIndex];
-    speak(c.front, 'ko-KR');
-}
-
-/* ==========================================================================
-   7. MODAL: Thêm từ mới
-   ========================================================================== */
-function openAddModal() {
-    const modal = document.getElementById('add-modal');
-    if (!modal) return;
-    ['new-kr', 'new-rm', 'new-vi', 'new-cat'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    modal.style.display = 'flex';
-    const firstInput = document.getElementById('new-kr');
-    if (firstInput) firstInput.focus();
-}
-
-function closeAddModal() {
-    const modal = document.getElementById('add-modal');
-    if (modal) modal.style.display = 'none';
-}
-
-function saveNewWordFromModal() {
-    const kr = (document.getElementById('new-kr')?.value || '').trim();
-    const rm = (document.getElementById('new-rm')?.value || '').trim();
-    const vi = (document.getElementById('new-vi')?.value || '').trim();
-    const cat = (document.getElementById('new-cat')?.value || '').trim();
-
-    if (!kr || !vi) {
-        showToast('Vui lòng nhập ít nhất Tiếng Hàn và Nghĩa tiếng Việt', 'error');
-        return;
+    document.getElementById('resultCount').textContent = ws.length ? `${ws.length} từ` : '';
+    const el = document.getElementById('wordList');
+    if (!ws.length) {
+      el.innerHTML = '<div class="empty"><div class="e-icon">📭</div><p>Không tìm thấy từ nào</p></div>';
+      return;
     }
+    el.innerHTML = ws.map(w => `
+      <div class="word-item" onclick="A.showWord(${w.id})">
+        <div class="w-main">
+          <div class="w-kr">${w.front} <span class="badge ${w.level}">${w.level === 'beginner' ? 'Sơ cấp' : w.level === 'intermediate' ? 'Trung cấp' : 'Cao cấp'}</span></div>
+          <div class="w-vi">${w.back}</div>
+          <div class="w-roman">${w.roman || ''}</div>
+        </div>
+        <div class="w-actions">
+          <button class="btn-icon" onclick="event.stopPropagation();A.tts('${w.front}')" title="Phát âm">🔊</button>
+          <button class="btn-icon" onclick="event.stopPropagation();A.toggleFav(${w.id})" title="Yêu thích">${w.fav ? '❤️' : '🤍'}</button>
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('hTotal').textContent = this.s.words.length;
+  },
 
-    const newCard = normalizeCard({ front: kr, back: vi, roman: rm, category: cat || 'Chung', fav: false, hard: false });
-    masterDeck.push(newCard);
-    saveData();
+  clearSearch() {
+    document.getElementById('searchInput').value = '';
+    this.renderDict();
+  },
 
-    closeAddModal();
-    showToast('Đã thêm từ mới!', 'success');
+  showWord(id) {
+    const w = this.s.words.find(x => x.id === id);
+    if (!w) return;
+    const srInfo = w.srBox >= 4 ? '✅ Đã thuộc' : w.srBox >= 2 ? '📖 Đang học' : '✨ Mới';
+    document.getElementById('modalBody').innerHTML = `
+      <h2>${w.front}</h2>
+      <div class="d-roman">${w.roman || ''}</div>
+      <div class="d-row"><span class="d-label">Nghĩa</span><span class="d-val">${w.back}</span></div>
+      <div class="d-row"><span class="d-label">Loại từ</span><span class="d-val">${w.partOfSpeech || '-'}</span></div>
+      <div class="d-row"><span class="d-label">Cấp độ</span><span class="d-val"><span class="badge ${w.level}">${w.level}</span></span></div>
+      <div class="d-row"><span class="d-label">Trạng thái</span><span class="d-val">${srInfo} (Box ${w.srBox || 1})</span></div>
+      ${w.hanViet ? `<div class="d-row"><span class="d-label">Hán Việt</span><span class="d-val">${w.hanViet}</span></div>` : ''}
+      ${w.example ? `<div class="d-row"><span class="d-label">Ví dụ</span><span class="d-val">${w.example}<br><em style="color:var(--text3)">${w.exampleMeaning || ''}</em></span></div>` : ''}
+      <div class="d-actions">
+        <button class="btn btn-primary btn-sm" onclick="A.tts('${w.front}')">🔊 Nghe</button>
+        <button class="btn btn-outline btn-sm" onclick="A.toggleFav(${w.id});A.showWord(${w.id})">${w.fav ? '❤️ Bỏ thích' : '🤍 Thích'}</button>
+        <button class="btn btn-outline btn-sm" onclick="A.toggleHard(${w.id});A.showWord(${w.id})">${w.hard ? '⚑ Bỏ khó' : '⚑ Khó'}</button>
+        <button class="btn btn-outline btn-sm" onclick="A.copyWord(${w.id})">📋 Copy</button>
+        <button class="btn btn-outline btn-sm" onclick="A.explainAI(${w.id})">🤖 AI giải thích</button>
+      </div>
+      <div id="aiExplain" class="mt-8"></div>
+    `;
+    document.getElementById('wordModal').classList.add('show');
+  },
 
-    // Nếu đang ở Flashcard, nhảy tới từ vừa thêm để người dùng thấy ngay kết quả
-    if (activeMode === 'flashcard') {
-        const idx = filteredDeck.findIndex(c => c === newCard || (c.front === newCard.front && c.back === newCard.back));
-        if (idx !== -1) currentIndex = idx;
-        updateCard();
-    }
-}
+  closeModal() { document.getElementById('wordModal').classList.remove('show'); },
+  closeAddModal() { document.getElementById('addModal').classList.remove('show'); },
 
-/* ==========================================================================
-   8. EXPORT / IMPORT JSON
-   ========================================================================== */
-function exportData() {
+  toggleFav(id) {
+    const w = this.s.words.find(x => x.id === id);
+    if (w) { w.fav = !w.fav; this.save(); this.renderDict(); this.toast(w.fav ? 'Đã thích' : 'Bỏ thích', 'success'); }
+  },
+
+  toggleHard(id) {
+    const w = this.s.words.find(x => x.id === id);
+    if (w) { w.hard = !w.hard; this.save(); this.renderDict(); this.toast(w.hard ? 'Đã đánh dấu khó' : 'Bỏ đánh dấu', 'info'); }
+  },
+
+  copyWord(id) {
+    const w = this.s.words.find(x => x.id === id);
+    if (w) navigator.clipboard.writeText(`${w.front} (${w.roman || ''}) - ${w.back}`).then(() => this.toast('Đã copy!', 'success'));
+  },
+
+  async explainAI(id) {
+    const w = this.s.words.find(x => x.id === id);
+    if (!w) return;
+    const k = this.s.settings.apiKey;
+    if (!k) { this.toast('Nhập API Key trong Cài đặt', 'warning'); return; }
+    const el = document.getElementById('aiExplain');
+    el.innerHTML = '<div style="color:var(--text3)">🤖 Đang giải thích...</div>';
     try {
-        const dataStr = JSON.stringify(masterDeck, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
+      const r = await this.gemini(
+        [{ role: 'user', parts: [{ text: `Giải thích từ tiếng Hàn "${w.front}" (${w.roman}) cho người Việt. Gồm: nghĩa chi tiết, cách dùng, ngữ pháp, từ đồng nghĩa, mẹo ghi nhớ. Ngắn gọn, tiếng Việt.` }] }],
+        k, 'gemini-2.0-flash'
+      );
+      el.innerHTML = `<div class="card" style="font-size:.88rem;line-height:1.7">${this.esc(r).replace(/\n/g, '<br>')}</div>`;
+    } catch (e) {
+      el.innerHTML = `<div style="color:var(--error)">⚠️ ${e.message}</div>`;
+    }
+  },
+
+  // ==================== ADD WORD ====================
+  dict: {
+    showAddWord() {
+      document.getElementById('addBody').innerHTML = `
+        <div class="add-form">
+          <input id="addKr" placeholder="Tiếng Hàn * (예: 사과)" required>
+          <input id="addVi" placeholder="Nghĩa tiếng Việt * (예: quả táo)" required>
+          <input id="addRoman" placeholder="Romanization (예: sagwa)">
+          <div class="form-row">
+            <select id="addLevel"><option value="beginner">Sơ cấp</option><option value="intermediate">Trung cấp</option><option value="advanced">Cao cấp</option></select>
+            <select id="addCat"><option value="custom">Tùy chỉnh</option><option value="greetings">Chào hỏi</option><option value="food">Đồ ăn</option><option value="family">Gia đình</option><option value="places">Địa điểm</option><option value="verbs">Động từ</option><option value="adjectives">Tính từ</option><option value="daily">Hàng ngày</option><option value="education">Giáo dục</option></select>
+          </div>
+          <input id="addPos" placeholder="Loại từ (예: Danh từ)">
+          <textarea id="addEx" placeholder="Ví dụ tiếng Hàn"></textarea>
+          <input id="addExVi" placeholder="Nghĩa ví dụ">
+          <button class="btn btn-primary" onclick="A.dict.addWord()" style="width:100%">➕ Thêm từ</button>
+        </div>`;
+      document.getElementById('addModal').classList.add('show');
+    },
+    addWord() {
+      const kr = document.getElementById('addKr').value.trim();
+      const vi = document.getElementById('addVi').value.trim();
+      if (!kr || !vi) { A.toast('Nhập từ và nghĩa!', 'error'); return; }
+      A.s.words.push(normWord({
+        id: Date.now(), front: kr, back: vi,
+        roman: document.getElementById('addRoman').value.trim(),
+        level: document.getElementById('addLevel').value,
+        category: document.getElementById('addCat').value,
+        partOfSpeech: document.getElementById('addPos').value.trim(),
+        example: document.getElementById('addEx').value.trim(),
+        exampleMeaning: document.getElementById('addExVi').value.trim(),
+        topik: 'custom', hanViet: ''
+      }));
+      A.save(); A.renderDict(); A.closeAddModal();
+      A.toast(`Đã thêm "${kr}"!`, 'success');
+    }
+  },
+
+  // ==================== TTS ====================
+  tts(text) {
+    if (!text || !('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    u.rate = parseFloat(this.s.settings.ttsSpeed) || 0.8;
+    const v = speechSynthesis.getVoices().find(x => x.lang.startsWith('ko'));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  },
+
+  // ==================== FLASHCARD ====================
+  fc: {
+    idx: 0, words: [], flipped: false, mode: 'all',
+    init() { this.loadWords(); this.idx = 0; this.flipped = false; this.render(); this.setupSwipe(); },
+    loadWords() {
+      const ws = A.filtered();
+      if (this.mode === 'due') {
+        const now = Date.now();
+        this.words = ws.filter(w => !w.nextReview || w.nextReview <= now);
+      } else this.words = [...ws];
+      this.renderModeBar();
+    },
+    renderModeBar() {
+      const due = A.filtered().filter(w => !w.nextReview || w.nextReview <= Date.now()).length;
+      document.getElementById('fcModeBar').innerHTML = `
+        <button class="${this.mode === 'all' ? 'active' : ''}" onclick="A.fc.setMode('all')">Tất cả</button>
+        <button class="${this.mode === 'due' ? 'active' : ''}" onclick="A.fc.setMode('due')">Ôn tập ${due ? `<span class="fc-due-badge">${due}</span>` : ''}</button>`;
+    },
+    setMode(m) { this.mode = m; this.init(); },
+    cur() { return this.words[this.idx]; },
+    render() {
+      const w = this.cur();
+      if (!w) {
+        document.getElementById('fcFront').textContent = 'Không có từ';
+        document.getElementById('fcBack').textContent = '';
+        document.getElementById('fcRoman').textContent = '';
+        document.getElementById('fcPos').textContent = '';
+        document.getElementById('fcProg').textContent = '0/0';
+        return;
+      }
+      document.getElementById('fcFront').textContent = w.front;
+      document.getElementById('fcBack').textContent = w.back;
+      document.getElementById('fcRoman').textContent = w.roman || '';
+      document.getElementById('fcPos').textContent = w.partOfSpeech || '';
+      document.getElementById('fcProg').textContent = `${this.idx + 1} / ${this.words.length}`;
+      document.getElementById('fcFill').style.width = `${((this.idx + 1) / this.words.length) * 100}%`;
+      document.getElementById('fcFav').textContent = w.fav ? '❤️' : '🤍';
+      document.getElementById('fcHard').style.opacity = w.hard ? 1 : .4;
+      const fc = document.getElementById('flashcard');
+      fc.classList.toggle('flipped', this.flipped);
+      if (this.flipped && A.s.settings.autoTTS) A.tts(w.front);
+    },
+    flip() {
+      this.flipped = !this.flipped;
+      document.getElementById('flashcard').classList.toggle('flipped', this.flipped);
+      if (this.flipped) {
+        const w = this.cur();
+        if (w) { w.lastReviewed = Date.now(); A.save(); }
+      }
+    },
+    next() { if (!this.words.length) return; this.idx = (this.idx + 1) % this.words.length; this.flipped = false; this.render(); A.recordActivity(); },
+    prev() { if (!this.words.length) return; this.idx = (this.idx - 1 + this.words.length) % this.words.length; this.flipped = false; this.render(); },
+    toggleFav() {
+      const w = this.cur(); if (!w) return;
+      const o = A.s.words.find(x => x.id === w.id);
+      if (o) { o.fav = !o.fav; w.fav = o.fav; A.save(); this.render(); A.renderDict(); }
+    },
+    markHard() {
+      const w = this.cur(); if (!w) return;
+      const o = A.s.words.find(x => x.id === w.id);
+      if (o) { o.hard = !o.hard; w.hard = o.hard; A.save(); this.render(); }
+    },
+    markCorrect() {
+      const w = this.cur(); if (!w) return;
+      const o = A.s.words.find(x => x.id === w.id);
+      if (o) {
+        o.srBox = Math.min((o.srBox || 1) + 1, 5);
+        const days = [0, 1, 3, 7, 14];
+        o.nextReview = Date.now() + (days[o.srBox - 1] || 14) * 864e5;
+        o.correctCount++; o.lastReviewed = Date.now();
+        if (o.srBox >= 4) o.learned = true;
+        A.save();
+      }
+      this.next();
+    },
+    markWrong() {
+      const w = this.cur(); if (!w) return;
+      const o = A.s.words.find(x => x.id === w.id);
+      if (o) { o.srBox = 1; o.nextReview = Date.now(); o.wrongCount++; o.lastReviewed = Date.now(); A.save(); }
+      this.next();
+    },
+    setupSwipe() {
+      const el = document.getElementById('fcContainer');
+      const fc = document.getElementById('flashcard');
+      const lh = document.querySelector('.fc-swipe-hint.left');
+      const rh = document.querySelector('.fc-swipe-hint.right');
+      let startX = 0, dx = 0, moving = false;
+      el.addEventListener('touchstart', e => { startX = e.touches[0].clientX; moving = false; fc.style.transition = 'none'; }, { passive: true });
+      el.addEventListener('touchmove', e => {
+        dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+        if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy)) {
+          moving = true;
+          fc.style.transform = `translateX(${dx * .7}px) rotate(${dx * .04}deg)`;
+          if (dx > 40) rh.style.opacity = Math.min((dx - 40) / 40, 1); else rh.style.opacity = 0;
+          if (dx < -40) lh.style.opacity = Math.min((-dx - 40) / 40, 1); else lh.style.opacity = 0;
+        }
+      }, { passive: true });
+      el.addEventListener('touchend', () => {
+        fc.style.transition = 'transform .35s var(--ease)';
+        if (moving && Math.abs(dx) > 70) { dx > 0 ? this.prev() : this.next(); }
+        fc.style.transform = this.flipped ? 'rotateY(180deg)' : '';
+        lh.style.opacity = 0; rh.style.opacity = 0;
+        if (!moving && Math.abs(dx) < 10) this.flip();
+        dx = 0;
+      });
+    }
+  },
+
+  // ==================== GAMES ====================
+  game: {
+    score: 0, streak: 0, type: '', _c: [],
+    start(t) {
+      this.type = t; this.score = 0; this.streak = 0; this.cleanup();
+      document.getElementById('gameSelect').style.display = 'none';
+      document.getElementById('gameArea').classList.add('active');
+      this.updScore();
+      if (t === 'quiz') this.initQuiz();
+      else if (t === 'match') this.initMatch();
+      else if (t === 'typing') this.initTyping();
+      else if (t === 'speak') this.initSpeak();
+    },
+    back() { this.cleanup(); document.getElementById('gameSelect').style.display = ''; document.getElementById('gameArea').classList.remove('active'); document.getElementById('gameContent').innerHTML = ''; },
+    cleanup() { this._c.forEach(f => f()); this._c = []; try { if (A._sr) A._sr.stop(); } catch (e) {} },
+    updScore() { document.getElementById('gScore').textContent = `🎯 ${this.score}`; document.getElementById('gStreak').textContent = `🔥 ${this.streak}`; },
+    shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; },
+    sim(a, b) {
+      if (!a || !b) return 0; a = a.toLowerCase().trim(); b = b.toLowerCase().trim();
+      if (a === b) return 1;
+      const l = a.length > b.length ? a : b, s = a.length > b.length ? b : a;
+      if (!l.length) return 1;
+      let m = 0; for (let i = 0; i < s.length; i++) if (l.includes(s[i])) m++;
+      return m / l.length;
+    },
+    // QUIZ
+    initQuiz() {
+      const ws = A.filtered(); if (ws.length < 4) { A.toast('Cần ít nhất 4 từ', 'warning'); this.back(); return; }
+      this._qw = this.shuffle([...ws]).slice(0, 20); this._qi = 0; this.nextQ();
+    },
+    nextQ() {
+      if (this._qi >= this._qw.length) { this.showResult(); return; }
+      const w = this._qw[this._qi], all = A.s.words, opts = [w];
+      while (opts.length < 4) { const r = all[Math.floor(Math.random() * all.length)]; if (!opts.find(o => o.id === r.id)) opts.push(r); }
+      const sh = this.shuffle(opts);
+      document.getElementById('gameContent').innerHTML = `
+        <div class="quiz-q">${w.front}</div><div class="quiz-sub">${w.roman || ''}</div>
+        ${sh.map((o, i) => `<button class="quiz-opt" data-id="${o.id}" onclick="A.game.ansQuiz(${o.id},${w.id},this)">${String.fromCharCode(65 + i)}. ${o.back}</button>`).join('')}`;
+    },
+    ansQuiz(sid, cid, btn) {
+      document.querySelectorAll('.quiz-opt').forEach(o => { o.classList.add('done'); if (+o.dataset.id === cid) o.classList.add('correct'); });
+      if (sid === cid) { btn.classList.add('correct'); this.score += 10; this.streak++; const w = A.s.words.find(x => x.id === cid); if (w) { w.correctCount++; w.learned = true; w.lastReviewed = Date.now(); } }
+      else { btn.classList.add('wrong'); this.streak = 0; const w = A.s.words.find(x => x.id === cid); if (w) w.wrongCount++; }
+      A.save(); this.updScore(); A.recordActivity(); this._qi++; setTimeout(() => this.nextQ(), 1100);
+    },
+    // MATCH
+    initMatch() {
+      const ws = A.filtered(); if (ws.length < 4) { A.toast('Cần ít nhất 4 từ', 'warning'); this.back(); return; }
+      const sel = this.shuffle([...ws]).slice(0, 6); this._mp = sel; this._msel = null; this._mc = 0; this._mt = sel.length;
+      const kr = this.shuffle([...sel]), vi = this.shuffle([...sel]);
+      document.getElementById('gameContent').innerHTML = `<div class="match-grid">
+        <div class="match-col" id="mk">${kr.map(w => `<div class="match-item" data-id="${w.id}" data-col="k" onclick="A.game.matchClk(this)">${w.front}</div>`).join('')}</div>
+        <div class="match-col" id="mv">${vi.map(w => `<div class="match-item" data-id="${w.id}" data-col="v" onclick="A.game.matchClk(this)">${w.back}</div>`).join('')}</div></div>`;
+    },
+    matchClk(el) {
+      if (el.classList.contains('matched')) return;
+      const col = el.dataset.col;
+      if (this._msel && this._msel.dataset.col === col) { document.querySelectorAll('.match-item.sel').forEach(e => e.classList.remove('sel')); this._msel = el; el.classList.add('sel'); return; }
+      el.classList.add('sel');
+      if (!this._msel) { this._msel = el; return; }
+      const f = this._msel, s = el;
+      if (f.dataset.id === s.dataset.id) {
+        f.classList.add('matched'); s.classList.add('matched'); f.classList.remove('sel'); s.classList.remove('sel');
+        this._mc++; this.score += 15; this.streak++; this.updScore(); A.recordActivity();
+        if (this._mc >= this._mt) setTimeout(() => { document.getElementById('gameContent').innerHTML += `<div class="game-result"><div class="r-icon">🎉</div><div class="r-score">${this.score} điểm</div><button class="btn btn-primary" onclick="A.game.initMatch()">Chơi lại</button></div>`; }, 400);
+      } else {
+        f.classList.add('wrong-anim'); s.classList.add('wrong-anim'); this.streak = 0; this.updScore();
+        setTimeout(() => { f.classList.remove('sel', 'wrong-anim'); s.classList.remove('sel', 'wrong-anim'); }, 400);
+      }
+      this._msel = null;
+    },
+    // TYPING
+    initTyping() {
+      const ws = A.filtered(); if (!ws.length) { A.toast('Không có từ', 'warning'); this.back(); return; }
+      this._tw = this.shuffle([...ws]).slice(0, 15); this._ti = 0; this.nextTyping();
+    },
+    nextTyping() {
+      if (this._ti >= this._tw.length) { this.showResult(); return; }
+      const w = this._tw[this._ti];
+      document.getElementById('gameContent').innerHTML = `
+        <div class="quiz-q">${w.back}</div><div class="quiz-sub">${w.roman || ''}</div>
+        <input type="text" class="type-input" id="typeIn" placeholder="Nhập tiếng Hàn..." autocomplete="off">
+        <button class="btn btn-primary" style="width:100%" onclick="A.game.chkType()">Kiểm tra ▶</button><div id="typeRes"></div>`;
+      const inp = document.getElementById('typeIn'); inp.focus();
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') A.game.chkType(); });
+    },
+    chkType() {
+      const inp = document.getElementById('typeIn'), w = this._tw[this._ti], ans = inp.value.trim(), el = document.getElementById('typeRes');
+      if (!ans) return;
+      if (ans === w.front) { el.innerHTML = '<div class="type-result" style="background:var(--success-light);color:#065f46">✅ Chính xác!</div>'; this.score += 20; this.streak++; const o = A.s.words.find(x => x.id === w.id); if (o) { o.correctCount++; o.learned = true; } }
+      else {
+        const s = this.sim(ans, w.front);
+        if (s > .6) { el.innerHTML = `<div class="type-result" style="background:var(--warn-light);color:#92400e">⚠️ Gần đúng! → ${w.front}</div>`; this.score += 5; }
+        else { el.innerHTML = `<div class="type-result" style="background:var(--error-light);color:#991b1b">❌ Sai! → ${w.front}</div>`; this.streak = 0; const o = A.s.words.find(x => x.id === w.id); if (o) o.wrongCount++; }
+      }
+      A.save(); this.updScore(); A.recordActivity(); this._ti++; setTimeout(() => this.nextTyping(), 1400);
+    },
+    // SPEAKING
+    initSpeak() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { document.getElementById('gameContent').innerHTML = '<div class="empty"><div class="e-icon">🎤</div><p>Không hỗ trợ.<br>Dùng Chrome.</p></div>'; return; }
+      const ws = A.filtered(); if (!ws.length) { A.toast('Không có từ', 'warning'); this.back(); return; }
+      this._sw = this.shuffle([...ws]).slice(0, 10); this._si = 0; this.nextSpeak();
+    },
+    nextSpeak() {
+      if (this._si >= this._sw.length) { this.showResult(); return; }
+      const w = this._sw[this._si];
+      document.getElementById('gameContent').innerHTML = `
+        <div class="quiz-q">${w.front}</div><div class="quiz-sub">${w.back} (${w.roman || ''})</div>
+        <div class="text-center"><button class="btn-icon" onclick="A.tts('${w.front}')" style="font-size:1.4rem">🔊 Nghe mẫu</button></div>
+        <div class="text-center"><button class="speak-mic" id="sMic" onclick="A.game.startListen()">🎤</button></div>
+        <div id="speakRes" class="text-center mt-16"></div>`;
+    },
+    startListen() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = new SR();
+      rec.lang = 'ko-KR'; rec.interimResults = false; rec.maxAlternatives = 3;
+      const btn = document.getElementById('sMic'), res = document.getElementById('speakRes');
+      btn.classList.add('rec'); res.innerHTML = '<div style="color:var(--text3)">🎤 Đang nghe...</div>';
+      rec.onresult = e => {
+        const said = e.results[0][0].transcript, conf = Math.round(e.results[0][0].confidence * 100);
+        const w = this._sw[this._si], s = this.sim(said, w.front), sc = Math.round(s * 60 + conf * .4);
+        if (s >= .8) { this.score += Math.round(sc / 5); this.streak++; res.innerHTML = `<div class="card"><div style="color:var(--text3);font-size:.78rem">Bạn nói</div><div style="font-size:1.1rem;margin:6px 0">${said}</div><div style="font-size:2rem;font-weight:700;color:var(--success)">🎯 ${sc}/100</div><div style="color:var(--success)">Tuyệt vời!</div></div>`; }
+        else if (s >= .5) { this.score += Math.round(sc / 10); res.innerHTML = `<div class="card"><div style="color:var(--text3);font-size:.78rem">Bạn nói</div><div style="font-size:1.1rem;margin:6px 0">${said}</div><div style="font-size:2rem;font-weight:700;color:var(--warn)">🎯 ${sc}/100</div><div style="color:var(--warn)">Khá tốt!</div></div>`; }
+        else { this.streak = 0; res.innerHTML = `<div class="card"><div style="color:var(--text3);font-size:.78rem">Bạn nói</div><div style="font-size:1.1rem;margin:6px 0">${said || '?'}</div><div style="font-size:2rem;font-weight:700;color:var(--error)">🎯 ${sc}/100</div><div style="color:var(--error)">Thử lại!</div></div>`; }
+        const o = A.s.words.find(x => x.id === w.id); if (o) { if (s >= .8) o.correctCount++; else o.wrongCount++; }
+        A.save(); this.updScore(); A.recordActivity(); this._si++; setTimeout(() => this.nextSpeak(), 2200);
+      };
+      rec.onerror = e => { res.innerHTML = `<div style="color:var(--error)">⚠️ ${e.error}</div>`; };
+      rec.onend = () => btn.classList.remove('rec');
+      rec.start(); A._sr = rec;
+    },
+    showResult() {
+      document.getElementById('gameContent').innerHTML = `<div class="game-result"><div class="r-icon">🎉</div><div class="r-score">${this.score} điểm</div><p style="color:var(--text2);margin:8px 0">Streak: ${this.streak}</p><button class="btn btn-primary" onclick="A.game.start('${this.type}')">Chơi lại</button></div>`;
+    }
+  },
+
+  // ==================== AI CHAT ====================
+  chat: {
+    hist: [], scene: 'free', loading: false,
+    scenes: [
+      { id: 'free', l: '💬 Free Talk', sys: 'Bạn là giáo viên tiếng Hàn thân thiện. Nói tiếng Hàn đơn giản, giải thích tiếng Việt khi cần. Sửa lỗi nhẹ nhàng.' },
+      { id: 'cafe', l: '☕ Cafe', sys: 'Bạn là nhân viên quán cafe Hàn Quốc. Luyện gọi đồ uống bằng tiếng Hàn.' },
+      { id: 'school', l: '🏫 School', sys: 'Bạn là bạn học Hàn Quốc. Luyện hội thoại trường học, bài tập.' },
+      { id: 'travel', l: '✈️ Travel', sys: 'Bạn là hướng dẫn viên du lịch. Luyện hội thoại du lịch Hàn Quốc.' },
+      { id: 'topik', l: '📝 TOPIK', sys: 'Bạn là giáo viên luyện thi TOPIK. Đưa câu hỏi TOPIK, chấm bài, giải thích.' }
+    ],
+    render() {
+      document.getElementById('chatScenes').innerHTML = this.scenes.map(s =>
+        `<button class="${s.id === this.scene ? 'active' : ''}" onclick="A.chat.setScene('${s.id}')">${s.l}</button>`
+      ).join('');
+    },
+    setScene(id) {
+      this.scene = id; this.hist = []; this.render();
+      document.getElementById('chatMsgs').innerHTML = '';
+      this.hist.push({ role: 'user', parts: [{ text: 'Xin chào! Hãy bắt đầu.' }] });
+      this.sendToAI(true);
+    },
+    async send() {
+      const inp = document.getElementById('chatInput'), t = inp.value.trim();
+      if (!t || this.loading) return; inp.value = '';
+      const el = document.getElementById('chatMsgs');
+      el.innerHTML += `<div class="c-msg user">${this.esc(t)}</div>`;
+      this.hist.push({ role: 'user', parts: [{ text: t }] });
+      this.sendToAI(false);
+    },
+    async sendToAI(greet) {
+      const k = A.s.settings.apiKey;
+      if (!k) { document.getElementById('chatMsgs').innerHTML += `<div class="c-msg ai"><span class="c-err">⚠️ Nhập API Key trong Cài đặt</span></div>`; return; }
+      this.loading = true;
+      const el = document.getElementById('chatMsgs');
+      if (!greet) el.innerHTML += `<div class="c-msg ai" id="aiTmp">🤖 Đang suy nghĩ...</div>`;
+      try {
+        const sc = this.scenes.find(s => s.id === this.scene);
+        const r = await A.gemini(this.hist, k, A.s.settings.chatModel, sc.sys);
+        this.hist.push({ role: 'model', parts: [{ text: r }] });
+        const tmp = document.getElementById('aiTmp');
+        if (tmp) { tmp.innerHTML = this.fmtResp(r); tmp.removeAttribute('id'); }
+      } catch (e) {
+        const tmp = document.getElementById('aiTmp');
+        if (tmp) { tmp.innerHTML = `<span class="c-err">⚠️ ${e.message}</span>`; tmp.removeAttribute('id'); }
+      }
+      this.loading = false;
+      el.scrollTop = el.scrollHeight;
+    },
+    fmtResp(t) {
+      return t.split('\n').map(l => {
+        if (l.match(/^[✔✅✓]/)) return `<div style="color:var(--success)">${this.esc(l)}</div>`;
+        if (l.match(/^[💡]/)) return `<div style="color:var(--warn)">${this.esc(l)}</div>`;
+        return this.esc(l);
+      }).join('<br>');
+    },
+    clear() { this.hist = []; document.getElementById('chatMsgs').innerHTML = ''; A.toast('Đã xóa chat', 'info'); },
+    esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  },
+
+  renderChatModels() {
+    const ms = [
+      { id: 'gemini-2.5-flash', l: '2.5 Flash' },
+      { id: 'gemini-2.0-flash', l: '2.0 Flash' },
+      { id: 'gemini-2.5-flash-lite', l: '2.5 Lite' }
+    ];
+    document.getElementById('chatModels').innerHTML = ms.map(m =>
+      `<button class="${m.id === this.s.settings.chatModel ? 'active' : ''}" onclick="A.s.settings.chatModel='${m.id}';A.settings.save();A.renderChatModels()">${m.l}</button>`
+    ).join('');
+  },
+
+  renderChatScenes() { this.chat.render(); },
+
+  // ==================== GEMINI API ====================
+  async gemini(contents, key, model, sys) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    const body = {
+      contents: contents.map(c => ({ role: c.role === 'model' ? 'model' : 'user', parts: c.parts })),
+      generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
+    };
+    if (sys) body.systemInstruction = { parts: [{ text: sys }] };
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e?.error?.message || `API ${r.status}`); }
+    const d = await r.json();
+    return d.candidates?.[0]?.content?.parts?.[0]?.text || '(Không có phản hồi)';
+  },
+
+  // ==================== VOICE CALL ====================
+  voice: {
+    ws: null, actx: null, stream: null, worklet: null,
+    state: 'off', playCtx: null, queue: [], playing: false,
+    muted: false, speakerOn: true, timer: null, secs: 0,
+
+    async startCall() {
+      const k = A.s.settings.apiKey;
+      if (!k) { A.toast('Nhập API Key trong Cài đặt', 'warning'); return; }
+      if (this.state !== 'off') return;
+      this.state = 'connecting'; this.showOverlay();
+      this.setStatus('connecting', 'Đang kết nối...');
+      this.secs = 0; this.updateTimer();
+      document.getElementById('vcTranscript').innerHTML = '';
+      this.addTC('sys', 'Đang kết nối AI...');
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+        this.actx = new AudioContext({ sampleRate: 16000 });
+
+        // Load PCM worklet dynamically
+        const blob = new Blob([
+          `class P extends AudioWorkletProcessor{constructor(){super();this._b=[];this._r=sampleRate/16000;this._a=0;this._n=0}process(i){const x=i[0]?.[0];if(!x)return true;for(let j=0;j<x.length;j++){this._a+=x[j];this._n++;if(this._n>=this._r){let s=this._a/this._n;s=Math.max(-1,Math.min(1,s));this._b.push(s<0?s*0x8000:s*0x7FFF);this._a=0;this._n=0}}while(this._b.length>=512){const c=new Int16Array(this._b.splice(0,512));this.port.postMessage(c.buffer,[c.buffer])}return true}}registerProcessor('pcm-processor',P);`
+        ], { type: 'application/javascript' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'korean-vocab-' + new Date().toISOString().slice(0, 10) + '.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        await this.actx.audioWorklet.addModule(url);
         URL.revokeObjectURL(url);
-        showToast('Đã xuất dữ liệu JSON', 'success');
-    } catch (e) {
-        console.error('Lỗi xuất dữ liệu:', e);
-        showToast('Lỗi khi xuất dữ liệu', 'error');
-    }
-}
 
-function triggerImport() {
-    const fileInput = document.getElementById('import-file');
-    if (fileInput) fileInput.click();
-}
-
-function handleImportFile(event) {
-    const file = event.target && event.target.files && event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const parsed = JSON.parse(e.target.result);
-            if (!Array.isArray(parsed)) {
-                throw new Error('File JSON phải chứa một mảng các từ vựng');
-            }
-            const validCards = parsed.filter(isValidCard).map(normalizeCard);
-            if (validCards.length === 0) {
-                throw new Error('Không tìm thấy từ vựng hợp lệ nào trong file');
-            }
-
-            const merge = window.confirm(
-                'Tìm thấy ' + validCards.length + ' từ hợp lệ.\n\nOK = Gộp vào bộ từ hiện tại\nCancel = Thay thế toàn bộ bộ từ hiện tại'
-            );
-
-            masterDeck = merge ? [...masterDeck, ...validCards] : validCards;
-            currentIndex = 0;
-            saveData();
-            updateCard();
-            showToast('Đã nhập ' + validCards.length + ' từ vựng', 'success');
-        } catch (err) {
-            console.error('Lỗi nhập file:', err);
-            showToast('File JSON không hợp lệ: ' + err.message, 'error');
-        } finally {
-            // Reset input để có thể chọn lại cùng 1 file lần nữa nếu cần
-            event.target.value = '';
-        }
-    };
-    reader.onerror = () => {
-        showToast('Không thể đọc file', 'error');
-        event.target.value = '';
-    };
-    reader.readAsText(file);
-}
-
-function openExportImportMenu() {
-    const choice = window.confirm('OK = Xuất dữ liệu ra file JSON\nCancel = Nhập dữ liệu từ file JSON');
-    if (choice) {
-        exportData();
-    } else {
-        triggerImport();
-    }
-}
-
-/* ==========================================================================
-   9. DICTIONARY (Tra từ bằng Gemini AI)
-   ========================================================================== */
-async function performDictSearch() {
-    if (isDictSearching) return; // Chống bấm đúp
-
-    const input = document.getElementById('dict-input');
-    const query = ((input && input.value) || '').trim();
-    if (!query) {
-        showToast('Vui lòng nhập từ cần tra', 'error');
-        return;
-    }
-
-    const resultBox = document.getElementById('dict-result');
-    const searchBtn = document.getElementById('btn-dict-search');
-
-    isDictSearching = true;
-    if (searchBtn) searchBtn.disabled = true;
-    setElementText('res-kr', 'Đang tra cứu...');
-    setElementText('res-vi', '...');
-    if (resultBox) resultBox.style.display = 'block';
-
-    const prompt = 'Bạn là từ điển Hàn-Việt. Người dùng nhập: "' + query + '" (có thể là tiếng Hàn hoặc tiếng Việt).\n' +
-        'Hãy trả lời DUY NHẤT một đối tượng JSON hợp lệ, không thêm markdown, không thêm giải thích, theo đúng cấu trúc:\n' +
-        '{"korean": "<từ tiếng Hàn>", "vietnamese": "<nghĩa tiếng Việt>", "roman": "<phiên âm La-tinh>", "category": "<chủ đề ngắn gọn, ví dụ: Giao tiếp/Du lịch/Ẩm thực/TOPIK 1>"}\n' +
-        'Nếu không chắc chắn hoặc từ không có nghĩa rõ ràng, vẫn cố gắng đưa ra phỏng đoán hợp lý nhất.';
-
-    try {
-        const raw = await callGeminiAPI(prompt);
-        const parsed = parseJSONFromAI(raw);
-
-        if (!parsed || !parsed.korean || !parsed.vietnamese) {
-            throw new Error('AI không trả về kết quả tra từ hợp lệ');
-        }
-
-        lastDictResult = normalizeCard({
-            front: parsed.korean,
-            back: parsed.vietnamese,
-            roman: parsed.roman || '',
-            category: parsed.category || 'Chung'
-        });
-
-        setElementText('res-kr', lastDictResult.front);
-        setElementText('res-vi', lastDictResult.back + (lastDictResult.roman ? ' (' + lastDictResult.roman + ')' : ''));
-    } catch (err) {
-        console.error('Lỗi tra từ:', err);
-        setElementText('res-kr', 'Lỗi tra cứu');
-        setElementText('res-vi', err.message || 'Vui lòng thử lại');
-        lastDictResult = null;
-        showToast(err.message || 'Lỗi tra từ', 'error');
-    } finally {
-        isDictSearching = false;
-        if (searchBtn) searchBtn.disabled = false;
-    }
-}
-
-function speakDictResult() {
-    if (!lastDictResult) return;
-    speak(lastDictResult.front, 'ko-KR');
-}
-
-function saveDictResultToDeck() {
-    if (!lastDictResult) {
-        showToast('Chưa có kết quả tra từ để lưu', 'error');
-        return;
-    }
-    // Tránh lưu trùng nếu từ đã tồn tại sẵn trong bộ từ vựng
-    const exists = masterDeck.some(c => c.front === lastDictResult.front && c.back === lastDictResult.back);
-    if (exists) {
-        showToast('Từ này đã có trong bộ từ vựng', 'error');
-        return;
-    }
-    masterDeck.push(Object.assign({}, lastDictResult, { fav: false, hard: false }));
-    saveData();
-    showToast('Đã lưu vào bộ từ vựng!', 'success');
-}
-
-/* ==========================================================================
-   10. MINI GAME SYSTEM — điều phối chung
-   ========================================================================== */
-const SUBGAME_KEYS = ['quiz', 'match', 'typing', 'speaking'];
-
-function switchSubGame(sub) {
-    if (SUBGAME_KEYS.indexOf(sub) === -1) return;
-
-    // Dừng TUYỆT ĐỐI mọi thứ của sub-game trước khi chuyển: hủy timer đang chờ,
-    // dừng phát âm đang đọc, dừng ghi âm đang chạy, và reset mọi cờ "đang xử lý".
-    // Đây là điểm mấu chốt chống "treo khi đổi sub-game qua lại liên tục".
-    clearGameTimers();
-    stopAllSpeech();
-    stopSpeakingRecognition();
-    resetProcessingFlags();
-
-    activeSubGame = sub;
-
-    SUBGAME_KEYS.forEach(g => {
-        const el = document.getElementById('game-' + g);
-        if (el) el.style.display = (g === sub) ? 'block' : 'none';
-
-        const btn = document.getElementById('sg-' + g);
-        if (btn) btn.className = (g === sub) ? 'active-subgame' : '';
-    });
-
-    if (sub === 'quiz') startQuizGame();
-    else if (sub === 'match') startMatchGame();
-    else if (sub === 'typing') startTypingGame();
-    else if (sub === 'speaking') startSpeakingGame();
-}
-
-/* --------------------------------------------------------------------------
-   10.1 Mini Game 1: Trắc nghiệm (Quiz)
-   -------------------------------------------------------------------------- */
-function startQuizGame() {
-    isProcessingQuiz = false;
-    setElementText('quiz-fb', '');
-
-    if (!Array.isArray(masterDeck) || masterDeck.length === 0) {
-        setElementText('quiz-kr', 'Chưa có từ vựng');
-        setElementText('quiz-rm', 'Hãy thêm từ mới để chơi');
-        setElementHTML('quiz-opts', '');
-        return;
-    }
-
-    if (masterDeck.length < 2) {
-        setElementText('quiz-kr', masterDeck[0].front);
-        setElementText('quiz-rm', masterDeck[0].roman || '');
-        setElementHTML('quiz-opts', '<p style="grid-column:span 2; text-align:center; color:var(--text-muted); font-size:13px;">Cần ít nhất 2 từ vựng để tạo câu hỏi trắc nghiệm.</p>');
-        return;
-    }
-
-    currentQuiz = masterDeck[Math.floor(Math.random() * masterDeck.length)];
-    setElementText('quiz-kr', currentQuiz.front);
-    setElementText('quiz-rm', currentQuiz.roman || '');
-
-    const opts = [currentQuiz.back];
-    let attempts = 0;
-    const maxOpts = Math.min(4, masterDeck.length);
-    while (opts.length < maxOpts && attempts < 100) {
-        attempts++;
-        const randomWord = masterDeck[Math.floor(Math.random() * masterDeck.length)].back;
-        if (opts.indexOf(randomWord) === -1) {
-            opts.push(randomWord);
-        }
-    }
-    opts.sort(() => Math.random() - 0.5);
-
-    const container = document.getElementById('quiz-opts');
-    if (!container) return;
-    container.innerHTML = '';
-
-    const localQuiz = currentQuiz; // Chốt tham chiếu để callback đóng đúng câu hỏi tại thời điểm tạo, tránh lệch khi currentQuiz đổi
-
-    opts.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = 'quiz-opt-btn';
-        btn.innerText = opt;
-        btn.onclick = () => {
-            // Chống bấm đúp / chống bấm vào câu hỏi đã bị thay bởi timer khác
-            if (isProcessingQuiz || currentQuiz !== localQuiz) return;
-            isProcessingQuiz = true;
-
-            container.querySelectorAll('.quiz-opt-btn').forEach(b => b.disabled = true);
-
-            if (opt === localQuiz.back) {
-                btn.classList.add('correct');
-                quizScore += 10;
-                quizStreak++;
-                setElementHTML('quiz-fb', '<span style="color:var(--success-color, green);">Chính xác! 🎉</span>');
-            } else {
-                btn.classList.add('wrong');
-                quizStreak = 0;
-                setElementHTML('quiz-fb', '<span style="color:var(--danger-color, red);">Sai! Đáp án đúng: ' + localQuiz.back + '</span>');
-                // Đánh dấu luôn đáp án đúng để người học thấy ngay
-                container.querySelectorAll('.quiz-opt-btn').forEach(b => {
-                    if (b.innerText === localQuiz.back) b.classList.add('correct');
-                });
-            }
-
-            setElementText('quiz-score', quizScore);
-            setElementText('quiz-streak', quizStreak);
-            setGameTimeout(() => {
-                if (activeMode === 'game' && activeSubGame === 'quiz') startQuizGame();
-            }, 1200);
+        const src = this.actx.createMediaStreamSource(this.stream);
+        this.worklet = new AudioWorkletNode(this.actx, 'pcm-processor');
+        this.worklet.port.onmessage = e => {
+          if (this.ws && this.ws.readyState === 1 && !this.muted) {
+            this.ws.send(JSON.stringify({ realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=16000', data: this.b64(e.data) }] } }));
+          }
         };
-        container.appendChild(btn);
-    });
-}
-
-/* --------------------------------------------------------------------------
-   10.2 Mini Game 2: Nối từ — cross-match 2 cột (đúng cấu trúc HTML thật:
-   #col-kr-list bên trái / #col-vi-list bên phải, chọn 1 bên Hàn + 1 bên Việt)
-   -------------------------------------------------------------------------- */
-function startMatchGame() {
-    isProcessingMatch = false;
-    matchSelectedKr = null;
-    matchSelectedVi = null;
-    setElementText('match-fb', '');
-
-    const colKr = document.getElementById('col-kr-list');
-    const colVi = document.getElementById('col-vi-list');
-    if (!colKr || !colVi) return;
-    colKr.innerHTML = '';
-    colVi.innerHTML = '';
-
-    if (!Array.isArray(masterDeck) || masterDeck.length < 2) {
-        colKr.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:13px;">Cần ít nhất 2 từ vựng.</p>';
-        matchRemaining = 0;
-        return;
-    }
-
-    const poolSize = Math.min(4, masterDeck.length);
-    const pool = [...masterDeck].sort(() => Math.random() - 0.5).slice(0, poolSize);
-    matchPairs = pool.map((item, idx) => ({ id: idx, kr: item.front, vi: item.back }));
-    matchRemaining = matchPairs.length;
-
-    const krShuffled = [...matchPairs].sort(() => Math.random() - 0.5);
-    const viShuffled = [...matchPairs].sort(() => Math.random() - 0.5);
-
-    krShuffled.forEach(pair => {
-        const div = document.createElement('div');
-        div.className = 'cross-card';
-        div.innerText = pair.kr;
-        div.dataset.pairId = String(pair.id);
-        div.onclick = () => handleMatchSelectKr(div, pair);
-        colKr.appendChild(div);
-    });
-
-    viShuffled.forEach(pair => {
-        const div = document.createElement('div');
-        div.className = 'cross-card';
-        div.innerText = pair.vi;
-        div.dataset.pairId = String(pair.id);
-        div.onclick = () => handleMatchSelectVi(div, pair);
-        colVi.appendChild(div);
-    });
-}
-
-function handleMatchSelectKr(element, pair) {
-    if (isProcessingMatch) return; // Chống bấm trong lúc đang xử lý cặp trước
-    if (element.classList.contains('matched-correct')) return;
-
-    if (matchSelectedKr) matchSelectedKr.classList.remove('selected');
-    matchSelectedKr = element;
-    element.classList.add('selected');
-
-    tryResolveMatchPair();
-}
-
-function handleMatchSelectVi(element, pair) {
-    if (isProcessingMatch) return;
-    if (element.classList.contains('matched-correct')) return;
-
-    if (matchSelectedVi) matchSelectedVi.classList.remove('selected');
-    matchSelectedVi = element;
-    element.classList.add('selected');
-
-    tryResolveMatchPair();
-}
-
-function tryResolveMatchPair() {
-    if (!matchSelectedKr || !matchSelectedVi) return; // Chưa đủ 1 cặp (1 bên Hàn + 1 bên Việt)
-
-    isProcessingMatch = true;
-
-    const krId = matchSelectedKr.dataset.pairId;
-    const viId = matchSelectedVi.dataset.pairId;
-    const elKr = matchSelectedKr;
-    const elVi = matchSelectedVi;
-
-    if (krId === viId) {
-        elKr.classList.remove('selected');
-        elVi.classList.remove('selected');
-        elKr.classList.add('matched-correct');
-        elVi.classList.add('matched-correct');
-        matchRemaining--;
-        setElementHTML('match-fb', '<span style="color:var(--success-color, green);">Chính xác!</span>');
-
-        matchSelectedKr = null;
-        matchSelectedVi = null;
-        isProcessingMatch = false;
-
-        if (matchRemaining <= 0) {
-            setElementHTML('match-fb', '<span style="color:var(--success-color, green);">Hoàn thành! Đang tạo lượt mới...</span>');
-            setGameTimeout(() => {
-                if (activeMode === 'game' && activeSubGame === 'match') startMatchGame();
-            }, 1000);
-        }
-    } else {
-        elKr.classList.add('matched-wrong');
-        elVi.classList.add('matched-wrong');
-        setElementHTML('match-fb', '<span style="color:var(--danger-color, red);">Chưa đúng, thử lại!</span>');
-
-        setGameTimeout(() => {
-            elKr.classList.remove('selected', 'matched-wrong');
-            elVi.classList.remove('selected', 'matched-wrong');
-            matchSelectedKr = null;
-            matchSelectedVi = null;
-            isProcessingMatch = false;
-            setElementText('match-fb', '');
-        }, 700);
-    }
-}
-
-/* --------------------------------------------------------------------------
-   10.3 Mini Game 3: Gõ phím (Typing)
-   -------------------------------------------------------------------------- */
-function startTypingGame() {
-    isProcessingTyping = false;
-    setElementText('typing-fb', '');
-    const input = document.getElementById('typing-input');
-    if (input) input.value = '';
-
-    if (!Array.isArray(masterDeck) || masterDeck.length === 0) {
-        setElementText('typing-vi', 'Chưa có từ vựng');
-        currentTypingWord = null;
-        return;
-    }
-
-    currentTypingWord = masterDeck[Math.floor(Math.random() * masterDeck.length)];
-    setElementText('typing-vi', currentTypingWord.back);
-}
-
-function checkTypingAnswer() {
-    if (isProcessingTyping) return; // Chống bấm đúp / double-submit
-    if (!currentTypingWord) return;
-
-    const input = document.getElementById('typing-input');
-    if (!input) return;
-
-    const userAns = input.value.trim().toLowerCase();
-    if (!userAns) return;
-
-    const correctAns = currentTypingWord.front.trim().toLowerCase();
-
-    if (userAns === correctAns) {
-        isProcessingTyping = true;
-        typingScore += 10;
-        setElementText('typing-score', typingScore);
-        setElementHTML('typing-fb', '<span style="color:var(--success-color, green);">Đúng rồi! 🎉</span>');
-        setGameTimeout(() => {
-            if (activeMode === 'game' && activeSubGame === 'typing') startTypingGame();
-        }, 1000);
-    } else {
-        setElementHTML('typing-fb', '<span style="color:var(--danger-color, red);">Chưa đúng, thử lại nhé!</span>');
-    }
-}
-
-function playTypingListen() {
-    if (!currentTypingWord) return;
-    speak(currentTypingWord.front, 'ko-KR');
-}
-
-/* --------------------------------------------------------------------------
-   10.4 Mini Game 4: Luyện nói (SpeechRecognition + Gemini chấm điểm %)
-   -------------------------------------------------------------------------- */
-function isSpeechRecognitionSupported() {
-    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-}
-
-function startSpeakingGame() {
-    setElementText('speak-fb', '');
-    setElementText('mic-status', 'Nhấn micro và đọc');
-
-    const evalBox = document.getElementById('eval-box');
-    if (evalBox) evalBox.style.display = 'none';
-
-    const micBtn = document.getElementById('btn-mic');
-    if (micBtn) micBtn.classList.remove('recording');
-
-    if (!Array.isArray(masterDeck) || masterDeck.length === 0) {
-        setElementText('speak-target', 'Chưa có từ vựng');
-        setElementText('speak-vi', 'Hãy thêm từ mới để luyện');
-        currentSpeakingWord = null;
-        return;
-    }
-
-    currentSpeakingWord = masterDeck[Math.floor(Math.random() * masterDeck.length)];
-    setElementText('speak-target', currentSpeakingWord.front);
-    setElementText('speak-vi', currentSpeakingWord.back);
-
-    if (!isSpeechRecognitionSupported()) {
-        setElementText('mic-status', 'Trình duyệt không hỗ trợ nhận diện giọng nói');
-        if (micBtn) micBtn.disabled = true;
-    } else if (micBtn) {
-        micBtn.disabled = false;
-    }
-}
-
-function playSpeakSample() {
-    if (!currentSpeakingWord) return;
-    speak(currentSpeakingWord.front, 'ko-KR');
-}
-
-/** Dừng tuyệt đối phiên ghi âm Luyện Nói đang chạy (nếu có), reset UI mic. */
-function stopSpeakingRecognition() {
-    if (speechRecognizer && isRecording) {
-        try { speechRecognizer.stop(); } catch (e) { /* đã dừng sẵn, bỏ qua */ }
-    }
-    isRecording = false;
-    isEvaluatingSpeech = false;
-    const micBtn = document.getElementById('btn-mic');
-    if (micBtn) micBtn.classList.remove('recording');
-}
-
-function toggleMicRecording() {
-    if (!isSpeechRecognitionSupported()) {
-        setElementText('mic-status', 'Trình duyệt không hỗ trợ nhận diện giọng nói. Hãy thử Chrome/Edge.');
-        return;
-    }
-    if (isEvaluatingSpeech) return; // Đang chờ AI chấm điểm, chặn bấm mic tiếp
-    if (!currentSpeakingWord) return;
-
-    if (isRecording) {
-        stopSpeakingRecognition();
-        return;
-    }
-
-    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    speechRecognizer = new SpeechRecognitionCtor();
-    speechRecognizer.lang = 'ko-KR';
-    speechRecognizer.interimResults = false;
-    speechRecognizer.maxAlternatives = 1;
-
-    const micBtn = document.getElementById('btn-mic');
-    const targetWordAtStart = currentSpeakingWord; // Chốt từ mục tiêu tại thời điểm bắt đầu ghi âm
-
-    speechRecognizer.onstart = () => {
-        isRecording = true;
-        if (micBtn) micBtn.classList.add('recording');
-        setElementText('mic-status', 'Đang nghe... hãy đọc từ trên');
-    };
-
-    speechRecognizer.onresult = (event) => {
-        const transcript = (event.results && event.results[0] && event.results[0][0] && event.results[0][0].transcript) || '';
-        evaluatePronunciation(transcript, targetWordAtStart);
-    };
-
-    speechRecognizer.onerror = (event) => {
-        isRecording = false;
-        if (micBtn) micBtn.classList.remove('recording');
-        const reason = event.error === 'no-speech' ? 'Không nghe thấy giọng nói, thử lại nhé'
-            : event.error === 'not-allowed' ? 'Vui lòng cho phép quyền truy cập micro'
-            : 'Lỗi ghi âm: ' + event.error;
-        setElementText('mic-status', reason);
-    };
-
-    speechRecognizer.onend = () => {
-        isRecording = false;
-        if (micBtn) micBtn.classList.remove('recording');
-    };
-
-    try {
-        speechRecognizer.start();
-    } catch (e) {
-        console.error('Không thể bắt đầu ghi âm:', e);
-        setElementText('mic-status', 'Không thể bắt đầu ghi âm, thử lại');
-        isRecording = false;
-    }
-}
-
-/** Gửi transcript nhận diện được sang Gemini để so sánh với từ mẫu và chấm % chính xác. */
-async function evaluatePronunciation(transcript, targetWord) {
-    if (!targetWord) return;
-
-    isEvaluatingSpeech = true;
-    setElementText('mic-status', 'Đang chấm điểm phát âm bằng AI...');
-
-    const evalBox = document.getElementById('eval-box');
-    if (evalBox) evalBox.style.display = 'block';
-    setElementText('eval-score', '...');
-    setElementText('eval-rating', 'Đang phân tích...');
-    setElementText('eval-transcript', 'Giọng nói nhận diện: "' + (transcript || '(không rõ)') + '"');
-
-    const prompt = 'Bạn là giáo viên chấm phát âm tiếng Hàn. Từ mẫu cần đọc là: "' + targetWord.front + '" (phiên âm: ' + (targetWord.roman || 'không có') + ', nghĩa: ' + targetWord.back + ').\n' +
-        'Hệ thống nhận diện giọng nói (speech-to-text) đã ghi lại người học nói là: "' + (transcript || '(không nhận diện được gì)') + '"\n\n' +
-        'So sánh mức độ giống nhau về ÂM THANH (không chỉ chữ viết, vì speech-to-text tiếng Hàn có thể sai chính tả nhưng gần đúng về âm) giữa từ nhận diện được và từ mẫu. Chấm điểm phần trăm độ chính xác phát âm (0-100).\n\n' +
-        'Trả lời DUY NHẤT một đối tượng JSON hợp lệ, không markdown, không giải thích thêm, theo đúng cấu trúc:\n' +
-        '{"score": <số nguyên 0-100>, "rating": "<1 trong: Xuất sắc/Tốt/Khá/Cần luyện thêm>", "feedback": "<nhận xét ngắn gọn 1 câu bằng tiếng Việt>"}';
-
-    try {
-        const raw = await callGeminiAPI(prompt);
-        const parsed = parseJSONFromAI(raw);
-
-        if (!parsed || typeof parsed.score !== 'number') {
-            throw new Error('AI không trả về kết quả chấm điểm hợp lệ');
-        }
-
-        const score = Math.max(0, Math.min(100, Math.round(parsed.score)));
-        setElementText('eval-score', score + '%');
-        setElementText('eval-rating', parsed.rating || '---');
-        setElementText('eval-transcript', 'Giọng nói nhận diện: "' + (transcript || '(không rõ)') + '"' + (parsed.feedback ? ' — ' + parsed.feedback : ''));
-        setElementText('mic-status', 'Nhấn micro để thử lại');
-    } catch (err) {
-        console.error('Lỗi chấm điểm phát âm:', err);
-        setElementText('eval-score', '---');
-        setElementText('eval-rating', 'Lỗi chấm điểm');
-        setElementText('eval-transcript', err.message || 'Vui lòng thử lại');
-        setElementText('mic-status', 'Nhấn micro để thử lại');
-        showToast(err.message || 'Lỗi chấm điểm phát âm', 'error');
-    } finally {
-        isEvaluatingSpeech = false;
-    }
-}
-
-/* ==========================================================================
-   14. GEMINI AI CORE — gọi API dùng chung cho Tra từ / AI Chat / Chấm phát âm
-   ========================================================================== */
-async function callGeminiAPI(promptText) {
-    let apiKey = '';
-    try {
-        apiKey = localStorage.getItem('gemini_api_key') || '';
-    } catch (e) { /* localStorage không khả dụng */ }
-
-    if (!apiKey) {
-        throw new Error('Chưa nhập API Key! Vui lòng dán Gemini API Key ở mục AI Chat và bấm Lưu.');
-    }
-
-    // Tên model Gemini dùng chung cho toàn bộ app (Tra từ / AI Chat / Chấm phát âm).
-    // Google định kỳ ngừng hỗ trợ các model cũ (ví dụ gemini-1.5-flash đã bị shutdown
-    // hoàn toàn) — nếu gặp lỗi "is not found for API version..." trong tương lai,
-    // chỉ cần cập nhật đúng 1 hằng số này theo danh sách model Stable mới nhất tại
-    // https://ai.google.dev/gemini-api/docs/models
-    const GEMINI_MODEL = 'gemini-3.5-flash';
-
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent?key=' + encodeURIComponent(apiKey);
-    const requestBody = {
-        contents: [{ parts: [{ text: promptText }] }]
-    };
-
-    let response;
-    try {
-        response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
-    } catch (networkErr) {
-        // Lỗi mạng (mất kết nối, CORS, v.v.) — fetch ném lỗi trước khi có response
-        console.error('Lỗi mạng khi gọi Gemini API:', networkErr);
-        throw new Error('Không thể kết nối đến Gemini AI. Kiểm tra kết nối mạng.');
-    }
-
-    if (!response.ok) {
-        let errMessage = 'Lỗi kết nối HTTP: ' + response.status;
-        try {
-            const errData = await response.json();
-            if (errData && errData.error && errData.error.message) errMessage = errData.error.message;
-        } catch (e) {
-            // Body lỗi không phải JSON hợp lệ — giữ nguyên message mặc định theo status code
-        }
-        if (response.status === 400) errMessage = 'API Key không hợp lệ hoặc yêu cầu sai định dạng.';
-        if (response.status === 403) errMessage = 'API Key bị từ chối truy cập (kiểm tra lại quyền hạn key).';
-        if (response.status === 429) errMessage = 'Đã vượt giới hạn số lượt gọi API, vui lòng thử lại sau.';
-        throw new Error(errMessage);
-    }
-
-    let data;
-    try {
-        data = await response.json();
-    } catch (e) {
-        throw new Error('Phản hồi từ AI không phải JSON hợp lệ.');
-    }
-
-    // Bóc tách an toàn: candidates[0].content.parts[].text — kiểm tra từng cấp
-    // để không bao giờ ném TypeError "Cannot read property of undefined".
-    //
-    // Model dòng Gemini 3.x (gemini-3.5-flash trở lên) mặc định bật "thinking":
-    // parts[] có thể chứa NHIỀU phần tử, trong đó phần tử đầu (hoặc vài phần tử
-    // đầu) là suy luận nội bộ đánh dấu part.thought === true, và phần trả lời
-    // thật nằm ở phần tử SAU đó — không nhất thiết là parts[0]. Vì vậy phải
-    // duyệt toàn bộ mảng parts[], bỏ qua mọi phần có thought === true, và ghép
-    // các đoạn text còn lại — thay vì chỉ đọc mỗi parts[0].text như model đời
-    // cũ (1.x/2.x không có thinking, luôn chỉ có đúng 1 phần tử ở parts[0]).
-    const parts = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
-        data.candidates[0].content.parts;
-
-    let text = '';
-    if (Array.isArray(parts)) {
-        text = parts
-            .filter(p => p && p.thought !== true && typeof p.text === 'string')
-            .map(p => p.text)
-            .join('');
-    }
-
-    if (typeof text === 'string' && text.length > 0) {
-        return text;
-    }
-
-    // Gemini có thể chặn nội dung vì lý do an toàn — báo rõ nguyên nhân thay vì lỗi chung chung
-    const finishReason = data && data.candidates && data.candidates[0] && data.candidates[0].finishReason;
-    if (finishReason === 'SAFETY') {
-        throw new Error('Nội dung bị chặn bởi bộ lọc an toàn của Gemini AI.');
-    }
-    if (data && data.promptFeedback && data.promptFeedback.blockReason) {
-        throw new Error('Yêu cầu bị chặn: ' + data.promptFeedback.blockReason);
-    }
-
-    throw new Error('Phản hồi từ AI bị rỗng hoặc không đúng định dạng chuẩn.');
-}
-
-/**
- * Gemini đôi khi bọc JSON trong ```json ... ``` dù đã được yêu cầu không làm vậy.
- * Hàm này bóc tách an toàn để không bao giờ ném lỗi làm treo luồng gọi AI.
- */
-function parseJSONFromAI(rawText) {
-    if (!rawText || typeof rawText !== 'string') return null;
-
-    let cleaned = rawText.trim();
-    // Gỡ markdown code fence nếu có: ```json ... ``` hoặc ``` ... ```
-    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
-
-    // Nếu vẫn còn text thừa trước/sau, cố lấy đúng khối {...} đầu tiên
-    const firstBrace = cleaned.indexOf('{');
-    const lastBrace = cleaned.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        cleaned = cleaned.slice(firstBrace, lastBrace + 1);
-    }
-
-    try {
-        return JSON.parse(cleaned);
-    } catch (e) {
-        console.error('Không thể parse JSON từ phản hồi AI:', e, rawText);
-        return null;
-    }
-}
-
-/* ==========================================================================
-   15. AI CHAT (hội thoại luyện tiếng Hàn theo kịch bản)
-   ========================================================================== */
-const SCENARIO_PROMPTS = {
-    free: 'Hãy trò chuyện tự do bằng tiếng Hàn đơn giản, phù hợp người mới học.',
-    food: 'Bạn đang đóng vai nhân viên phục vụ nhà hàng Hàn Quốc, giúp người học luyện hội thoại gọi món ăn.',
-    taxi: 'Bạn đang đóng vai tài xế taxi ở Hàn Quốc, giúp người học luyện hội thoại đi taxi (địa điểm, giá cước, chỉ đường).',
-    hotel: 'Bạn đang đóng vai lễ tân khách sạn ở Hàn Quốc, giúp người học luyện hội thoại nhận phòng, hỏi dịch vụ khách sạn.'
-};
-
-function saveGeminiApiKey() {
-    const input = document.getElementById('gemini-api-key');
-    const key = ((input && input.value) || '').trim();
-    if (!key) {
-        showToast('Vui lòng nhập API Key trước khi lưu', 'error');
-        return;
-    }
-    try {
-        localStorage.setItem('gemini_api_key', key);
-        showToast('Đã lưu API Key!', 'success');
-    } catch (e) {
-        showToast('Không thể lưu API Key (localStorage lỗi)', 'error');
-    }
-}
-
-function loadGeminiApiKey() {
-    const input = document.getElementById('gemini-api-key');
-    if (!input) return;
-    try {
-        const saved = localStorage.getItem('gemini_api_key');
-        if (saved) input.value = saved;
-    } catch (e) { /* bỏ qua nếu không đọc được */ }
-}
-
-function switchScenario(scen) {
-    if (!SCENARIO_PROMPTS[scen]) return;
-    activeScenario = scen;
-    document.querySelectorAll('.scen-chip[data-scen]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.scen === scen);
-    });
-    setElementHTML('chat-box', '');
-    setElementHTML('chat-sug', '');
-    const chipEl = document.querySelector('.scen-chip[data-scen="' + scen + '"]');
-    const label = chipEl ? chipEl.innerText.trim() : scen;
-    appendChatMessage('system', '— Bắt đầu chủ đề: ' + label + ' —');
-}
-
-function appendChatMessage(role, text) {
-    const box = document.getElementById('chat-box');
-    if (!box) return;
-    const div = document.createElement('div');
-    div.className = 'chat-msg ' + role;
-    div.innerText = text;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-    return div;
-}
-
-async function sendChatMessage() {
-    if (isSendingChatMessage) return; // Chống double-send
-
-    const input = document.getElementById('chat-input');
-    const message = ((input && input.value) || '').trim();
-    if (!message) return;
-
-    isSendingChatMessage = true;
-    const sendBtn = document.getElementById('btn-chat-send');
-    if (sendBtn) sendBtn.disabled = true;
-
-    appendChatMessage('user', message);
-    if (input) input.value = '';
-
-    const thinkingEl = appendChatMessage('system', 'AI đang trả lời...');
-
-    const scenarioContext = SCENARIO_PROMPTS[activeScenario] || SCENARIO_PROMPTS.free;
-    const prompt = scenarioContext + '\n' +
-        'Người học (trình độ sơ cấp) vừa nói: "' + message + '"\n\n' +
-        'Hãy trả lời NGẮN GỌN bằng tiếng Hàn đơn giản (1-2 câu), phù hợp bối cảnh trên. Nếu câu người học nói có lỗi ngữ pháp/chính tả rõ ràng, hãy nhẹ nhàng sửa lại ở cuối câu trả lời.\n\n' +
-        'Trả lời DUY NHẤT một đối tượng JSON hợp lệ, không markdown, theo đúng cấu trúc:\n' +
-        '{"korean": "<câu trả lời tiếng Hàn>", "vietnamese": "<dịch nghĩa tiếng Việt>", "correction": "<sửa lỗi cho người học nếu có, để trống nếu không có lỗi>"}';
-
-    try {
-        const raw = await callGeminiAPI(prompt);
-        const parsed = parseJSONFromAI(raw);
-
-        if (thinkingEl) thinkingEl.remove();
-
-        if (!parsed || !parsed.korean) {
-            throw new Error('AI không trả về phản hồi hợp lệ');
-        }
-
-        const box = document.getElementById('chat-box');
-        if (box) {
-            const div = document.createElement('div');
-            div.className = 'chat-msg ai';
-
-            const krLine = document.createElement('div');
-            krLine.className = 'msg-kr';
-            krLine.innerText = parsed.korean;
-            div.appendChild(krLine);
-
-            if (parsed.vietnamese) {
-                const viLine = document.createElement('div');
-                viLine.className = 'msg-vi';
-                viLine.innerText = parsed.vietnamese;
-                div.appendChild(viLine);
-            }
-
-            if (parsed.correction && parsed.correction.trim()) {
-                const corLine = document.createElement('div');
-                corLine.className = 'msg-correction';
-                corLine.innerText = '✏️ ' + parsed.correction;
-                div.appendChild(corLine);
-            }
-
-            const audioBtn = document.createElement('button');
-            audioBtn.className = 'btn-msg-audio';
-            audioBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-            audioBtn.onclick = () => speak(parsed.korean, 'ko-KR');
-            div.appendChild(audioBtn);
-
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
-        }
-
-        speak(parsed.korean, 'ko-KR');
-    } catch (err) {
-        console.error('Lỗi AI Chat:', err);
-        if (thinkingEl) thinkingEl.remove();
-        appendChatMessage('system', '⚠️ ' + (err.message || 'Lỗi khi gọi AI'));
-        showToast(err.message || 'Lỗi AI Chat', 'error');
-    } finally {
-        isSendingChatMessage = false;
-        if (sendBtn) sendBtn.disabled = false;
-    }
-}
-
-function stopChatRecognition() {
-    if (chatRecognizer && isChatRecording) {
-        try { chatRecognizer.stop(); } catch (e) { /* đã dừng sẵn */ }
-    }
-    isChatRecording = false;
-    const micBtn = document.getElementById('btn-chat-mic');
-    if (micBtn) micBtn.classList.remove('recording');
-}
-
-function toggleChatMic() {
-    if (!isSpeechRecognitionSupported()) {
-        showToast('Trình duyệt không hỗ trợ nhận diện giọng nói', 'error');
-        return;
-    }
-
-    if (isChatRecording) {
-        stopChatRecognition();
-        return;
-    }
-
-    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    chatRecognizer = new SpeechRecognitionCtor();
-    chatRecognizer.lang = 'ko-KR';
-    chatRecognizer.interimResults = false;
-    chatRecognizer.maxAlternatives = 1;
-
-    const micBtn = document.getElementById('btn-chat-mic');
-
-    chatRecognizer.onstart = () => {
-        isChatRecording = true;
-        if (micBtn) micBtn.classList.add('recording');
-    };
-
-    chatRecognizer.onresult = (event) => {
-        const transcript = (event.results && event.results[0] && event.results[0][0] && event.results[0][0].transcript) || '';
-        const input = document.getElementById('chat-input');
-        if (input && transcript) input.value = transcript;
-    };
-
-    chatRecognizer.onerror = () => {
-        isChatRecording = false;
-        if (micBtn) micBtn.classList.remove('recording');
-    };
-
-    chatRecognizer.onend = () => {
-        isChatRecording = false;
-        if (micBtn) micBtn.classList.remove('recording');
-    };
-
-    try {
-        chatRecognizer.start();
-    } catch (e) {
-        console.error('Không thể bắt đầu ghi âm chat:', e);
-        isChatRecording = false;
-    }
-}
-
-/* ==========================================================================
-   16. VOICE AI (Gemini 3.1 Flash Live — voice-to-voice 2 chiều qua WebSocket)
-   ==========================================================================
-   Khác hẳn AI Chat (REST request-response từng câu) và Luyện Nói (ghi 1 từ
-   rồi chấm điểm), Voice AI mở 1 kết nối WebSocket SỐNG LIÊN TỤC tới Gemini
-   Live API: mic được stream real-time tới Gemini dưới dạng PCM 16-bit
-   16kHz, và Gemini trả lời trực tiếp bằng audio PCM 24kHz — giống hệt một
-   cuộc gọi điện thoại thật, không qua bước chuyển-đổi-thành-chữ-rồi-đọc-lại
-   nào cả. Google gọi đây là "native audio" (speech-to-speech thật, không
-   phải pipeline ASR→LLM→TTS).
-
-   Google tự động xử lý việc "khi nào người dùng ngừng nói thì nên trả lời"
-   (Voice Activity Detection) và "cho phép ngắt lời AI giữa chừng" (barge-in)
-   — cả 2 đều bật mặc định phía server, code này không cần tự cài đặt logic
-   phát hiện im lặng nào cả, chỉ cần liên tục đẩy audio mic lên.
-   -------------------------------------------------------------------------- */
-
-const VOICE_MODEL = 'gemini-3.1-flash-live-preview';
-const VOICE_SCENARIO_PROMPTS = {
-    free: 'Bạn là bạn luyện nói tiếng Hàn, trò chuyện tự do bằng tiếng Hàn đơn giản, phù hợp người mới học. Nói ngắn gọn, tự nhiên như hội thoại đời thường.',
-    food: 'Bạn đang đóng vai nhân viên phục vụ nhà hàng Hàn Quốc, giúp người học luyện hội thoại gọi món ăn bằng giọng nói. Nói ngắn gọn, tự nhiên.',
-    taxi: 'Bạn đang đóng vai tài xế taxi ở Hàn Quốc, giúp người học luyện hội thoại đi taxi (địa điểm, giá cước, chỉ đường) bằng giọng nói. Nói ngắn gọn, tự nhiên.',
-    hotel: 'Bạn đang đóng vai lễ tân khách sạn ở Hàn Quốc, giúp người học luyện hội thoại nhận phòng, hỏi dịch vụ khách sạn bằng giọng nói. Nói ngắn gọn, tự nhiên.'
-};
-
-function switchVoiceScenario(scen) {
-    if (!VOICE_SCENARIO_PROMPTS[scen]) return;
-    voiceScenario = scen;
-    document.querySelectorAll('#voice-scenario-bar .scen-chip[data-vscen]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.vscen === scen);
-    });
-    // Đổi kịch bản khi đang trong cuộc gọi: phải kết nối lại vì system
-    // instruction chỉ được gửi đúng 1 lần lúc bắt đầu phiên (trong message
-    // "setup"), không có cách nào đổi giữa chừng một phiên đang chạy.
-    if (voiceState === 'connected' || voiceState === 'connecting') {
-        stopVoiceCall();
-        setElementText('voice-fb', 'Đã đổi chủ đề — nhấn nút gọi lại để tiếp tục với chủ đề mới.');
-    }
-}
-
-function appendVoiceTranscript(role, text) {
-    if (!text || !text.trim()) return;
-    const box = document.getElementById('voice-transcript-box');
-    if (!box) return;
-    const div = document.createElement('div');
-    div.className = 'chat-msg ' + role;
-    div.innerText = text;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-}
-
-function setVoiceUiState(state, message) {
-    voiceState = state;
-    const dot = document.getElementById('voice-status-dot');
-    const statusText = document.getElementById('voice-status-text');
-    const callBtn = document.getElementById('btn-voice-call');
-    const callIcon = document.getElementById('voice-call-icon');
-    const callHint = document.getElementById('voice-call-hint');
-
-    if (dot) dot.className = 'voice-status-dot' + (state !== 'idle' ? ' ' + state : '');
-    if (statusText) statusText.innerText = message || '';
-
-    if (callBtn) callBtn.classList.remove('recording', 'connecting');
-    if (callIcon) callIcon.className = 'fas fa-phone';
-
-    if (state === 'connecting') {
-        if (callBtn) callBtn.classList.add('connecting');
-        if (callIcon) callIcon.className = 'fas fa-spinner fa-spin';
-        if (callHint) callHint.innerText = 'Đang kết nối...';
-    } else if (state === 'connected') {
-        if (callBtn) callBtn.classList.add('recording');
-        if (callIcon) callIcon.className = 'fas fa-phone-slash';
-        if (callHint) callHint.innerText = 'Đang gọi — nhấn để kết thúc';
-    } else if (state === 'error') {
-        if (callHint) callHint.innerText = 'Nhấn để thử lại';
-    } else {
-        if (callHint) callHint.innerText = 'Nhấn để kết nối';
-    }
-}
-
-function toggleVoiceCall() {
-    if (voiceState === 'connected' || voiceState === 'connecting') {
-        stopVoiceCall();
-    } else {
-        startVoiceCall();
-    }
-}
-
-async function startVoiceCall() {
-    let apiKey = '';
-    try {
-        apiKey = localStorage.getItem('gemini_api_key') || '';
-    } catch (e) { /* localStorage không khả dụng */ }
-
-    if (!apiKey) {
-        showToast('Chưa có API Key! Vui lòng nhập ở mục AI Chat và bấm Lưu trước.', 'error');
-        setElementText('voice-fb', 'Chưa nhập API Key — vào mục AI Chat để nhập trước khi gọi.');
-        return;
-    }
-
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showToast('Trình duyệt không hỗ trợ truy cập micro', 'error');
-        return;
-    }
-    if (typeof AudioWorkletNode === 'undefined') {
-        showToast('Trình duyệt không hỗ trợ AudioWorklet (cần Chrome/Edge/Safari bản mới)', 'error');
-        return;
-    }
-
-    setVoiceUiState('connecting', 'Đang xin quyền micro...');
-    setElementText('voice-fb', '');
-    voiceSetupComplete = false;
-    voiceOutputQueueTime = 0;
-
-    // Bước 1: xin quyền và mở mic TRƯỚC khi mở WebSocket — nếu người dùng
-    // từ chối quyền mic, dừng lại ngay ở đây, không tốn 1 kết nối WebSocket
-    // vô ích nào tới Gemini.
-    try {
-        voiceMicStream = await navigator.mediaDevices.getUserMedia({
-            audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-        });
-    } catch (err) {
-        console.error('Không thể truy cập micro:', err);
-        setVoiceUiState('error', 'Không có quyền truy cập micro');
-        showToast('Vui lòng cho phép quyền truy cập micro để gọi thoại', 'error');
-        return;
-    }
-
-    // Bước 2: mở WebSocket tới Gemini Live API.
-    setElementText('voice-status-text', 'Đang kết nối tới Gemini...');
-    const wsUrl = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=' + encodeURIComponent(apiKey);
-
-    try {
-        voiceSocket = new WebSocket(wsUrl);
-    } catch (err) {
-        console.error('Không thể mở WebSocket:', err);
-        stopVoiceCall();
-        setVoiceUiState('error', 'Không thể kết nối');
-        showToast('Không thể mở kết nối tới Gemini Live API', 'error');
-        return;
-    }
-
-    voiceSocket.onopen = () => {
-        // Message đầu tiên PHẢI là "setup" — đây là lúc duy nhất có thể gửi
-        // model, system instruction, và cấu hình response modality. Không
-        // gửi gì khác trước message này, server sẽ từ chối.
-        //
-        // QUAN TRỌNG: BidiGenerateContentSetup (Live API qua WebSocket) có
-        // schema RIÊNG, KHÁC với GenerateContentRequest (REST API thường).
-        // inputAudioTranscription / outputAudioTranscription / realtimeInputConfig
-        // là field NGANG HÀNG với generationConfig — nằm trực tiếp trong
-        // "setup", KHÔNG lồng bên trong generationConfig. Đặt sai cấp khiến
-        // server từ chối toàn bộ message với lỗi "Unknown name... Cannot
-        // find field" và đóng kết nối bằng mã 1007 (invalid frame payload
-        // data) — đã xác nhận qua interface protobuf chính thức
-        // (IBidiGenerateContentSetup) của Google, không phải suy đoán.
-        const setupMessage = {
+        src.connect(this.worklet);
+        const gain = this.actx.createGain(); gain.gain.value = 0;
+        this.worklet.connect(gain); gain.connect(this.actx.destination);
+
+        const model = A.s.settings.voiceModel;
+        this.ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${k}`);
+        this.ws.onopen = () => {
+          this.ws.send(JSON.stringify({
             setup: {
-                model: 'models/' + VOICE_MODEL,
-                generationConfig: {
-                    responseModalities: ['AUDIO'],
-                    // Gemini 3.1 dùng thinkingLevel (minimal/low/medium/high)
-                    // thay cho thinkingBudget của model đời cũ. thinkingConfig
-                    // LÀ field hợp lệ của generationConfig (khác nhóm với 3
-                    // field transcription/realtimeInputConfig ở trên — field
-                    // này giữ đúng vị trí cũ). Mặc định server là "minimal"
-                    // (ưu tiên độ trễ thấp nhất) — với app luyện hội thoại,
-                    // đặt "low" đánh đổi một chút độ trễ để câu trả lời tự
-                    // nhiên và đúng ngữ pháp hơn khi cần sửa lỗi cho người
-                    // học, vẫn đủ nhanh cho cảm giác hội thoại thời gian thực.
-                    thinkingConfig: {
-                        thinkingLevel: 'low'
-                    }
-                },
-                // Bật transcript cả 2 chiều để hiển thị chữ lên màn hình —
-                // giúp người học vừa nghe vừa đọc theo, và để debug dễ hơn
-                // khi audio khó nghe rõ.
-                inputAudioTranscription: {},
-                outputAudioTranscription: {},
-                systemInstruction: {
-                    parts: [{ text: VOICE_SCENARIO_PROMPTS[voiceScenario] || VOICE_SCENARIO_PROMPTS.free }]
-                },
-                // Không giới hạn cứng phiên gọi ở mốc 15 phút mặc định —
-                // bật context window compression để Gemini tự nén lịch sử
-                // hội thoại cũ khi cần, cho phép gọi lâu hơn mà không bị
-                // ngắt đột ngột giữa chừng.
-                contextWindowCompression: {
-                    slidingWindow: {}
-                },
-                // Voice Activity Detection tự động phía server (mặc định đã
-                // bật) — khai báo tường minh để rõ ràng, và vì đây là app
-                // học ngôn ngữ, người học có thể ngập ngừng lâu hơn bình
-                // thường khi tìm từ, nên tăng nhẹ độ nhạy so với mặc định
-                // giúp Gemini không cắt ngang quá sớm khi người học đang
-                // suy nghĩ giữa câu. (Lưu ý: silenceDurationMs hiện có bug
-                // đã biết bị server bỏ qua trên riêng model 3.1-flash-live-
-                // preview — không gây lỗi kết nối, chỉ là chưa có hiệu lực
-                // cho tới khi Google khắc phục; giữ lại để tự động có tác
-                // dụng khi bug được sửa.)
-                realtimeInputConfig: {
-                    automaticActivityDetection: {
-                        disabled: false,
-                        silenceDurationMs: 800
-                    }
-                }
+              model: `models/${model}`,
+              generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Aoede' } } } },
+              systemInstruction: { parts: [{ text: 'Bạn là giáo viên tiếng Hàn thân thiện. Nói tiếng Hàn đơn giản, giải thích tiếng Việt khi cần. Giúp học viên luyện nghe nói. Sửa lỗi nhẹ nhàng.' }] }
             }
+          }));
         };
-        voiceSocket.send(JSON.stringify(setupMessage));
-    };
+        this.ws.onmessage = e => {
+          try {
+            const m = JSON.parse(e.data);
+            if (m.setupComplete) {
+              this.state = 'connected'; this.setStatus('connected', 'Đang nói chuyện');
+              this.startTimer(); document.getElementById('vcRing').classList.add('active');
+              document.getElementById('vcWave').classList.add('active');
+              this.addTC('sys', '🟢 Đã kết nối! Hãy nói tiếng Hàn.');
+              A.toast('Đã kết nối!', 'success'); return;
+            }
+            if (m.serverContent) {
+              const parts = m.serverContent.modelTurn?.parts || [];
+              for (const p of parts) {
+                if (p.inlineData) this.playAudio(p.inlineData.data, p.inlineData.mimeType);
+                if (p.text) this.addTC('ai', p.text);
+              }
+            }
+          } catch (err) { console.error('WS msg err:', err); }
+        };
+        this.ws.onerror = () => { A.toast('Lỗi kết nối', 'error'); this.endCall(); };
+        this.ws.onclose = () => { if (this.state !== 'off') this.endCall(); };
+      } catch (e) {
+        console.error('Voice err:', e); A.toast(`Lỗi: ${e.message}`, 'error'); this.endCall();
+      }
+    },
 
-    voiceSocket.onmessage = async (event) => {
+    endCall() {
+      this.state = 'off'; this.stopTimer(); this.hideOverlay();
+      if (this.ws) { try { this.ws.close(); } catch (e) {} this.ws = null; }
+      if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
+      if (this.actx) { try { this.actx.close(); } catch (e) {} this.actx = null; }
+      if (this.playCtx) { try { this.playCtx.close(); } catch (e) {} this.playCtx = null; }
+      this.worklet = null; this.queue = []; this.playing = false;
+    },
+
+    toggleMute() {
+      this.muted = !this.muted;
+      const btn = document.getElementById('vcMute');
+      btn.classList.toggle('on', this.muted); btn.textContent = this.muted ? '🔇' : '🎤';
+      if (this.stream) this.stream.getAudioTracks().forEach(t => t.enabled = !this.muted);
+    },
+
+    toggleSpeaker() {
+      this.speakerOn = !this.speakerOn;
+      document.getElementById('vcSpeaker').classList.toggle('on', !this.speakerOn);
+    },
+
+    showOverlay() { document.getElementById('vcOverlay').classList.add('show'); },
+    hideOverlay() { document.getElementById('vcOverlay').classList.remove('show'); document.getElementById('vcRing').classList.remove('active'); document.getElementById('vcWave').classList.remove('active'); },
+    setStatus(cls, txt) { document.getElementById('vcDot').className = 'vc-dot ' + cls; document.getElementById('vcStatusText').textContent = txt; },
+    startTimer() { this.timer = setInterval(() => { this.secs++; this.updateTimer(); }, 1000); },
+    stopTimer() { if (this.timer) { clearInterval(this.timer); this.timer = null; } },
+    updateTimer() { const m = Math.floor(this.secs / 60), s = this.secs % 60; document.getElementById('vcTimer').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; },
+
+    addTC(role, txt) {
+      const el = document.getElementById('vcTranscript');
+      const cls = role === 'ai' ? 'tc-ai' : role === 'sys' ? 'tc-sys' : 'tc-user';
+      const prefix = role === 'ai' ? '🇰🇷 AI: ' : role === 'user' ? '🇻🇳 Bạn: ' : '';
+      el.innerHTML += `<div class="${cls}">${prefix}${txt}</div>`;
+      el.scrollTop = el.scrollHeight;
+    },
+
+    playAudio(b64, mime) {
+      if (!this.speakerOn) return;
+      this.queue.push({ b64, mime }); if (!this.playing) this._playNext();
+    },
+
+    async _playNext() {
+      if (!this.queue.length) { this.playing = false; return; }
+      this.playing = true; const { b64, mime } = this.queue.shift();
+      try {
+        const rate = parseInt(mime.match(/rate=(\d+)/)?.[1] || '24000');
+        const raw = atob(b64); const bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+        const i16 = new Int16Array(bytes.buffer); const f32 = new Float32Array(i16.length);
+        for (let i = 0; i < i16.length; i++) f32[i] = i16[i] / 32768;
+        if (!this.playCtx || this.playCtx.state === 'closed') this.playCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: rate });
+        const buf = this.playCtx.createBuffer(1, f32.length, rate); buf.getChannelData(0).set(f32);
+        const src = this.playCtx.createBufferSource(); src.buffer = buf; src.connect(this.playCtx.destination);
+        src.onended = () => this._playNext(); src.start();
+      } catch (e) { console.error('Play err:', e); this._playNext(); }
+    },
+
+    b64(buf) { const b = new Uint8Array(buf); let s = ''; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
+  },
+
+  // ==================== WRITING ====================
+  writing: {
+    gen() {
+      const ws = A.filtered(); if (!ws.length) { A.toast('Không có từ', 'warning'); return; }
+      const n = parseInt(document.getElementById('wrLines').value) || 10;
+      const trace = document.getElementById('wrTrace').checked;
+      const roman = document.getElementById('wrRoman').checked;
+      const meaning = document.getElementById('wrMeaning').checked;
+      const sel = []; for (let i = 0; i < n; i++) sel.push(ws[Math.floor(Math.random() * ws.length)]);
+      document.getElementById('wrPreview').innerHTML = sel.map(w => `<div class="wr-line">
+        ${trace ? `<div class="kr-w">${w.front}</div>` : ''}
+        <div class="guide">${roman ? `<div class="roman">${w.roman || ''}</div>` : ''}${meaning ? `<div class="meaning">${w.back}</div>` : ''}</div>
+        <div class="practice">${trace ? w.front : ''}</div></div>`).join('');
+    },
+    print() { window.print(); }
+  },
+
+  // ==================== STATISTICS ====================
+  stats: {
+    render() {
+      const ws = A.s.words;
+      const learned = ws.filter(w => w.learned).length;
+      const hard = ws.filter(w => w.hard).length;
+      const tc = ws.reduce((s, w) => s + (w.correctCount || 0), 0);
+      const tw = ws.reduce((s, w) => s + (w.wrongCount || 0), 0);
+      const acc = tc + tw > 0 ? Math.round(tc / (tc + tw) * 100) : 0;
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="st-card blue"><div class="st-icon">📚</div><div class="st-val">${ws.length}</div><div class="st-lbl">Tổng từ</div></div>
+        <div class="st-card green"><div class="st-icon">🧠</div><div class="st-val">${learned}</div><div class="st-lbl">Đã thuộc</div></div>
+        <div class="st-card yellow"><div class="st-icon">🎯</div><div class="st-val">${acc}%</div><div class="st-lbl">Chính xác</div></div>
+        <div class="st-card red"><div class="st-icon">⚠️</div><div class="st-val">${hard}</div><div class="st-lbl">Từ khó</div></div>
+        <div class="st-card purple"><div class="st-icon">🔥</div><div class="st-val">${A.s.streak}</div><div class="st-lbl">Streak</div></div>`;
+      // Activity chart
+      const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = d.toISOString().slice(0, 10); days.push({ l: d.toLocaleDateString('vi', { weekday: 'short' }), v: A.s.daily[k] || 0 }); }
+      const mx = Math.max(...days.map(d => d.v), 1);
+      document.getElementById('actChart').innerHTML = days.map(d => `<div class="b" style="height:${Math.max(d.v / mx * 100, 4)}%" data-v="${d.v}"></div>`).join('');
+      // Streak calendar
+      const cal = document.getElementById('streakCal'); let html = '';
+      for (let i = 27; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = d.toISOString().slice(0, 10); const active = A.s.daily[k] > 0; const today = i === 0; html += `<div class="sc-day${active ? ' active' : ''}${today ? ' today' : ''}" title="${k}">${d.getDate()}</div>`; }
+      cal.innerHTML = html;
+      // Level chart
+      const lv = { beginner: 0, intermediate: 0, advanced: 0 }; ws.forEach(w => { if (lv[w.level] !== undefined) lv[w.level]++; });
+      const ml = Math.max(...Object.values(lv), 1); const cl = { beginner: 'var(--primary)', intermediate: 'var(--warn)', advanced: 'var(--error)' };
+      document.getElementById('lvlChart').innerHTML = Object.entries(lv).map(([k, v]) => `<div style="flex:1;text-align:center"><div class="b" style="height:${Math.max(v / ml * 100, 4)}%;background:${cl[k]}" data-v="${v}"></div><div style="font-size:.6rem;margin-top:4px;color:var(--text3)">${k === 'beginner' ? 'Sơ cấp' : k === 'intermediate' ? 'Trung cấp' : 'Cao cấp'}</div></div>`).join('');
+    }
+  },
+
+  // ==================== SETTINGS ====================
+  settingsUI() {
+    const s = this.s.settings;
+    document.getElementById('sSpeed').value = s.ttsSpeed;
+    document.getElementById('sSession').value = s.sessionSize;
+    document.getElementById('sApiKey').value = s.apiKey;
+    document.getElementById('sChatModel').value = s.chatModel;
+    document.getElementById('sVoiceModel').value = s.voiceModel;
+    this.setToggle('tAutoTTS', s.autoTTS);
+    this.setToggle('tPriorHard', s.priorHard);
+    this.setToggle('tDark', s.theme === 'dark');
+  },
+
+  settings: {
+    save() {
+      const s = A.s.settings;
+      s.ttsSpeed = document.getElementById('sSpeed').value;
+      s.sessionSize = document.getElementById('sSession').value;
+      s.apiKey = document.getElementById('sApiKey').value.trim();
+      s.chatModel = document.getElementById('sChatModel').value;
+      s.voiceModel = document.getElementById('sVoiceModel').value;
+      A.save(); A.renderChatModels();
+    },
+    toggleDark() { A.toggleTheme(); },
+    toggle(k) {
+      A.s.settings[k] = !A.s.settings[k];
+      A.setToggle('t' + k.charAt(0).toUpperCase() + k.slice(1), A.s.settings[k]);
+      A.save();
+    }
+  },
+
+  // ==================== IMPORT / EXPORT ====================
+  data: {
+    export() {
+      const d = { version: 2, exportDate: new Date().toISOString(), words: A.s.words, streak: A.s.streak, lastStudy: A.s.lastStudy, daily: A.s.daily, settings: A.s.settings };
+      const b = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+      const u = URL.createObjectURL(b); const a = document.createElement('a');
+      a.href = u; a.download = `korean-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+      URL.revokeObjectURL(u); A.toast('Đã xuất file!', 'success');
+    },
+    import(e) {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader(); r.onload = ev => {
         try {
-            // Server có thể gửi text (JSON thường) hoặc Blob (hiếm khi xảy
-            // ra với BidiGenerateContent nhưng kiểm tra để an toàn tuyệt
-            // đối, không giả định trước kiểu dữ liệu).
-            const raw = typeof event.data === 'string' ? event.data : await event.data.text();
-            const message = JSON.parse(raw);
-            handleVoiceServerMessage(message);
-        } catch (err) {
-            console.error('Lỗi xử lý message từ Gemini Live:', err);
-            // Một message lỗi không nên làm chết cả phiên gọi — bỏ qua và
-            // tiếp tục nghe message tiếp theo.
-        }
-    };
-
-    voiceSocket.onerror = (err) => {
-        console.error('Lỗi WebSocket Voice AI:', err);
-        setElementText('voice-fb', 'Lỗi kết nối tới Gemini Live API.');
-    };
-
-    voiceSocket.onclose = (event) => {
-        // Đóng ngoài ý muốn (server chủ động cắt, mất mạng...) trong khi
-        // giao diện vẫn đang hiển thị trạng thái "connected" — dọn dẹp và
-        // báo cho người dùng biết thay vì để nút gọi bị kẹt ở trạng thái
-        // "đang gọi" dù thực tế đã mất kết nối từ lâu.
-        if (voiceState === 'connected' || voiceState === 'connecting') {
-            const reason = event.code === 1000 ? 'Cuộc gọi đã kết thúc.' : 'Mất kết nối (mã ' + event.code + ').';
-            teardownVoiceResources();
-            setVoiceUiState('idle', 'Chưa kết nối');
-            setElementText('voice-fb', reason);
-        }
-    };
-}
-
-/**
- * Xử lý mọi loại message server gửi về. Cấu trúc theo đúng
- * BidiGenerateContentServerMessage: setupComplete | serverContent | toolCall | goAway.
- */
-function handleVoiceServerMessage(message) {
-    if (message.setupComplete) {
-        voiceSetupComplete = true;
-        setVoiceUiState('connected', 'Đang gọi');
-        setupVoiceAudioCapture(); // Chỉ bắt đầu gửi audio SAU khi server xác nhận setup xong
-        appendVoiceTranscript('system', '— Đã kết nối, bắt đầu nói chuyện —');
-        return;
+          const d = JSON.parse(ev.target.result);
+          if (!d.words || !Array.isArray(d.words)) throw new Error('File không hợp lệ');
+          let ok = 0, skip = 0;
+          d.words.forEach(w => { if (!w.front || !w.back) { skip++; return; } const ex = A.s.words.find(x => x.front === w.front); if (ex) Object.assign(ex, normWord({}), ex, w); else A.s.words.push(normWord(w)); ok++; });
+          if (d.streak) A.s.streak = d.streak;
+          if (d.daily) A.s.daily = { ...A.s.daily, ...d.daily };
+          if (d.settings) A.s.settings = { ...A.s.settings, ...d.settings };
+          A.save(); A.renderDict(); A.updateHeader(); A.settingsUI(); A.applyTheme(); A.fc.init(); A.stats.render();
+          A.toast(`Đã import ${ok} từ${skip ? `, bỏ qua ${skip}` : ''}`, 'success');
+        } catch (err) { A.toast(`Lỗi: ${err.message}`, 'error'); }
+      };
+      r.readAsText(f); e.target.value = '';
+    },
+    reset() {
+      if (!confirm('Xóa TẤT CẢ dữ liệu? Không thể hoàn tác.')) return;
+      if (!confirm('Xác nhận lần 2?')) return;
+      localStorage.removeItem('krApp2'); location.reload();
     }
+  },
 
-    if (message.serverContent) {
-        const sc = message.serverContent;
+  // ==================== HELPERS ====================
+  updateHeader() {
+    document.getElementById('hTotal').textContent = this.s.words.length;
+    document.getElementById('hStreak').textContent = this.s.streak;
+    this.checkStreak();
+  },
 
-        // Audio Gemini trả lời (native speech-to-speech) — nằm trong
-        // modelTurn.parts[].inlineData, base64-encoded PCM 24kHz.
-        if (sc.modelTurn && Array.isArray(sc.modelTurn.parts)) {
-            sc.modelTurn.parts.forEach(part => {
-                if (part.inlineData && part.inlineData.data) {
-                    playVoiceAudioChunk(part.inlineData.data);
-                }
-            });
-        }
+  toast(m, t = 'info') {
+    const c = document.getElementById('toastBox');
+    const el = document.createElement('div');
+    el.className = 'toast ' + t; el.textContent = m;
+    c.appendChild(el); setTimeout(() => el.remove(), 3200);
+  },
 
-        // Transcript chữ của những gì người dùng vừa nói (do Gemini tự
-        // nhận diện song song với audio, không cần SpeechRecognition riêng).
-        if (sc.inputTranscription && sc.inputTranscription.text) {
-            appendVoiceTranscript('user', sc.inputTranscription.text);
-        }
-        // Transcript chữ của những gì Gemini vừa trả lời bằng giọng nói.
-        if (sc.outputTranscription && sc.outputTranscription.text) {
-            appendVoiceTranscript('ai', sc.outputTranscription.text);
-        }
+  esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; },
 
-        // Người dùng ngắt lời AI giữa chừng (barge-in) — Gemini tự phát
-        // hiện và báo qua interrupted:true. Phải dừng phát audio đang xếp
-        // hàng ngay lập tức, nếu không AI sẽ tiếp tục nói đè lên audio mới.
-        if (sc.interrupted) {
-            stopVoiceAudioPlayback();
-        }
-        return;
+  debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; },
+
+  setToggle(id, on) { const el = document.getElementById(id); if (el) el.classList.toggle('on', on); },
+
+  hotkey(e) {
+    if (this.s.view === 'flashcard') {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); this.fc.prev(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); this.fc.next(); }
+      if (e.key === ' ') { e.preventDefault(); this.fc.flip(); }
+      if (e.key === 'f') this.fc.toggleFav();
+      if (e.key === 'ArrowUp') { e.preventDefault(); this.fc.markCorrect(); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); this.fc.markWrong(); }
     }
-
-    if (message.goAway) {
-        // Server báo trước sẽ ngắt kết nối (giới hạn ~10 phút/kết nối theo
-        // thiết kế của Gemini Live API, không phải lỗi). Đóng gọn gàng và
-        // báo rõ cho người dùng thay vì để họ thấy cuộc gọi tự dưng im
-        // bặt không rõ lý do.
-        appendVoiceTranscript('system', '— Phiên gọi sắp hết thời gian, đang kết thúc —');
-        stopVoiceCall();
-        return;
-    }
-
-    if (message.toolCall) {
-        // App này không đăng ký tool nào (không cần function calling cho
-        // mục đích luyện nói), nhưng vẫn xử lý phòng trường hợp server gửi
-        // toolCall ngoài ý muốn — trả lời rỗng để không làm phiên bị treo
-        // chờ phản hồi mãi mãi.
-        if (voiceSocket && voiceSocket.readyState === WebSocket.OPEN && Array.isArray(message.toolCall.functionCalls)) {
-            const functionResponses = message.toolCall.functionCalls.map(fc => ({
-                name: fc.name,
-                id: fc.id,
-                response: { result: 'not_supported' }
-            }));
-            voiceSocket.send(JSON.stringify({ toolResponse: { functionResponses } }));
-        }
-    }
-}
-
-/** Khởi tạo AudioContext + AudioWorklet để capture mic và gửi liên tục qua WebSocket. */
-async function setupVoiceAudioCapture() {
-    if (!voiceMicStream) return;
-
-    try {
-        voiceAudioContextIn = new (window.AudioContext || window.webkitAudioContext)();
-        await voiceAudioContextIn.audioWorklet.addModule('js/pcm-worklet.js');
-
-        const source = voiceAudioContextIn.createMediaStreamSource(voiceMicStream);
-        voiceWorkletNode = new AudioWorkletNode(voiceAudioContextIn, 'pcm-capture-processor');
-
-        voiceWorkletNode.port.onmessage = (event) => {
-            // event.data là ArrayBuffer chứa Int16Array PCM 16kHz đã được
-            // worklet resample sẵn — chỉ cần base64-encode và gửi đi.
-            if (!voiceSetupComplete || !voiceSocket || voiceSocket.readyState !== WebSocket.OPEN) return;
-
-            const bytes = new Uint8Array(event.data);
-            let binary = '';
-            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-            const base64Data = btoa(binary);
-
-            const audioMessage = {
-                realtimeInput: {
-                    audio: {
-                        data: base64Data,
-                        mimeType: 'audio/pcm;rate=16000'
-                    }
-                }
-            };
-            voiceSocket.send(JSON.stringify(audioMessage));
-        };
-
-        source.connect(voiceWorkletNode);
-        // Không connect voiceWorkletNode ra destination (loa) — worklet
-        // này chỉ dùng để capture và gửi đi, không phải để phát lại mic
-        // của chính người dùng ra loa (sẽ gây tiếng vọng/hú rít).
-    } catch (err) {
-        console.error('Lỗi khởi tạo audio capture:', err);
-        setElementText('voice-fb', 'Lỗi khởi tạo micro cho cuộc gọi.');
-        stopVoiceCall();
-    }
-}
-
-/** Phát 1 chunk audio PCM 24kHz base64 nhận từ Gemini, xếp hàng tuần tự không chồng lấn. */
-function playVoiceAudioChunk(base64Data) {
-    try {
-        if (!voiceAudioContextOut) {
-            voiceAudioContextOut = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-            voiceOutputQueueTime = voiceAudioContextOut.currentTime;
-        }
-
-        const binary = atob(base64Data);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
-        // Convert Int16 PCM little-endian sang Float32 chuẩn Web Audio API.
-        const int16Array = new Int16Array(bytes.buffer);
-        const float32Array = new Float32Array(int16Array.length);
-        for (let i = 0; i < int16Array.length; i++) {
-            float32Array[i] = int16Array[i] / (int16Array[i] < 0 ? 32768 : 32767);
-        }
-
-        const audioBuffer = voiceAudioContextOut.createBuffer(1, float32Array.length, 24000);
-        audioBuffer.copyToChannel(float32Array, 0);
-
-        const sourceNode = voiceAudioContextOut.createBufferSource();
-        sourceNode.buffer = audioBuffer;
-        sourceNode.connect(voiceAudioContextOut.destination);
-
-        // Xếp hàng phát nối tiếp: nếu mốc hàng đợi đã ở tương lai (chunk
-        // trước đó chưa phát xong), phát chunk này ngay sau khi chunk
-        // trước kết thúc — không phát chồng lên nhau, không có khoảng
-        // trống giữa các chunk khiến giọng nói bị giật/ngắt quãng.
-        const now = voiceAudioContextOut.currentTime;
-        const startTime = Math.max(now, voiceOutputQueueTime);
-        sourceNode.start(startTime);
-        voiceOutputQueueTime = startTime + audioBuffer.duration;
-    } catch (err) {
-        console.error('Lỗi phát audio từ Gemini:', err);
-        // Một chunk audio lỗi không nên làm chết cả cuộc gọi — bỏ qua và
-        // tiếp tục nhận chunk tiếp theo.
-    }
-}
-
-/** Dừng phát audio đang xếp hàng ngay lập tức — dùng khi người dùng ngắt lời AI (barge-in). */
-function stopVoiceAudioPlayback() {
-    if (voiceAudioContextOut) {
-        // Cách đơn giản và an toàn nhất để dừng mọi audio đang phát/xếp
-        // hàng ngay lập tức: đóng hẳn AudioContext hiện tại, một context
-        // mới sẽ được tạo lại tự động ở chunk audio tiếp theo trong
-        // playVoiceAudioChunk(). Không cần theo dõi thủ công từng
-        // BufferSourceNode đang chạy để gọi .stop() từng cái một.
-        try { voiceAudioContextOut.close(); } catch (e) { /* đã đóng sẵn */ }
-        voiceAudioContextOut = null;
-        voiceOutputQueueTime = 0;
-    }
-}
-
-/** Giải phóng mic + AudioContext + WorkletNode, KHÔNG đóng WebSocket (dùng khi WebSocket tự đóng). */
-function teardownVoiceResources() {
-    if (voiceReconnectTimer) {
-        clearTimeout(voiceReconnectTimer);
-        voiceReconnectTimer = null;
-    }
-
-    if (voiceWorkletNode) {
-        try { voiceWorkletNode.port.onmessage = null; voiceWorkletNode.disconnect(); } catch (e) { /* đã ngắt sẵn */ }
-        voiceWorkletNode = null;
-    }
-    if (voiceAudioContextIn) {
-        try { voiceAudioContextIn.close(); } catch (e) { /* đã đóng sẵn */ }
-        voiceAudioContextIn = null;
-    }
-    stopVoiceAudioPlayback();
-
-    if (voiceMicStream) {
-        voiceMicStream.getTracks().forEach(track => track.stop());
-        voiceMicStream = null;
-    }
-
-    voiceSetupComplete = false;
-}
-
-/** Kết thúc cuộc gọi hoàn toàn: đóng WebSocket + giải phóng mọi tài nguyên audio/mic. */
-function stopVoiceCall() {
-    teardownVoiceResources();
-
-    if (voiceSocket) {
-        // Gỡ handler trước khi đóng để tránh onclose tự chạy lần nữa và
-        // ghi đè trạng thái UI đã được set đúng ngay bên dưới.
-        voiceSocket.onopen = null;
-        voiceSocket.onmessage = null;
-        voiceSocket.onerror = null;
-        voiceSocket.onclose = null;
-        if (voiceSocket.readyState === WebSocket.OPEN || voiceSocket.readyState === WebSocket.CONNECTING) {
-            try { voiceSocket.close(1000, 'user_ended_call'); } catch (e) { /* đã đóng sẵn */ }
-        }
-        voiceSocket = null;
-    }
-
-    if (voiceState !== 'idle') {
-        setVoiceUiState('idle', 'Chưa kết nối');
-    }
-}
-
-/* ==========================================================================
-   17. LUYỆN VIẾT (Tạo worksheet A4 — xuất Word/PDF thật, in được)
-   ==========================================================================
-   Luồng: Nhập JSON -> Thêm vào danh sách (writingList, lưu localStorage riêng,
-   độc lập hoàn toàn với masterDeck) -> Tạo bản viết tay -> Preview A4 (dựng từ
-   MỘT worksheet data model duy nhất, xem buildWorksheetPages()) -> Lưu Word /
-   Lưu PDF / In, cả 3 đều đọc từ ĐÚNG data model đó nên luôn khớp nội dung.
-
-   Word dùng thư viện docx (tạo XML thật, Word tự dùng font hệ thống máy người
-   mở để hiển thị). PDF dùng jsPDF.html() + html2canvas — chụp lại đúng khối
-   DOM đã render bằng CSS font-family liệt kê sẵn các font Hangul hệ thống phổ
-   biến (Malgun Gothic/Apple SD Gothic Neo/Noto Sans KR...), nên KHÔNG cần tải
-   file .ttf nào qua mạng: trình duyệt tự chọn đúng font có sẵn trên máy để
-   render, html2canvas chỉ chụp lại y hệt những gì đã hiển thị trên màn hình.
-   Đây là lựa chọn có cân nhắc, không phải bỏ sót — tránh phụ thuộc CDN font
-   nặng (hàng chục MB cho Hangul) và tránh bẫy variable-font không tương thích
-   nhiều engine dựng PDF.
-   -------------------------------------------------------------------------- */
-
-const WRITING_STORAGE_KEY = 'writingPracticeList';
-const WRITING_FONT_STACK = "'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Nanum Gothic', sans-serif";
-
-/** Kiểm tra 1 mục worksheet có hình dạng hợp lệ tối thiểu hay không (bắt buộc có "word"). */
-function isValidWritingEntry(e) {
-    return !!(e && typeof e === 'object' && typeof e.word === 'string' && e.word.trim() !== '');
-}
-
-function normalizeWritingEntry(raw) {
-    return {
-        word: String(raw.word || '').trim().normalize('NFC'),
-        reading: String(raw.reading || '').trim(),
-        hanviet: String(raw.hanviet || '').trim(),
-        meaning: String(raw.meaning || '').trim()
-    };
-}
-
-function loadWritingList() {
-    try {
-        const saved = localStorage.getItem(WRITING_STORAGE_KEY);
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed)) {
-                writingList = parsed.filter(isValidWritingEntry).map(normalizeWritingEntry);
-                return;
-            }
-        }
-    } catch (e) {
-        console.warn('Dữ liệu Luyện Viết trong localStorage bị hỏng, bắt đầu danh sách rỗng:', e);
-    }
-    writingList = [];
-}
-
-function saveWritingList() {
-    try {
-        localStorage.setItem(WRITING_STORAGE_KEY, JSON.stringify(writingList));
-    } catch (e) {
-        console.error('Không thể lưu danh sách Luyện Viết:', e);
-        showToast('Lỗi: Không thể lưu danh sách (bộ nhớ trình duyệt đầy)', 'error');
-    }
-}
-
-function setWritingMsg(text, type) {
-    const el = document.getElementById('writing-msg');
-    if (!el) return;
-    el.innerText = text || '';
-    el.style.color = type === 'error' ? 'var(--danger-color)' : (type === 'success' ? 'var(--success-color)' : 'var(--text-muted)');
-}
-
-/** Bấm "Dùng thử demo" — chỉ điền textarea, KHÔNG tự thêm vào danh sách (đúng mục 5 spec). */
-function fillWritingDemo() {
-    const demo = [
-        { word: '안녕하세요', reading: 'annyeonghaseyo', hanviet: '', meaning: 'Xin chào' },
-        { word: '감사합니다', reading: 'gamsahamnida', hanviet: 'CẢM TẠ', meaning: 'Cảm ơn' },
-        { word: '학교', reading: 'hakgyo', hanviet: 'HỌC HIỆU', meaning: 'Trường học' },
-        { word: '선생님', reading: 'seonsaengnim', hanviet: 'TIÊN SINH', meaning: 'Giáo viên' },
-        { word: '학생', reading: 'haksaeng', hanviet: 'HỌC SINH', meaning: 'Học sinh' },
-        { word: '친구', reading: 'chingu', hanviet: 'THÂN HỮU', meaning: 'Bạn bè' },
-        { word: '가족', reading: 'gajok', hanviet: 'GIA TỘC', meaning: 'Gia đình' },
-        { word: '사랑', reading: 'sarang', hanviet: '', meaning: 'Tình yêu' },
-        { word: '음식', reading: 'eumsik', hanviet: 'ẨM THỰC', meaning: 'Đồ ăn' },
-        { word: '공부', reading: 'gongbu', hanviet: 'CÔNG PHU', meaning: 'Học tập' }
-    ];
-    const textarea = document.getElementById('writing-textarea');
-    if (textarea) textarea.value = JSON.stringify(demo, null, 2);
-    setWritingMsg('Đã điền dữ liệu demo — bấm "Thêm vào danh sách" để sử dụng.', 'info');
-}
-
-/**
- * Cố gắng parse nội dung textarea thành mảng entry hợp lệ.
- * Trả về { entries, error } — error khác null nếu parse thất bại hoàn toàn.
- * Đúng mục 24 spec: JSON sai không được crash, phải báo lỗi rõ ràng.
- */
-function parseWritingInput(raw) {
-    const trimmed = (raw || '').trim();
-    if (!trimmed) return { entries: [], error: null };
-
-    let parsed;
-    try {
-        parsed = JSON.parse(trimmed);
-    } catch (e) {
-        return { entries: [], error: 'JSON không hợp lệ. Vui lòng kiểm tra dấu ngoặc hoặc dấu phẩy.' };
-    }
-
-    const arr = Array.isArray(parsed) ? parsed : [parsed];
-    const validEntries = [];
-    let hasInvalid = false;
-    arr.forEach(item => {
-        if (isValidWritingEntry(item)) {
-            validEntries.push(normalizeWritingEntry(item));
-        } else {
-            hasInvalid = true;
-        }
-    });
-
-    if (validEntries.length === 0) {
-        return { entries: [], error: hasInvalid ? 'Một mục không có trường "word".' : 'Không tìm thấy từ vựng hợp lệ nào.' };
-    }
-    return { entries: validEntries, error: null };
-}
-
-function addWritingFromTextarea() {
-    const textarea = document.getElementById('writing-textarea');
-    const raw = textarea ? textarea.value : '';
-
-    if (!raw.trim()) {
-        setWritingMsg('Vui lòng nhập dữ liệu trước khi thêm.', 'error');
-        return;
-    }
-
-    const { entries, error } = parseWritingInput(raw);
-    if (error) {
-        setWritingMsg('⚠️ ' + error, 'error');
-        return;
-    }
-
-    // Chống trùng: 1 từ (theo "word") đã có trong danh sách thì bỏ qua, không thêm lại.
-    const existingWords = new Set(writingList.map(e => e.word));
-    let addedCount = 0;
-    entries.forEach(entry => {
-        if (!existingWords.has(entry.word)) {
-            writingList.push(entry);
-            existingWords.add(entry.word);
-            addedCount++;
-        }
-    });
-
-    saveWritingList();
-    renderWritingList();
-
-    if (addedCount === 0) {
-        setWritingMsg('Các từ này đã có sẵn trong danh sách.', 'error');
-    } else {
-        setWritingMsg('✓ Đã thêm ' + addedCount + ' từ vựng thành công!', 'success');
-        if (textarea) textarea.value = '';
-    }
-}
-
-function clearWritingTextarea() {
-    const textarea = document.getElementById('writing-textarea');
-    if (textarea) textarea.value = '';
-    setWritingMsg('');
-}
-
-function removeWritingEntry(index) {
-    if (index < 0 || index >= writingList.length) return;
-    writingList.splice(index, 1);
-    saveWritingList();
-    renderWritingList();
-}
-
-function clearAllWritingEntries() {
-    if (writingList.length === 0) return;
-    if (!window.confirm('Xóa toàn bộ ' + writingList.length + ' từ vựng khỏi danh sách?')) return;
-    writingList = [];
-    saveWritingList();
-    renderWritingList();
-    setWritingMsg('Đã xóa toàn bộ danh sách.', 'info');
-}
-
-/** Vẽ lại toàn bộ khối danh sách từ vựng (STT | Korean | Reading | Hán-Việt | Nghĩa | Xóa). */
-function renderWritingList() {
-    const titleEl = document.getElementById('writing-list-title');
-    const emptyHint = document.getElementById('writing-empty-hint');
-    const itemsBox = document.getElementById('writing-list-items');
-    const clearAllBtn = document.getElementById('btn-writing-clear-all');
-    if (!itemsBox) return;
-
-    itemsBox.innerHTML = '';
-
-    if (writingList.length === 0) {
-        if (titleEl) titleEl.innerText = 'Chưa có từ vựng';
-        if (emptyHint) emptyHint.style.display = 'block';
-        if (clearAllBtn) clearAllBtn.style.display = 'none';
-        return;
-    }
-
-    if (titleEl) titleEl.innerText = writingList.length + ' từ vựng';
-    if (emptyHint) emptyHint.style.display = 'none';
-    if (clearAllBtn) clearAllBtn.style.display = 'inline-block';
-
-    writingList.forEach((entry, idx) => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex; align-items:center; gap:6px; padding:7px 8px; background:var(--bg-color); border-radius:8px; font-size:12px;';
-
-        const numSpan = document.createElement('span');
-        numSpan.style.cssText = 'width:18px; flex-shrink:0; color:var(--text-muted); font-weight:600;';
-        numSpan.innerText = (idx + 1) + '.';
-
-        const infoDiv = document.createElement('div');
-        infoDiv.style.cssText = 'flex:1; min-width:0;';
-        const line1 = document.createElement('div');
-        line1.style.cssText = 'font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
-        line1.innerText = entry.word + (entry.reading ? '  (' + entry.reading + ')' : '');
-        const line2 = document.createElement('div');
-        line2.style.cssText = 'color:var(--text-muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
-        line2.innerText = [entry.hanviet, entry.meaning].filter(Boolean).join(' — ') || '—';
-        infoDiv.appendChild(line1);
-        infoDiv.appendChild(line2);
-
-        const delBtn = document.createElement('button');
-        delBtn.innerHTML = '<i class="fas fa-times"></i>';
-        delBtn.style.cssText = 'border:none; background:none; color:var(--danger-color); cursor:pointer; font-size:13px; flex-shrink:0; padding:4px 6px;';
-        delBtn.onclick = () => removeWritingEntry(idx);
-
-        row.appendChild(numSpan);
-        row.appendChild(infoDiv);
-        row.appendChild(delBtn);
-        itemsBox.appendChild(row);
-    });
-}
-
-function showWritingHelp() {
-    window.alert(
-        'Cách dùng:\n\n' +
-        '1. Dán danh sách JSON dạng:\n[{"word":"학교","reading":"hakgyo","hanviet":"HỌC HIỆU","meaning":"Trường học"}]\n\n' +
-        '2. Hoặc dán văn bản bất kỳ rồi bấm "AI Format" để AI tự chuẩn hóa.\n\n' +
-        '3. Bấm "Thêm vào danh sách", sau đó "Tạo bản viết tay" để xem trước và xuất file.'
-    );
-}
-
-/* --------------------------------------------------------------------------
-   17.1 AI Format — chuẩn hóa text thô thành JSON qua Gemini (dùng chung
-   callGeminiAPI() đã có, không bịa dữ liệu khi không chắc chắn theo mục 7)
-   -------------------------------------------------------------------------- */
-async function aiFormatWritingInput() {
-    if (isWritingAiFormatting) return;
-
-    const textarea = document.getElementById('writing-textarea');
-    const raw = textarea ? textarea.value.trim() : '';
-    if (!raw) {
-        setWritingMsg('Vui lòng dán nội dung cần chuẩn hóa trước.', 'error');
-        return;
-    }
-
-    isWritingAiFormatting = true;
-    const btn = document.getElementById('btn-writing-ai-format');
-    if (btn) btn.disabled = true;
-    setWritingMsg('AI đang chuẩn hóa dữ liệu...', 'info');
-
-    const prompt = 'Người dùng dán đoạn văn bản sau, có thể chứa từ vựng tiếng Hàn xen lẫn text khác:\n\n"""\n' + raw + '\n"""\n\n' +
-        'Hãy trích xuất TỪNG từ/cụm từ tiếng Hàn xuất hiện trong đó và chuẩn hóa thành JSON. Với mỗi từ, chỉ điền "reading" (phiên âm La-tinh), "hanviet" (âm Hán-Việt NẾU từ đó là từ Hán-Hàn có âm Hán-Việt rõ ràng, để trống "" nếu là từ thuần Hàn hoặc không chắc chắn), và "meaning" (nghĩa tiếng Việt) khi bạn CHẮC CHẮN — không bịa đặt nếu không rõ, để trống chuỗi rỗng "" thay vì đoán bừa.\n\n' +
-        'Trả lời DUY NHẤT một mảng JSON hợp lệ, không markdown, không giải thích, theo đúng cấu trúc:\n' +
-        '[{"word": "<từ tiếng Hàn>", "reading": "<phiên âm>", "hanviet": "<âm Hán-Việt hoặc rỗng>", "meaning": "<nghĩa tiếng Việt hoặc rỗng>"}]';
-
-    try {
-        const rawResult = await callGeminiAPI(prompt);
-        const cleaned = rawResult.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
-        const firstBracket = cleaned.indexOf('[');
-        const lastBracket = cleaned.lastIndexOf(']');
-        const jsonSlice = (firstBracket !== -1 && lastBracket !== -1) ? cleaned.slice(firstBracket, lastBracket + 1) : cleaned;
-
-        const parsed = JSON.parse(jsonSlice);
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-            throw new Error('AI không trích xuất được từ vựng nào từ nội dung đã cho.');
-        }
-
-        const validEntries = parsed.filter(isValidWritingEntry).map(normalizeWritingEntry);
-        if (validEntries.length === 0) {
-            throw new Error('AI không trả về kết quả hợp lệ.');
-        }
-
-        // Hiển thị kết quả trong textarea để người dùng KIỂM TRA trước — không
-        // tự động thêm vào danh sách (đúng mục 7 spec).
-        if (textarea) textarea.value = JSON.stringify(validEntries, null, 2);
-        setWritingMsg('✓ AI đã chuẩn hóa ' + validEntries.length + ' từ. Vui lòng kiểm tra rồi bấm "Thêm vào danh sách".', 'success');
-    } catch (err) {
-        console.error('Lỗi AI Format:', err);
-        setWritingMsg('⚠️ ' + (err.message || 'Lỗi khi gọi AI Format'), 'error');
-    } finally {
-        isWritingAiFormatting = false;
-        if (btn) btn.disabled = false;
-    }
-}
-
-/* --------------------------------------------------------------------------
-   17.2 Chuyển màn hình + xây dựng Worksheet Data Model (nguồn chung cho cả
-   Preview / DOCX / PDF — đúng mục 20 spec: 3 nơi phải luôn khớp nội dung)
-   -------------------------------------------------------------------------- */
-function openWritingPreview() {
-    if (writingList.length === 0) {
-        setWritingMsg('⚠️ Chưa có từ vựng. Hãy thêm từ vựng trước.', 'error');
-        return;
-    }
-
-    document.getElementById('writing-list-screen').style.display = 'none';
-    document.getElementById('writing-preview-screen').style.display = 'block';
-    renderWritingA4Preview();
-}
-
-function backToWritingList() {
-    document.getElementById('writing-preview-screen').style.display = 'none';
-    document.getElementById('writing-list-screen').style.display = 'block';
-}
-
-function toggleWritingConfigPanel() {
-    const panel = document.getElementById('writing-config-panel');
-    if (!panel) return;
-    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-}
-
-/** Đọc toàn bộ input cấu hình trên UI vào writingConfig, rồi vẽ lại preview. */
-function applyWritingConfigFromUi() {
-    const orientationEl = document.getElementById('cfg-orientation');
-    const modeEl = document.getElementById('cfg-mode');
-    const rowsEl = document.getElementById('cfg-rows');
-    const readingEl = document.getElementById('cfg-show-reading');
-    const hanvietEl = document.getElementById('cfg-show-hanviet');
-    const meaningEl = document.getElementById('cfg-show-meaning');
-
-    if (orientationEl) writingConfig.orientation = orientationEl.value;
-    if (modeEl) writingConfig.mode = modeEl.value;
-    if (rowsEl) {
-        const n = parseInt(rowsEl.value, 10);
-        writingConfig.rowsPerWord = Number.isFinite(n) && n >= 1 && n <= 6 ? n : 2;
-    }
-    if (readingEl) writingConfig.showReading = readingEl.checked;
-    if (hanvietEl) writingConfig.showHanviet = hanvietEl.checked;
-    if (meaningEl) writingConfig.showMeaning = meaningEl.checked;
-
-    renderWritingA4Preview();
-}
-
-/**
- * Tách 1 từ tiếng Hàn thành mảng các ÂM TIẾT (không phải Jamo rời) — Unicode
- * Hangul syllable đã compose sẵn nên duyệt string sau khi normalize('NFC') là
- * đủ chính xác: "안녕하세요" -> ["안","녕","하","세","요"], "학교" -> ["학","교"].
- * Ký tự không phải Hangul (số, chữ Latin, dấu câu...) vẫn tách đúng theo từng
- * ký tự đơn, không gây lỗi.
- */
-function splitIntoSyllables(word) {
-    return [...String(word || '').normalize('NFC')];
-}
-
-/**
- * Xây dựng Worksheet Data Model: chia writingList thành các TRANG A4, mỗi
- * trang chứa các MỤC (1 mục = 1 từ), không cắt đôi 1 mục giữa 2 trang (mục 17
- * spec) — ước lượng chiều cao từng mục rồi gói theo thuật toán "bin packing"
- * đơn giản (greedy: hết chỗ trên trang hiện tại thì chuyển nguyên mục sang
- * trang mới).
- */
-function buildWorksheetPages() {
-    // Chiều cao khả dụng trên 1 trang A4 sau khi trừ margin, tính theo đơn vị
-    // "điểm ước lượng" (không cần chính xác tuyệt đối vì Preview/PDF dùng CSS
-    // đo thật, đây chỉ dùng để QUYẾT ĐỊNH mục nào rơi vào trang nào).
-    const PAGE_CAPACITY = writingConfig.orientation === 'landscape' ? 480 : 720;
-    const HEADER_HEIGHT = 60;
-    const ROW_HEIGHT = 46;
-
-    const pages = [];
-    let currentPage = [];
-    let currentHeight = 0;
-
-    writingList.forEach(entry => {
-        const itemHeight = HEADER_HEIGHT + (writingConfig.rowsPerWord * ROW_HEIGHT);
-
-        // Nếu mục không vừa trang hiện tại (và trang hiện tại không rỗng),
-        // chuyển toàn bộ mục sang trang mới — không bao giờ cắt đôi 1 mục.
-        if (currentHeight + itemHeight > PAGE_CAPACITY && currentPage.length > 0) {
-            pages.push(currentPage);
-            currentPage = [];
-            currentHeight = 0;
-        }
-
-        currentPage.push({
-            word: entry.word,
-            syllables: splitIntoSyllables(entry.word),
-            reading: entry.reading,
-            hanviet: entry.hanviet,
-            meaning: entry.meaning
-        });
-        currentHeight += itemHeight;
-    });
-
-    if (currentPage.length > 0) pages.push(currentPage);
-    if (pages.length === 0) pages.push([]);
-    return pages;
-}
-
-/** Dựng 1 "ô luyện viết" (div vuông, có thể chứa chữ mẫu mờ để đồ theo). */
-function buildTraceCellElement(char, showGhost) {
-    const cell = document.createElement('div');
-    cell.style.cssText = 'width:38px; height:38px; border:1px solid #999; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;';
-    if (showGhost && char) {
-        cell.style.color = '#c8c8c8';
-        cell.innerText = char;
-    }
-    return cell;
-}
-
-/** Dựng 1 trang A4 (DOM element) từ danh sách mục — dùng chung cho Preview và PDF (html2canvas chụp đúng element này). */
-function buildA4PageElement(pageItems, pageNumber, totalPages) {
-    const isLandscape = writingConfig.orientation === 'landscape';
-    const page = document.createElement('div');
-    page.className = 'writing-a4-page';
-    // Margin KHÔNG đặt ở đây — để CSS class .writing-a4-page kiểm soát, vì
-    // các breakpoint responsive (@media max-width:480px...) cần ghi đè margin
-    // theo tỷ lệ scale khác nhau. Inline style có độ ưu tiên cao hơn class
-    // trong file .css nên nếu margin bị set ở đây, mọi rule responsive trong
-    // style.css sẽ vô tác dụng — đây chính là lỗi đã xảy ra và được sửa.
-    page.style.cssText = 'width:' + (isLandscape ? '297mm' : '210mm') + '; height:' + (isLandscape ? '210mm' : '297mm') +
-        '; background:white; padding:14mm 12mm; box-sizing:border-box; box-shadow:0 2px 10px rgba(0,0,0,0.3); font-family:' + WRITING_FONT_STACK + '; color:#1a1a1a; position:relative;';
-
-    pageItems.forEach(item => {
-        const block = document.createElement('div');
-        block.style.cssText = 'margin-bottom:14px;';
-
-        const headerRow = document.createElement('div');
-        headerRow.style.cssText = 'display:flex; align-items:baseline; gap:8px; margin-bottom:4px; flex-wrap:wrap;';
-
-        const wordSpan = document.createElement('span');
-        wordSpan.style.cssText = 'font-size:20px; font-weight:700;';
-        wordSpan.innerText = item.word;
-        headerRow.appendChild(wordSpan);
-
+  }
+};
+
+// ==================== STARTUP ====================
+document.addEventListener('DOMContentLoaded', () => {
+  A.init();
+  document.getElementById('themeBtn').addEventListener('click', () => A.toggleTheme());
+});
