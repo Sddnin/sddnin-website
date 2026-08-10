@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#3b82f6">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="description" content="Ứng dụng học tiếng Hàn toàn diện cho người Việt - TOPIK, giao tiếp, AI">
+<meta name="description" content="Ứng dụng học tiếng Hàn toàn diện cho người Việt">
 <title>Học Tiếng Hàn 2.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
 </head>
 <body>
 <div id="app">
-  <!-- HEADER -->
   <header>
     <div class="logo"><span class="flag">🇰🇷</span>Học Tiếng Hàn</div>
     <div class="header-stats">
@@ -26,10 +25,8 @@
     </div>
   </header>
 
-  <!-- CATEGORY BAR -->
   <div class="cat-bar" id="catBar"></div>
 
-  <!-- MAIN -->
   <main>
     <!-- DICTIONARY -->
     <section class="view active" id="v-dict">
@@ -84,18 +81,10 @@
       <div id="gameSelect">
         <h2 style="margin-bottom:14px;font-size:1.1rem">🎮 Mini Games</h2>
         <div class="game-select">
-          <div class="game-card" onclick="A.game.start('quiz')">
-            <div class="g-icon">📝</div><div class="g-name">Trắc nghiệm</div><div class="g-desc">Chọn nghĩa đúng</div>
-          </div>
-          <div class="game-card" onclick="A.game.start('match')">
-            <div class="g-icon">🔗</div><div class="g-name">Nối từ</div><div class="g-desc">Ghép cặp Hàn-Việt</div>
-          </div>
-          <div class="game-card" onclick="A.game.start('typing')">
-            <div class="g-icon">⌨️</div><div class="g-name">Gõ phím</div><div class="g-desc">Nhập tiếng Hàn</div>
-          </div>
-          <div class="game-card" onclick="A.game.start('speak')">
-            <div class="g-icon">🎤</div><div class="g-name">Luyện nói</div><div class="g-desc">Phát âm chuẩn</div>
-          </div>
+          <div class="game-card" onclick="A.game.start('quiz')"><div class="g-icon">📝</div><div class="g-name">Trắc nghiệm</div><div class="g-desc">Chọn nghĩa đúng</div></div>
+          <div class="game-card" onclick="A.game.start('match')"><div class="g-icon">🔗</div><div class="g-name">Nối từ</div><div class="g-desc">Ghép cặp Hàn-Việt</div></div>
+          <div class="game-card" onclick="A.game.start('typing')"><div class="g-icon">⌨️</div><div class="g-name">Gõ phím</div><div class="g-desc">Nhập tiếng Hàn</div></div>
+          <div class="game-card" onclick="A.game.start('speak')"><div class="g-icon">🎤</div><div class="g-name">Luyện nói</div><div class="g-desc">Phát âm chuẩn</div></div>
         </div>
       </div>
       <div class="game-area" id="gameArea">
@@ -131,7 +120,7 @@
         <div class="vt-title">📞 Gọi điện với AI</div>
         <div class="vt-desc">Nói chuyện trực tiếp bằng tiếng Hàn.<br>AI sẽ nghe, trả lời và sửa lỗi cho bạn.</div>
         <div class="vt-call-btn" onclick="A.voice.startCall()">📞</div>
-        <div class="vt-info">Yêu cầu microphone • Dùng Gemini Live API</div>
+        <div class="vt-info">Yêu cầu microphone • Gemini 3.1 Flash Live</div>
       </div>
     </section>
 
@@ -163,71 +152,26 @@
     <!-- SETTINGS -->
     <section class="view" id="v-settings">
       <h2 style="margin-bottom:14px;font-size:1.1rem">⚙️ Cài đặt</h2>
-
       <div class="set-section">
         <h3>Giao diện</h3>
-        <div class="set-item">
-          <div><div class="s-label">Chế độ tối</div><div class="s-desc">Dark / Light mode</div></div>
-          <div class="toggle" id="tDark" onclick="A.settings.toggleDark()"></div>
-        </div>
+        <div class="set-item"><div><div class="s-label">Chế độ tối</div><div class="s-desc">Dark / Light mode</div></div><div class="toggle" id="tDark" onclick="A.settings.toggleDark()"></div></div>
       </div>
-
       <div class="set-section">
         <h3>Phát âm</h3>
-        <div class="set-item">
-          <div class="s-label">Tốc độ đọc</div>
-          <select id="sSpeed" onchange="A.settings.save()">
-            <option value="0.6">Chậm</option>
-            <option value="0.8" selected>Bình thường</option>
-            <option value="1">Nhanh</option>
-          </select>
-        </div>
-        <div class="set-item">
-          <div><div class="s-label">Tự phát âm khi lật</div></div>
-          <div class="toggle" id="tAutoTTS" onclick="A.settings.toggle('autoTTS')"></div>
-        </div>
+        <div class="set-item"><div class="s-label">Tốc độ đọc</div><select id="sSpeed" onchange="A.settings.save()"><option value="0.6">Chậm</option><option value="0.8" selected>Bình thường</option><option value="1">Nhanh</option></select></div>
+        <div class="set-item"><div><div class="s-label">Tự phát âm khi lật</div></div><div class="toggle" id="tAutoTTS" onclick="A.settings.toggle('autoTTS')"></div></div>
       </div>
-
       <div class="set-section">
         <h3>Học tập</h3>
-        <div class="set-item">
-          <div class="s-label">Số từ mỗi phiên</div>
-          <select id="sSession" onchange="A.settings.save()">
-            <option value="10">10</option>
-            <option value="20" selected>20</option>
-            <option value="30">30</option>
-            <option value="50">50</option>
-          </select>
-        </div>
-        <div class="set-item">
-          <div><div class="s-label">Ưu tiên từ khó</div></div>
-          <div class="toggle" id="tPriorHard" onclick="A.settings.toggle('priorHard')"></div>
-        </div>
+        <div class="set-item"><div class="s-label">Số từ mỗi phiên</div><select id="sSession" onchange="A.settings.save()"><option value="10">10</option><option value="20" selected>20</option><option value="30">30</option><option value="50">50</option></select></div>
+        <div class="set-item"><div><div class="s-label">Ưu tiên từ khó</div></div><div class="toggle" id="tPriorHard" onclick="A.settings.toggle('priorHard')"></div></div>
       </div>
-
       <div class="set-section">
         <h3>AI — Gemini</h3>
-        <div class="set-item" style="flex-direction:column;align-items:stretch;gap:8px">
-          <div class="s-label">Gemini API Key</div>
-          <input type="password" id="sApiKey" placeholder="Nhập API key..." onchange="A.settings.save()">
-          <div class="s-desc">Lưu tại browser, không gửi nơi khác</div>
-        </div>
-        <div class="set-item">
-          <div class="s-label">Model Chat</div>
-          <select id="sChatModel" onchange="A.settings.save()">
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-            <option value="gemini-2.0-flash" selected>Gemini 2.0 Flash</option>
-            <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-          </select>
-        </div>
-        <div class="set-item">
-          <div class="s-label">Model Voice (Live)</div>
-          <select id="sVoiceModel" onchange="A.settings.save()">
-            <option value="gemini-2.0-flash-live-001" selected>Gemini 2.0 Flash Live</option>
-          </select>
-        </div>
+        <div class="set-item" style="flex-direction:column;align-items:stretch;gap:8px"><div class="s-label">Gemini API Key</div><input type="password" id="sApiKey" placeholder="Nhập API key..." onchange="A.settings.save()"><div class="s-desc">Lưu tại browser, không gửi nơi khác</div></div>
+        <div class="set-item"><div class="s-label">Model Chat</div><select id="sChatModel" onchange="A.settings.save()"><option value="gemini-3.6-flash" selected>Gemini 3.6 Flash</option><option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option><option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option></select></div>
+        <div class="set-item"><div class="s-label">Model Voice (Live)</div><select id="sVoiceModel" onchange="A.settings.save()"><option value="gemini-3.1-flash-live-preview" selected>Gemini 3.1 Flash Live</option></select></div>
       </div>
-
       <div class="set-section">
         <h3>Dữ liệu</h3>
         <div class="set-item d-flex gap-8" style="flex-wrap:wrap">
@@ -235,14 +179,11 @@
           <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()">📥 Import</button>
           <input type="file" id="importFile" accept=".json" style="display:none" onchange="A.data.import(event)">
         </div>
-        <div class="set-item">
-          <button class="btn btn-danger btn-sm" onclick="A.data.reset()">🗑 Xóa tất cả dữ liệu</button>
-        </div>
+        <div class="set-item"><button class="btn btn-danger btn-sm" onclick="A.data.reset()">🗑 Xóa tất cả dữ liệu</button></div>
       </div>
     </section>
   </main>
 
-  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button onclick="A.nav('dict')" data-v="dict" class="active">📖<span>Tra từ</span></button>
     <button onclick="A.nav('flashcard')" data-v="flashcard">🃏<span>Flash</span></button>
@@ -254,38 +195,22 @@
     <button onclick="A.nav('settings')" data-v="settings">⚙️<span>Cài</span></button>
   </nav>
 
-  <!-- WORD MODAL -->
   <div class="modal-overlay" id="wordModal" onclick="if(event.target===this)A.closeModal()">
     <div class="modal"><div class="modal-handle"></div><div id="modalBody"></div></div>
   </div>
 
-  <!-- ADD WORD MODAL -->
   <div class="modal-overlay" id="addModal" onclick="if(event.target===this)A.closeAddModal()">
-    <div class="modal">
-      <div class="modal-handle"></div>
-      <h2 style="margin-bottom:14px">➕ Thêm từ mới</h2>
-      <div id="addBody"></div>
-    </div>
+    <div class="modal"><div class="modal-handle"></div><h2 style="margin-bottom:14px">➕ Thêm từ mới</h2><div id="addBody"></div></div>
   </div>
 
-  <!-- VOICE CALL OVERLAY -->
   <div class="vc-overlay" id="vcOverlay">
-    <div class="vc-status">
-      <div class="vc-dot" id="vcDot"></div>
-      <span id="vcStatusText">Đang kết nối...</span>
-    </div>
+    <div class="vc-status"><div class="vc-dot" id="vcDot"></div><span id="vcStatusText">Đang kết nối...</span></div>
     <div class="vc-timer" id="vcTimer">00:00</div>
     <div class="vc-avatar-area">
-      <div class="vc-avatar">
-        <div class="vc-avatar-ring" id="vcRing"></div>
-        🤖
-      </div>
+      <div class="vc-avatar"><div class="vc-avatar-ring" id="vcRing"></div>🤖</div>
       <div class="vc-name">AI Korean Teacher</div>
     </div>
-    <div class="vc-wave" id="vcWave">
-      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-      <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-    </div>
+    <div class="vc-wave" id="vcWave"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
     <div class="vc-transcript" id="vcTranscript"></div>
     <div class="vc-controls">
       <div class="vc-ctrl mute" id="vcMute" onclick="A.voice.toggleMute()">🎤</div>
@@ -294,11 +219,9 @@
     </div>
   </div>
 
-  <!-- TOAST -->
   <div class="toast-box" id="toastBox"></div>
 </div>
 
-<script src="js/pcm-worklet.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
