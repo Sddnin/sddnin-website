@@ -1,373 +1,533 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Học Tiếng Hàn 3.0 - AI Chat & Game Luyện Nói</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#3b82f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Học Tiếng Hàn 2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET ========== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#f0f4f8;--surface:#ffffff;--surface2:#f8fafc;--surface3:#eef2f6;
+--border:#e2e8f0;--text:#1e293b;--text2:#475569;--text3:#94a3b8;
+--primary:#3b82f6;--primary-dark:#2563eb;--primary-light:#dbeafe;--primary-glow:rgba(59,130,246,.15);
+--success:#10b981;--success-light:#d1fae5;--error:#ef4444;--error-light:#fee2e2;
+--warn:#f59e0b;--warn-light:#fef3c7;--purple:#8b5cf6;--purple-light:#ede9fe;
+--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+--shadow-md:0 4px 12px rgba(0,0,0,.07);--shadow-lg:0 12px 24px rgba(0,0,0,.1);
+--radius:14px;--radius-sm:10px;--radius-lg:20px;--radius-xl:28px;
+--font:'Noto Sans KR',system-ui,sans-serif;
+--nav-h:68px;--header-h:56px;
+--ease:cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+--bg:#0c1222;--surface:#151e30;--surface2:#1c2740;--surface3:#243050;
+--border:#2a3650;--text:#e8edf5;--text2:#94a3c0;--text3:#586880;
+--primary:#60a5fa;--primary-dark:#3b82f6;--primary-light:#172554;
+--primary-glow:rgba(96,165,250,.12);
+--shadow:0 1px 3px rgba(0,0,0,.25);--shadow-md:0 4px 12px rgba(0,0,0,.3);--shadow-lg:0 12px 24px rgba(0,0,0,.35);
+}
+html{font-size:16px;-webkit-tap-highlight-color:transparent;scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;transition:background .3s,color .3s;-webkit-font-smoothing:antialiased}
+button{font-family:var(--font);cursor:pointer;border:none;outline:none;background:none;color:inherit;font-size:inherit}
+input,textarea,select{font-family:var(--font);outline:none;border:1.5px solid var(--border);background:var(--surface);color:var(--text);border-radius:var(--radius-sm);padding:10px 14px;font-size:.95rem;transition:border .2s,box-shadow .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+::placeholder{color:var(--text3)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ========== APP LAYOUT ========== */
+#app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+header{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:var(--header-h);display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+header .logo{font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:8px}
+header .logo .flag{font-size:1.2rem}
+.header-stats{display:flex;gap:10px;font-size:.75rem;color:var(--text2);font-weight:600}
+.header-stats .st{display:flex;align-items:center;gap:3px;background:var(--surface2);padding:4px 8px;border-radius:20px}
+.header-actions{display:flex;gap:4px}
+.header-actions button{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:var(--surface2);transition:all .2s}
+.header-actions button:active{transform:scale(.92)}
+
+/* ========== CATEGORY BAR ========== */
+.cat-bar{display:flex;gap:6px;padding:8px 16px;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border);scrollbar-width:none}
+.cat-bar::-webkit-scrollbar{display:none}
+.cat-bar button{padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;white-space:nowrap;background:var(--surface2);color:var(--text2);border:1.5px solid var(--border);transition:all .2s;flex-shrink:0}
+.cat-bar button.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px var(--primary-glow)}
+.cat-bar button:active{transform:scale(.95)}
+
+/* ========== BOTTOM NAV ========== */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;padding-bottom:env(safe-area-inset-bottom,0)}
+.bottom-nav button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;font-size:1.15rem;transition:all .2s;border-radius:var(--radius-sm);min-width:40px;color:var(--text3);position:relative}
+.bottom-nav button span{font-size:.58rem;font-weight:600;letter-spacing:.3px}
+.bottom-nav button.active{color:var(--primary)}
+.bottom-nav button.active::after{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:20px;height:3px;background:var(--primary);border-radius:0 0 3px 3px}
+
+/* ========== MAIN ========== */
+main{flex:1;padding:14px 16px;padding-bottom:calc(var(--nav-h) + 14px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.view{display:none;animation:fadeUp .3s var(--ease)}
+.view.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ========== CARDS & COMPONENTS ========== */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .2s}
+.card:active{transform:scale(.985)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:var(--radius-sm);font-size:.9rem;font-weight:600;transition:all .15s;position:relative;overflow:hidden}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 2px 8px var(--primary-glow)}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-sm{padding:7px 14px;font-size:.8rem}
+.btn-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.05rem;background:var(--surface2);transition:all .2s}
+.btn-icon:active{transform:scale(.88)}
+.btn-danger{background:var(--error);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.badge.beginner{background:#dbeafe;color:#2563eb}
+.badge.intermediate{background:#fef3c7;color:#d97706}
+.badge.advanced{background:#fee2e2;color:#dc2626}
+
+/* ========== SEARCH ========== */
+.search-box{position:relative;margin-bottom:14px}
+.search-box input{width:100%;padding:12px 16px 12px 42px;border-radius:var(--radius);font-size:.92rem;background:var(--surface)}
+.search-box .s-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:1rem;pointer-events:none}
+.search-box .clear-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;background:var(--surface3);display:none;align-items:center;justify-content:center;font-size:.7rem;color:var(--text3)}
+.search-box .clear-btn.show{display:flex}
+
+/* ========== WORD LIST ========== */
+.word-list{display:flex;flex-direction:column;gap:6px}
+.word-item{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s}
+.word-item:active{transform:scale(.98);background:var(--surface2)}
+.word-item .w-main{flex:1;min-width:0}
+.word-item .w-kr{font-size:1.15rem;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.word-item .w-vi{font-size:.84rem;color:var(--text2);margin-top:3px}
+.word-item .w-roman{font-size:.72rem;color:var(--text3);font-style:italic}
+.word-item .w-actions{display:flex;gap:2px;flex-shrink:0}
+.word-item .w-actions button{opacity:.5;transition:opacity .2s}
+.word-item .w-actions button:active{opacity:1}
+
+/* ========== MODAL ========== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:20px 24px 32px;animation:modalUp .35s var(--ease)}
+@keyframes modalUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
+.modal h2{font-size:1.4rem;margin-bottom:4px}
+.modal .d-roman{color:var(--primary);font-size:.88rem;margin-bottom:14px;font-weight:500}
+.modal .d-row{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.modal .d-row:last-child{border:none}
+.modal .d-label{font-size:.78rem;color:var(--text3);min-width:76px;flex-shrink:0;padding-top:2px}
+.modal .d-val{font-size:.88rem;line-height:1.6}
+.modal .d-actions{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+
+/* ========== FLASHCARD ========== */
+.fc-wrapper{max-width:420px;margin:0 auto;position:relative}
+.fc-container{perspective:1200px;position:relative;touch-action:pan-y}
+.flashcard{position:relative;width:100%;min-height:300px;cursor:pointer;transform-style:preserve-3d;transition:transform .55s var(--ease);will-change:transform}
+.flashcard.swiping{transition:none}
+.flashcard.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg)}
+.fc-back{transform:rotateY(180deg)}
+.fc-face .fc-big{font-size:2.6rem;font-weight:700;margin-bottom:10px;text-align:center;line-height:1.3}
+.fc-face .fc-sub{font-size:1rem;color:var(--text2);text-align:center}
+.fc-face .fc-phon{font-size:.88rem;color:var(--primary);margin-top:8px;font-weight:500}
+.fc-face .fc-pos{font-size:.72rem;color:var(--text3);margin-top:4px;padding:2px 10px;background:var(--surface2);border-radius:12px}
+.fc-swipe-hint{position:absolute;top:50%;transform:translateY(-50%);font-size:2rem;opacity:0;transition:opacity .2s;pointer-events:none;z-index:2}
+.fc-swipe-hint.left{left:10px}.fc-swipe-hint.right{right:10px}
+.fc-controls{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:24px}
+.fc-controls button{width:48px;height:48px;border-radius:50%;font-size:1.2rem;background:var(--surface);border:2px solid var(--border);transition:all .2s;display:flex;align-items:center;justify-content:center}
+.fc-controls button:active{transform:scale(.88);border-color:var(--primary)}
+.fc-controls .fc-main{width:56px;height:56px;background:var(--primary);color:#fff;border-color:var(--primary);font-size:1.4rem;box-shadow:0 4px 16px var(--primary-glow)}
+.fc-progress{text-align:center;margin-top:14px;color:var(--text2);font-size:.82rem;font-weight:500}
+.fc-bar{height:5px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden}
+.fc-bar .fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--purple));border-radius:3px;transition:width .3s}
+.fc-mode-bar{display:flex;gap:6px;margin-bottom:14px;justify-content:center;flex-wrap:wrap}
+.fc-mode-bar button{padding:5px 12px;border-radius:16px;font-size:.72rem;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);transition:all .2s}
+.fc-mode-bar button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.fc-due-badge{background:var(--error);color:#fff;padding:2px 7px;border-radius:10px;font-size:.65rem;font-weight:700;margin-left:4px}
+
+/* ========== GAMES ========== */
+.game-select{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.game-card{padding:20px 14px;text-align:center;cursor:pointer;border:2px solid var(--border);border-radius:var(--radius);transition:all .2s;background:var(--surface)}
+.game-card:active{transform:scale(.96);border-color:var(--primary)}
+.game-card .g-icon{font-size:2.2rem;margin-bottom:6px}
+.game-card .g-name{font-weight:700;font-size:.9rem}
+.game-card .g-desc{font-size:.72rem;color:var(--text3);margin-top:3px}
+.game-area{display:none}.game-area.active{display:block;animation:fadeUp .3s}
+.game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.game-score{display:flex;gap:14px;font-size:.82rem;color:var(--text2);font-weight:600}
+.game-score span{background:var(--surface2);padding:3px 10px;border-radius:12px}
+.quiz-q{text-align:center;padding:20px 16px;font-size:2rem;font-weight:700;line-height:1.3}
+.quiz-sub{text-align:center;color:var(--text2);font-size:.88rem;margin-bottom:14px}
+.quiz-opt{display:block;width:100%;text-align:left;padding:14px 16px;margin-bottom:8px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.95rem;transition:all .2s;background:var(--surface)}
+.quiz-opt:active:not(.done){background:var(--primary-light);border-color:var(--primary)}
+.quiz-opt.correct{border-color:var(--success);background:var(--success-light);color:#065f46}
+.quiz-opt.wrong{border-color:var(--error);background:var(--error-light);color:#991b1b}
+.quiz-opt.done{opacity:.65;cursor:default}
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.match-col{display:flex;flex-direction:column;gap:7px}
+.match-item{padding:13px 10px;text-align:center;border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;font-size:.88rem;font-weight:500;background:var(--surface)}
+.match-item:active{border-color:var(--primary)}
+.match-item.sel{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark)}
+.match-item.matched{border-color:var(--success);background:var(--success-light);opacity:.5;pointer-events:none}
+.match-item.wrong-anim{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.type-input{width:100%;padding:16px;font-size:1.4rem;text-align:center;border:2px solid var(--border);border-radius:var(--radius);margin:14px 0;background:var(--surface)}
+.type-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.type-result{text-align:center;padding:12px;border-radius:var(--radius-sm);margin-top:10px;font-weight:600;font-size:.92rem}
+.speak-mic{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,var(--error),#f87171);color:#fff;font-size:2.2rem;margin:16px auto;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 4px 20px rgba(239,68,68,.3)}
+.speak-mic:active{transform:scale(.92)}
+.speak-mic.rec{animation:micPulse 1.5s infinite}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 18px rgba(239,68,68,0)}}
+.game-result{text-align:center;padding:30px 16px}
+.game-result .r-icon{font-size:3rem;margin-bottom:10px}
+.game-result .r-score{font-size:2rem;font-weight:700;margin-bottom:6px}
+
+/* ========== AI CHAT ========== */
+.chat-top{margin-bottom:10px}
+.chat-models{display:flex;gap:5px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;flex-wrap:nowrap}
+.chat-models::-webkit-scrollbar{display:none}
+.chat-models button{padding:5px 11px;border-radius:14px;font-size:.7rem;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);white-space:nowrap;transition:all .2s;flex-shrink:0}
+.chat-models button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.chat-scenes{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
+.chat-scenes::-webkit-scrollbar{display:none}
+.chat-scenes button{padding:7px 14px;border-radius:18px;font-size:.78rem;white-space:nowrap;border:1.5px solid var(--border);background:var(--surface);transition:all .2s;font-weight:500;flex-shrink:0}
+.chat-scenes button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.chat-box{display:flex;flex-direction:column;height:calc(100vh - var(--header-h) - var(--cat-h) - var(--nav-h) - 120px);min-height:300px}
+.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:10px;-webkit-overflow-scrolling:touch}
+.c-msg{max-width:82%;padding:11px 15px;border-radius:var(--radius);font-size:.88rem;line-height:1.7;word-break:break-word}
+.c-msg.ai{background:var(--primary-light);color:var(--primary-dark);align-self:flex-start;border-bottom-left-radius:4px}
+.c-msg.user{background:var(--primary);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.c-msg .c-err{color:var(--error)}
+.c-input{display:flex;gap:8px;padding-top:10px;border-top:1px solid var(--border)}
+.c-input input{flex:1}
+.c-input button{flex-shrink:0}
+.clear-chat-btn{font-size:.72rem;color:var(--text3);cursor:pointer;padding:4px 8px;border-radius:8px;transition:all .2s;float:right}
+.clear-chat-btn:hover{color:var(--error);background:var(--error-light)}
+
+/* ========== VOICE CALL ========== */
+.voice-tab{text-align:center;padding:30px 16px}
+.voice-tab .vt-title{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.voice-tab .vt-desc{font-size:.82rem;color:var(--text3);margin-bottom:28px;line-height:1.6}
+.voice-tab .vt-call-btn{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--success),#34d399);color:#fff;font-size:2.8rem;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(16,185,129,.35);transition:all .2s;cursor:pointer}
+.voice-tab .vt-call-btn:active{transform:scale(.9)}
+.voice-tab .vt-info{font-size:.75rem;color:var(--text3)}
+
+/* VOICE CALL OVERLAY */
+.vc-overlay{display:none;position:fixed;inset:0;z-index:300;flex-direction:column;align-items:center;justify-content:space-between;padding:40px 24px 50px;background:linear-gradient(170deg,#0a0e1a 0%,#131b30 40%,#1a1040 100%);color:#fff;overflow:hidden}
+.vc-overlay.show{display:flex}
+.vc-overlay::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 50% 80%,rgba(99,102,241,.08) 0%,transparent 50%);pointer-events:none}
+.vc-status{font-size:.85rem;opacity:.7;display:flex;align-items:center;gap:8px}
+.vc-dot{width:8px;height:8px;border-radius:50%;background:#666}
+.vc-dot.connecting{background:var(--warn);animation:vcBlink 1s infinite}
+.vc-dot.connected{background:var(--success);animation:vcGlow 2s infinite}
+@keyframes vcBlink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes vcGlow{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}50%{box-shadow:0 0 0 8px rgba(16,185,129,0)}}
+.vc-timer{font-size:1.4rem;font-weight:300;font-variant-numeric:tabular-nums;letter-spacing:2px;margin-top:4px}
+.vc-avatar-area{display:flex;flex-direction:column;align-items:center;gap:14px}
+.vc-avatar{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3.5rem;background:linear-gradient(135deg,#1e3a5f,#2d1b69);position:relative}
+.vc-avatar-ring{position:absolute;inset:-6px;border-radius:50%;border:2px solid transparent;opacity:0;transition:opacity .3s}
+.vc-avatar-ring.active{opacity:1;border-color:rgba(96,165,250,.5);animation:ringPulse 2s infinite}
+@keyframes ringPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.08);opacity:1}}
+.vc-name{font-size:1.1rem;font-weight:600}
+.vc-wave{display:flex;align-items:center;justify-content:center;gap:3px;height:50px;opacity:0;transition:opacity .3s}
+.vc-wave.active{opacity:1}
+.vc-wave .bar{width:3px;border-radius:2px;background:linear-gradient(180deg,var(--primary),var(--purple));animation:waveBar 1.2s ease-in-out infinite}
+.vc-wave .bar:nth-child(1){animation-delay:0s;height:12px}
+.vc-wave .bar:nth-child(2){animation-delay:.1s;height:22px}
+.vc-wave .bar:nth-child(3){animation-delay:.15s;height:30px}
+.vc-wave .bar:nth-child(4){animation-delay:.2s;height:38px}
+.vc-wave .bar:nth-child(5){animation-delay:.25s;height:30px}
+.vc-wave .bar:nth-child(6){animation-delay:.3s;height:22px}
+.vc-wave .bar:nth-child(7){animation-delay:.35s;height:12px}
+@keyframes waveBar{0%,100%{height:12px}50%{height:var(--h,30px)}}
+.vc-transcript{max-height:160px;width:100%;overflow-y:auto;font-size:.8rem;line-height:1.8;opacity:.85;text-align:left;padding:12px;background:rgba(255,255,255,.04);border-radius:var(--radius);margin-bottom:10px}
+.vc-transcript .tc-ai{color:#93c5fd}.vc-transcript .tc-user{color:#86efac}.tc-sys{color:rgba(255,255,255,.35);font-style:italic}
+.vc-controls{display:flex;align-items:center;gap:28px}
+.vc-ctrl{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;transition:all .2s;cursor:pointer}
+.vc-ctrl:active{transform:scale(.88)}
+.vc-ctrl.mute{background:rgba(255,255,255,.1)}
+.vc-ctrl.mute.on{background:var(--error);color:#fff}
+.vc-ctrl.end{width:68px;height:68px;background:var(--error);color:#fff;font-size:1.6rem;box-shadow:0 4px 20px rgba(239,68,68,.4)}
+.vc-ctrl.speaker{background:rgba(255,255,255,.1)}
+.vc-ctrl.speaker.on{background:var(--primary);color:#fff}
+
+/* ========== WRITING ========== */
+.wr-options{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.wr-options label{display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer}
+.wr-preview{background:#fff;color:#000;padding:30px;border-radius:var(--radius);min-height:300px;font-family:'Noto Sans KR',sans-serif}
+.wr-line{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px dashed #ddd}
+.wr-line .kr-w{font-size:1.7rem;font-weight:600;width:110px;flex-shrink:0}
+.wr-line .guide{flex:0 0 120px;display:flex;flex-direction:column;gap:2px}
+.wr-line .guide .roman{font-size:.75rem;color:#999}.wr-line .guide .meaning{font-size:.82rem;color:#666}
+.wr-line .practice{flex:1;border-bottom:2px solid #ccc;min-height:44px;font-size:1.7rem;display:flex;align-items:center;letter-spacing:4px}
+
+/* ========== STATS ========== */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.st-card{padding:16px;border-radius:var(--radius);text-align:center}
+.st-card .st-icon{font-size:1.4rem;margin-bottom:4px}
+.st-card .st-val{font-size:1.8rem;font-weight:700}
+.st-card .st-lbl{font-size:.72rem;color:var(--text2);margin-top:2px}
+.st-card.blue{background:var(--primary-light);color:var(--primary)}
+.st-card.green{background:var(--success-light);color:var(--success)}
+.st-card.red{background:var(--error-light);color:var(--error)}
+.st-card.yellow{background:var(--warn-light);color:var(--warn)}
+.st-card.purple{background:var(--purple-light);color:var(--purple)}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.chart-box h3{font-size:.85rem;margin-bottom:10px;color:var(--text2)}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:100px}
+.bar-chart .b{flex:1;background:var(--primary);border-radius:3px 3px 0 0;transition:height .4s;min-width:6px;position:relative}
+.bar-chart .b:hover::after{content:attr(data-v);position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.62rem;background:var(--text);color:var(--bg);padding:2px 5px;border-radius:4px;white-space:nowrap}
+.streak-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.streak-calendar .sc-day{aspect-ratio:1;border-radius:3px;background:var(--surface3);font-size:.5rem;display:flex;align-items:center;justify-content:center;color:var(--text3)}
+.streak-calendar .sc-day.active{background:var(--success);color:#fff}
+.streak-calendar .sc-day.today{outline:2px solid var(--primary)}
+
+/* ========== SETTINGS ========== */
+.set-section{margin-bottom:22px}
+.set-section h3{font-size:.78rem;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.set-item{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border)}
+.set-item:last-child{border:none}
+.set-item .s-label{font-size:.9rem;font-weight:500}
+.set-item .s-desc{font-size:.72rem;color:var(--text3);margin-top:2px}
+.toggle{position:relative;width:46px;height:26px;background:var(--border);border-radius:13px;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--primary)}
+.toggle::after{content:'';position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.toggle.on::after{transform:translateX(20px)}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2394a3b8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+
+/* ========== ADD WORD MODAL ========== */
+.add-form{display:flex;flex-direction:column;gap:12px}
+.add-form input,.add-form select,.add-form textarea{width:100%}
+.add-form textarea{min-height:60px;resize:vertical}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ========== TOAST ========== */
+.toast-box{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:400;display:flex;flex-direction:column;gap:6px;pointer-events:none;width:90%;max-width:380px}
+.toast{padding:11px 16px;border-radius:var(--radius-sm);font-size:.84rem;font-weight:600;color:#fff;animation:tIn .3s var(--ease),tOut .3s 2.7s var(--ease) forwards;box-shadow:var(--shadow-lg);pointer-events:auto;text-align:center}
+.toast.success{background:var(--success)}.toast.error{background:var(--error)}.toast.info{background:var(--primary)}.toast.warning{background:var(--warn)}
+@keyframes tIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{to{opacity:0;transform:translateY(-8px)}}
+
+/* ========== EMPTY ========== */
+.empty{text-align:center;padding:36px 20px;color:var(--text3)}
+.empty .e-icon{font-size:2.8rem;margin-bottom:10px}
+.empty p{font-size:.88rem;line-height:1.6}
+
+/* ========== MISC ========== */
+.d-flex{display:flex}.gap-8{gap:8px}.gap-6{gap:6px}.flex-1{flex:1}.a-center{align-items:center}.j-between{justify-content:space-between}.mt-8{margin-top:8px}.mt-16{margin-top:16px}.text-center{text-align:center}
+
+/* ========== RESPONSIVE ========== */
+@media(min-width:768px){
+main{max-width:680px;margin:0 auto;padding:20px 24px}
+.bottom-nav{max-width:680px;left:50%;transform:translateX(-50%);border-radius:var(--radius) var(--radius) 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.bottom-nav button span{display:block}
+.fc-wrapper{max-width:460px}
+}
+@media(min-width:1024px){
+main{max-width:860px}
+}
+@media print{
+header,.bottom-nav,.cat-bar,.modal-overlay,.toast-box,.vc-overlay{display:none!important}
+main{padding:0!important}.view{display:block!important}
+body{background:#fff!important;color:#000!important}
+.wr-preview{border:none!important;padding:10px!important}
+}
+</style>
 </head>
 <body>
-
-    <div class="top-bar">
-        <div class="app-title"><i class="fas fa-robot"></i> Hàn-Việt 3.0</div>
-        <div class="top-actions">
-            <div class="streak-badge"><i class="fas fa-fire"></i> <span id="daily-streak">1</span> ngày</div>
-            <button class="btn-icon-top" id="btn-open-add" title="Thêm từ mới"><i class="fas fa-plus"></i></button>
-            <button class="btn-icon-top" id="btn-export-import" title="Xuất/Nhập Dữ Liệu JSON"><i class="fas fa-file-export"></i></button>
-            <button class="btn-icon-top" id="btn-toggle-theme" title="Tối/Sáng"><i class="fas fa-moon" id="theme-icon"></i></button>
-        </div>
+<div id="app">
+<!-- HEADER -->
+<header>
+  <div class="logo"><span class="flag">🇰🇷</span>Học Tiếng Hàn</div>
+  <div class="header-stats">
+    <div class="st">📚<span id="hTotal">0</span></div>
+    <div class="st">🔥<span id="hStreak">0</span>d</div>
+  </div>
+  <div class="header-actions">
+    <button id="themeBtn" title="Giao diện">🌙</button>
+    <button onclick="A.nav('settings')" title="Cài đặt">⚙️</button>
+  </div>
+</header>
+<!-- CATEGORY -->
+<div class="cat-bar" id="catBar"></div>
+<!-- MAIN -->
+<main>
+  <!-- DICTIONARY -->
+  <section class="view active" id="v-dict">
+    <div class="search-box">
+      <span class="s-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Tìm tiếng Hàn, Việt, romaji...">
+      <button class="clear-btn" id="searchClear" onclick="A.dict.clearSearch()">✕</button>
     </div>
-
-    <div class="category-bar" id="category-bar">
-        <button class="cat-chip active" data-cat="ALL">Tất cả</button>
-        <button class="cat-chip" data-cat="Giao tiếp">Giao tiếp</button>
-        <button class="cat-chip" data-cat="Du lịch">Du lịch & Ẩm thực</button>
-        <button class="cat-chip" data-cat="TOPIK 1">TOPIK 1</button>
-        <button class="cat-chip" data-cat="Yêu thích"><i class="fas fa-heart" style="color:var(--danger-color);"></i> Yêu thích</button>
+    <div class="d-flex j-between a-center" style="margin-bottom:10px">
+      <span id="resultCount" style="font-size:.78rem;color:var(--text3)"></span>
+      <button class="btn btn-outline btn-sm" onclick="A.dict.showAddWord()">➕ Thêm từ</button>
     </div>
-
-    <div class="mode-switcher">
-        <button id="mode-dict" class="active-mode" data-mode="dict"><i class="fas fa-search"></i> Tra Từ</button>
-        <button id="mode-flashcard" data-mode="flashcard"><i class="fas fa-clone"></i> Thẻ Bài (<span id="count-badge">0</span>)</button>
-        <button id="mode-game" data-mode="game"><i class="fas fa-gamepad"></i> Mini Games</button>
-        <button id="mode-aichat" data-mode="aichat"><i class="fas fa-comments"></i> AI Chat</button>
-        <button id="mode-voice" data-mode="voice"><i class="fas fa-satellite-dish"></i> Voice AI</button>
-        <button id="mode-writing" data-mode="writing"><i class="fas fa-pen-nib"></i> Luyện Viết</button>
+    <div class="word-list" id="wordList"></div>
+  </section>
+  <!-- FLASHCARD -->
+  <section class="view" id="v-flashcard">
+    <div class="fc-mode-bar" id="fcModeBar"></div>
+    <div class="fc-wrapper">
+      <div class="fc-container" id="fcContainer">
+        <div class="flashcard" id="flashcard">
+          <div class="fc-face fc-front"><div class="fc-big" id="fcFront"></div><button class="btn-icon" onclick="event.stopPropagation();A.tts(A.fc.cur()?.front)">🔊</button></div>
+          <div class="fc-face fc-back"><div class="fc-big" id="fcBack"></div><div class="fc-phon" id="fcRoman"></div><div class="fc-pos" id="fcPos"></div><button class="btn-icon mt-8" onclick="event.stopPropagation();A.tts(A.fc.cur()?.front)">🔊</button></div>
+        </div>
+        <div class="fc-swipe-hint left">◀</div>
+        <div class="fc-swipe-hint right">▶</div>
+      </div>
+      <div class="fc-controls">
+        <button onclick="A.fc.prev()" title="Trước">◀</button>
+        <button class="btn-icon" id="fcFav" onclick="A.fc.toggleFav()">🤍</button>
+        <button class="fc-main" onclick="A.fc.flip()">🔄</button>
+        <button class="btn-icon" id="fcHard" onclick="A.fc.markHard()">⚑</button>
+        <button onclick="A.fc.next()" title="Sau">▶</button>
+      </div>
+      <div class="fc-progress"><span id="fcProg">0/0</span><div class="fc-bar"><div class="fill" id="fcFill"></div></div></div>
     </div>
-
-    <!-- MODE 1: TRA TỪ -->
-    <div id="dict-container" class="content-card" style="display: block;">
-        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px; text-align: center;">Tra từ trực tuyến & Lưu tự động:</div>
-        <div class="dict-search-box">
-            <input type="text" id="dict-input" placeholder="Nhập từ Hàn/Việt...">
-            <button id="btn-dict-search"><i class="fas fa-search"></i> Tra</button>
-        </div>
-        <div id="dict-result" class="dict-result">
-            <div class="dict-word-kr" id="res-kr">---</div>
-            <div class="dict-word-vi" id="res-vi">---</div>
-            <button class="controls button" style="background: var(--primary-color); color: white; padding: 6px 12px; border-radius: 15px; border:none; cursor:pointer;" id="btn-dict-speak"><i class="fas fa-volume-up"></i> Phát âm</button>
-            <br>
-            <button class="btn-add-deck" id="btn-dict-add"><i class="fas fa-plus-circle"></i> Lưu vào bộ từ vựng</button>
-        </div>
+  </section>
+  <!-- GAMES -->
+  <section class="view" id="v-games">
+    <div id="gameSelect">
+      <h2 style="margin-bottom:14px;font-size:1.1rem">🎮 Mini Games</h2>
+      <div class="game-select">
+        <div class="game-card" onclick="A.game.start('quiz')"><div class="g-icon">📝</div><div class="g-name">Trắc nghiệm</div><div class="g-desc">Chọn nghĩa đúng</div></div>
+        <div class="game-card" onclick="A.game.start('match')"><div class="g-icon">🔗</div><div class="g-name">Nối từ</div><div class="g-desc">Ghép cặp Hàn-Việt</div></div>
+        <div class="game-card" onclick="A.game.start('typing')"><div class="g-icon">⌨️</div><div class="g-name">Gõ phím</div><div class="g-desc">Nhập tiếng Hàn</div></div>
+        <div class="game-card" onclick="A.game.start('speak')"><div class="g-icon">🎤</div><div class="g-name">Luyện nói</div><div class="g-desc">Phát âm chuẩn</div></div>
+      </div>
     </div>
-
-    <!-- MODE 2: FLASHCARD -->
-    <div id="fc-main-wrapper" style="display:none; width: 100%; max-width: 480px;">
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Tìm từ...">
-            <button id="btn-search-word"><i class="fas fa-search"></i></button>
-        </div>
-
-        <div class="flashcard-wrapper">
-            <div class="card" id="flashcard">
-                <button class="btn-speak" id="btn-card-audio"><i class="fas fa-volume-up"></i></button>
-                <div class="card-face card-front">
-                    <span class="cat-tag" id="front-cat">Chủ đề</span>
-                    <div style="display:flex; flex-direction:column; gap:6px;">
-                        <div class="korean" id="front-text">안녕하세요</div>
-                        <div class="roman" id="front-roman">annyeonghaseyo</div>
-                    </div>
-                </div>
-                <div class="card-face card-back">
-                    <span class="cat-tag" id="back-cat">Chủ đề</span>
-                    <div style="display:flex; flex-direction:column; gap:6px;">
-                        <div class="vietnamese" id="back-text">Xin chào</div>
-                        <div class="roman" id="back-roman">annyeonghaseyo</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <button id="btn-prev-card"><i class="fas fa-chevron-left"></i> Trước</button>
-            <button class="active-btn" id="btn-flip-card"><i class="fas fa-sync-alt"></i> Lật thẻ</button>
-            <button id="btn-next-card">Sau <i class="fas fa-chevron-right"></i></button>
-        </div>
-
-        <div class="action-buttons">
-            <button id="btn-fav"><i class="far fa-heart"></i> Yêu thích</button>
-            <button id="btn-hard"><i class="fas fa-exclamation-triangle"></i> Từ khó</button>
-            <button id="btn-delete-word" style="color:var(--danger-color);"><i class="fas fa-trash"></i> Xóa từ</button>
-        </div>
-
-        <div class="progress-container">
-            <span id="current-idx">1</span> / <span id="total-idx">0</span>
-            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-        </div>
+    <div class="game-area" id="gameArea">
+      <div class="game-header">
+        <button class="btn btn-outline btn-sm" onclick="A.game.back()">← Quay lại</button>
+        <div class="game-score"><span id="gScore">🎯 0</span><span id="gStreak">🔥 0</span></div>
+      </div>
+      <div id="gameContent"></div>
     </div>
-
-    <!-- MODE 3: MINI GAMES -->
-    <div id="game-main-container" style="display: none; width: 100%; max-width: 480px;">
-        <div class="game-selector">
-            <button id="sg-quiz" data-sub="quiz"><i class="fas fa-list-ul"></i> Trắc Nghiệm</button>
-            <button id="sg-match" data-sub="match"><i class="fas fa-project-diagram"></i> Nối Từ</button>
-            <button id="sg-typing" data-sub="typing"><i class="fas fa-keyboard"></i> Gõ Phím</button>
-            <button id="sg-speaking" class="active-subgame" data-sub="speaking"><i class="fas fa-microphone"></i> Luyện Nói</button>
-        </div>
-
-        <div id="game-quiz" class="content-card">
-            <div class="game-stats">
-                <span><i class="fas fa-star" style="color:#f1c40f;"></i> Điểm: <strong id="quiz-score">0</strong></span>
-                <span><i class="fas fa-fire" style="color:#e74c3c;"></i> Chuỗi: <strong id="quiz-streak">0</strong></span>
-            </div>
-            <div class="quiz-card">
-                <div style="font-size: 26px; font-weight:700;" id="quiz-kr">안녕하세요</div>
-                <div style="font-size: 13px; opacity:0.8;" id="quiz-rm">annyeonghaseyo</div>
-            </div>
-            <div class="quiz-options" id="quiz-opts"></div>
-            <div id="quiz-fb" class="game-feedback"></div>
-        </div>
-
-        <div id="game-match" class="content-card">
-            <div class="game-stats">
-                <span>Nối từ Hàn - Việt:</span>
-                <button id="btn-refresh-match" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600;"><i class="fas fa-redo"></i> Đổi lượt</button>
-            </div>
-            <div class="cross-match-container">
-                <div class="cross-col">
-                    <div class="cross-col-header">TIẾNG HÀN</div>
-                    <div id="col-kr-list" style="display:flex; flex-direction:column; gap:10px;"></div>
-                </div>
-                <div class="cross-col">
-                    <div class="cross-col-header">TIẾNG VIỆT</div>
-                    <div id="col-vi-list" style="display:flex; flex-direction:column; gap:10px;"></div>
-                </div>
-            </div>
-            <div id="match-fb" class="game-feedback"></div>
-        </div>
-
-        <div id="game-typing" class="content-card">
-            <div class="game-stats">
-                <span><i class="fas fa-star" style="color:#f1c40f;"></i> Điểm gõ: <strong id="typing-score">0</strong></span>
-            </div>
-            <div class="typing-card">
-                <div style="font-size: 13px; color:var(--text-muted);">Gõ tiếng Hàn cho từ:</div>
-                <div style="font-size: 24px; font-weight:700; margin: 8px 0; color:var(--primary-color);" id="typing-vi">Xin chào</div>
-                <button class="controls button" style="padding:4px 12px; font-size:12px; border:none; background:var(--card-bg); cursor:pointer; border-radius:12px;" id="btn-typing-listen"><i class="fas fa-volume-up"></i> Nghe</button>
-            </div>
-            <div class="typing-input-wrap">
-                <input type="text" id="typing-input" placeholder="Gõ từ tiếng Hàn...">
-                <button id="btn-typing-submit">Gửi</button>
-            </div>
-            <div id="typing-fb" class="game-feedback"></div>
-        </div>
-
-        <div id="game-speaking" class="content-card">
-            <div class="game-stats">
-                <span><i class="fas fa-bullhorn"></i> Luyện Phát Âm</span>
-                <button id="btn-next-speak" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600;"><i class="fas fa-forward"></i> Từ tiếp</button>
-            </div>
-
-            <div class="speak-card">
-                <div class="speak-target-word" id="speak-target">안녕하세요</div>
-                <div class="speak-target-vi" id="speak-vi">Xin chào</div>
-
-                <button class="btn-speak-listen" id="btn-speak-sample">
-                    <i class="fas fa-volume-up"></i> Nghe mẫu
-                </button>
-
-                <button class="mic-btn-large" id="btn-mic">
-                    <i class="fas fa-microphone"></i>
-                </button>
-                <div style="font-size:12px; opacity:0.9;" id="mic-status">Nhấn micro và đọc</div>
-            </div>
-
-            <div class="eval-box" id="eval-box" style="display: none;">
-                <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">KẾT QUẢ PHÁT ÂM</div>
-                <div class="eval-score-ring" id="eval-score">0%</div>
-                <div class="eval-rating" id="eval-rating">---</div>
-                <div class="eval-transcript" id="eval-transcript">Giọng nói nhận diện: ---</div>
-            </div>
-
-            <div id="speak-fb" class="game-feedback"></div>
-        </div>
+  </section>
+  <!-- AI CHAT -->
+  <section class="view" id="v-chat">
+    <div class="chat-top">
+      <div class="d-flex j-between a-center" style="margin-bottom:8px">
+        <div class="chat-models" id="chatModels"></div>
+        <span class="clear-chat-btn" onclick="A.chat.clear()">🗑 Xóa</span>
+      </div>
+      <div class="chat-scenes" id="chatScenes"></div>
     </div>
-
-    <!-- MODE 4: AI CHAT -->
-    <div id="aichat-main-container" class="content-card">
-        <div class="api-key-box">
-            <i class="fas fa-key" style="color:var(--primary-color);"></i>
-            <input type="password" id="gemini-api-key" placeholder="Dán Gemini API Key vào đây...">
-            <button style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:700; font-size:11px;" id="btn-save-key">Lưu</button>
-        </div>
-
-        <div class="ai-scenario-bar" id="ai-scenario-bar">
-            <button class="scen-chip active" data-scen="free">💬 Tự Do</button>
-            <button class="scen-chip" data-scen="food">🍲 Gọi Món</button>
-            <button class="scen-chip" data-scen="taxi">🚕 Đi Taxi</button>
-            <button class="scen-chip" data-scen="hotel">🏨 Khách Sạn</button>
-        </div>
-
-        <div class="chat-box" id="chat-box"></div>
-        <div class="chat-suggestions" id="chat-sug"></div>
-
-        <div class="chat-input-bar">
-            <button class="btn-chat-mic" id="btn-chat-mic" title="Nói">
-                <i class="fas fa-microphone"></i>
-            </button>
-            <input type="text" id="chat-input" placeholder="Nhập câu tiếng Hàn...">
-            <button class="btn-chat-send" id="btn-chat-send"><i class="fas fa-paper-plane"></i></button>
-        </div>
+    <div class="chat-box">
+      <div class="chat-msgs" id="chatMsgs"></div>
+      <div class="c-input">
+        <input type="text" id="chatInput" placeholder="Nhập tin nhắn...">
+        <button class="btn btn-primary" onclick="A.chat.send()" style="padding:10px 14px">Gửi</button>
+      </div>
     </div>
-
-    <!-- MODE 5: VOICE AI (Gemini 3.1 Flash Live — nói chuyện 2 chiều bằng giọng nói thật) -->
-    <div id="voice-main-container" class="content-card">
-        <div class="ai-scenario-bar" id="voice-scenario-bar">
-            <button class="scen-chip active" data-vscen="free">💬 Tự Do</button>
-            <button class="scen-chip" data-vscen="food">🍲 Gọi Món</button>
-            <button class="scen-chip" data-vscen="taxi">🚕 Đi Taxi</button>
-            <button class="scen-chip" data-vscen="hotel">🏨 Khách Sạn</button>
-        </div>
-
-        <div class="voice-status-row">
-            <span class="voice-status-dot" id="voice-status-dot"></span>
-            <span id="voice-status-text">Chưa kết nối</span>
-        </div>
-
-        <div class="chat-box" id="voice-transcript-box"></div>
-
-        <div class="speak-card voice-call-card">
-            <div style="font-size:13px; opacity:0.9; margin-bottom: 4px;">Nhấn để bắt đầu gọi bằng giọng nói</div>
-            <button class="mic-btn-large" id="btn-voice-call">
-                <i class="fas fa-phone" id="voice-call-icon"></i>
-            </button>
-            <div style="font-size:12px; opacity:0.9;" id="voice-call-hint">Nhấn để kết nối</div>
-        </div>
-
-        <div id="voice-fb" class="game-feedback"></div>
+  </section>
+  <!-- VOICE AI -->
+  <section class="view" id="v-voice">
+    <div class="voice-tab">
+      <div class="vt-title">📞 Gọi điện với AI</div>
+      <div class="vt-desc">Nói chuyện trực tiếp bằng tiếng Hàn.<br>AI sẽ nghe, trả lời và sửa lỗi cho bạn.</div>
+      <div class="vt-call-btn" onclick="A.voice.startCall()">📞</div>
+      <div class="vt-info">Yêu cầu microphone • Dùng Gemini Live API</div>
     </div>
-
-    <!-- MODE 6: LUYỆN VIẾT (Tạo worksheet luyện viết tay A4 — xuất Word/PDF thật, in được) -->
-    <div id="writing-main-container" class="content-card" style="max-width: 480px;">
-
-        <!-- === MÀN HÌNH A: NHẬP + DANH SÁCH TỪ VỰNG === -->
-        <div id="writing-list-screen">
-            <div style="text-align:center; margin-bottom: 14px;">
-                <div style="font-size:17px; font-weight:700; color:var(--primary-color);">Tạo file luyện viết</div>
-                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Dán danh sách từ vựng dạng JSON, sau đó tạo bản check hoặc bản viết tay để in.</div>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <div style="font-size:13px; font-weight:700;">Nhập từ vựng (JSON) <span id="btn-writing-help" style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; color:var(--text-muted); cursor:pointer; font-weight:400; vertical-align:middle;"><i class="fas fa-question-circle"></i></span></div>
-                <button id="btn-writing-demo" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-play"></i> Dùng thử demo</button>
-            </div>
-
-            <textarea id="writing-textarea" rows="6" placeholder='Dán data thô (text bất kỳ) rồi bấm AI Format, hoặc dán JSON dạng
-[{"word":"...","reading":"...","hanviet":"...","meaning":"..."}, ...]' style="width:100%; padding:10px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); border-radius:12px; outline:none; font-size:13px; resize:vertical; font-family: 'Consolas', monospace; margin-bottom:8px;"></textarea>
-
-            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px;">
-                <button id="btn-writing-add" style="flex:1; min-width:120px; padding:9px 10px; border:none; background:var(--primary-color); color:white; border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-plus"></i> Thêm vào danh sách</button>
-                <button id="btn-writing-ai-format" style="flex:1; min-width:100px; padding:9px 10px; border:1px solid #6c5ce7; background:none; color:#6c5ce7; border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-magic"></i> AI Format</button>
-                <button id="btn-writing-clear-input" style="padding:9px 12px; border:1px solid var(--border-color); background:none; color:var(--text-muted); border-radius:14px; cursor:pointer; font-size:12px;"><i class="fas fa-times"></i> Xóa ô nhập</button>
-            </div>
-
-            <div id="writing-msg" class="game-feedback" style="min-height:18px; margin-top:-8px; margin-bottom:8px;"></div>
-
-            <div style="border-top:1px solid var(--border-color); padding-top:14px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div id="writing-list-title" style="font-size:13px; font-weight:700;">Chưa có từ vựng</div>
-                    <button id="btn-writing-clear-all" style="border:none; background:none; color:var(--danger-color); cursor:pointer; font-size:12px; font-weight:600; display:none;"><i class="fas fa-trash"></i> Xóa tất cả</button>
-                </div>
-                <div id="writing-empty-hint" style="text-align:center; color:var(--text-muted); font-size:12px; padding: 16px 0;">Nhập JSON ở trên để thêm từ vựng vào danh sách.</div>
-                <div id="writing-list-items" style="display:flex; flex-direction:column; gap:6px; max-height:260px; overflow-y:auto;"></div>
-            </div>
-
-            <div style="display:flex; gap:8px; margin-top:18px;">
-                <button id="btn-writing-check" style="flex:1; padding:11px; border:1px solid var(--border-color); background:none; color:var(--text-color); border-radius:16px; cursor:pointer; font-weight:600; font-size:13px;"><i class="fas fa-clipboard-check"></i> Tạo file check</button>
-                <button id="btn-writing-create" style="flex:1.4; padding:11px; border:none; background:linear-gradient(145deg, #8e24aa, #ab47bc); color:white; border-radius:16px; cursor:pointer; font-weight:700; font-size:13px; box-shadow:0 4px 12px rgba(142,36,170,0.3);"><i class="fas fa-pen-nib"></i> Tạo bản viết tay</button>
-            </div>
-        </div>
-
-        <!-- === MÀN HÌNH B: PREVIEW A4 === -->
-        <div id="writing-preview-screen" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <button id="btn-writing-back" style="border:none; background:none; color:var(--primary-color); cursor:pointer; font-weight:600; font-size:13px;"><i class="fas fa-arrow-left"></i> Quay lại</button>
-                <button id="btn-writing-config-toggle" style="border:none; background:none; color:var(--text-muted); cursor:pointer; font-size:13px;"><i class="fas fa-sliders-h"></i> Cấu hình</button>
-            </div>
-
-            <div id="writing-config-panel" style="display:none; background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:12px; font-size:12px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <label>Khổ giấy</label>
-                    <select id="cfg-orientation" style="padding:4px 8px; border-radius:8px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color);">
-                        <option value="portrait">A4 Dọc</option>
-                        <option value="landscape">A4 Ngang</option>
-                    </select>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <label>Chế độ luyện</label>
-                    <select id="cfg-mode" style="padding:4px 8px; border-radius:8px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color);">
-                        <option value="trace">Đồ theo chữ mờ</option>
-                        <option value="free">Ô trống tự viết</option>
-                        <option value="both">Cả hai</option>
-                    </select>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <label>Số dòng luyện / từ</label>
-                    <input type="number" id="cfg-rows" min="1" max="6" value="2" style="width:50px; padding:4px; border-radius:8px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color); text-align:center;">
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <label>Hiện phiên âm</label>
-                    <input type="checkbox" id="cfg-show-reading" checked>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <label>Hiện Hán-Việt</label>
-                    <input type="checkbox" id="cfg-show-hanviet" checked>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <label>Hiện nghĩa</label>
-                    <input type="checkbox" id="cfg-show-meaning" checked>
-                </div>
-            </div>
-
-            <div id="writing-a4-scroll" style="width:100%; overflow-x:auto; background:#525659; border-radius:10px; padding:16px 0;">
-                <div id="writing-a4-pages"></div>
-            </div>
-
-            <div style="display:flex; gap:8px; margin-top:14px;">
-                <button id="btn-writing-save-word" style="flex:1; padding:11px 6px; border:none; background:#2b579a; color:white; border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-file-word"></i> Lưu Word</button>
-                <button id="btn-writing-save-pdf" style="flex:1; padding:11px 6px; border:none; background:#c0392b; color:white; border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-file-pdf"></i> Lưu PDF</button>
-                <button id="btn-writing-print" style="flex:1; padding:11px 6px; border:1px solid var(--border-color); background:none; color:var(--text-color); border-radius:14px; cursor:pointer; font-weight:600; font-size:12px;"><i class="fas fa-print"></i> In</button>
-            </div>
-
-            <div id="writing-export-status" style="text-align:center; font-size:12px; font-weight:600; margin-top:10px; min-height:16px;"></div>
-        </div>
-
-        <div style="text-align:center; font-size:11px; color:var(--text-muted); margin-top:14px; border-top:1px solid var(--border-color); padding-top:10px;">
-            <i class="fas fa-print"></i> Bản in được tối ưu cho khổ giấy A4 (210×297mm).
-        </div>
+  </section>
+  <!-- WRITING -->
+  <section class="view" id="v-writing">
+    <h2 style="margin-bottom:14px;font-size:1.1rem">✍️ Luyện viết</h2>
+    <div class="wr-options">
+      <label>Số dòng: <input type="number" id="wrLines" value="10" min="1" max="50" style="width:60px;margin-left:8px"></label>
+      <label><input type="checkbox" id="wrTrace" checked> Chữ mẫu (tracing)</label>
+      <label><input type="checkbox" id="wrRoman"> Romanization</label>
+      <label><input type="checkbox" id="wrMeaning" checked> Nghĩa tiếng Việt</label>
+      <div class="d-flex gap-8">
+        <button class="btn btn-primary btn-sm" onclick="A.writing.gen()">📄 Tạo bài tập</button>
+        <button class="btn btn-outline btn-sm" onclick="A.writing.print()">🖨️ In / PDF</button>
+      </div>
     </div>
-
-    <div class="modal-overlay" id="add-modal">
-        <div class="modal-body">
-            <div class="modal-title">Thêm từ mới <span id="btn-close-modal" style="cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; float:right;"><i class="fas fa-times"></i></span></div>
-            <input type="text" class="modal-input" id="new-kr" placeholder="Tiếng Hàn (VD: 학교)">
-            <input type="text" class="modal-input" id="new-rm" placeholder="Phiên âm (VD: hakgyo)">
-            <input type="text" class="modal-input" id="new-vi" placeholder="Nghĩa tiếng Việt">
-            <input type="text" class="modal-input" id="new-cat" placeholder="Chủ đề">
-            <div class="modal-actions">
-                <button class="modal-btn" style="background:var(--border-color);" id="btn-cancel-modal">Hủy</button>
-                <button class="modal-btn" style="background:var(--primary-color); color:white;" id="btn-save-modal">Lưu thẻ</button>
-            </div>
-        </div>
+    <div id="wrPreview"></div>
+  </section>
+  <!-- STATS -->
+  <section class="view" id="v-stats">
+    <h2 style="margin-bottom:14px;font-size:1.1rem">📊 Thống kê</h2>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="chart-box"><h3>📈 Hoạt động 7 ngày</h3><div class="bar-chart" id="actChart"></div></div>
+    <div class="chart-box"><h3>🔥 Streak gần đây</h3><div class="streak-calendar" id="streakCal"></div></div>
+    <div class="chart-box"><h3>📚 Phân bố cấp độ</h3><div class="bar-chart" id="lvlChart"></div></div>
+  </section>
+  <!-- SETTINGS -->
+  <section class="view" id="v-settings">
+    <h2 style="margin-bottom:14px;font-size:1.1rem">⚙️ Cài đặt</h2>
+    <div class="set-section">
+      <h3>Giao diện</h3>
+      <div class="set-item"><div><div class="s-label">Chế độ tối</div><div class="s-desc">Dark / Light mode</div></div><div class="toggle" id="tDark" onclick="A.settings.toggleDark()"></div></div>
     </div>
-
-    <input type="file" id="import-file" style="display:none;" accept=".json">
-
-    <div class="footer">© 2026 Korean Engine 3.0 • Optimized for GitHub Pages</div>
-
-    <!-- Thư viện cho tính năng Luyện Viết: docx (tạo file Word thật), jsPDF + html2canvas
-         (tạo file PDF thật từ khối HTML đã render, dùng font hệ thống của trình duyệt nên
-         không cần nhúng font Hangul rời — tránh phụ thuộc CDN font nặng/kém ổn định),
-         FileSaver (lưu file xuống máy). docx không có trên cdnjs nên dùng jsDelivr (CDN
-         khác, cũng ổn định lâu năm) cho riêng thư viện này. Nếu 1 script lỗi tải, app.js
-         tự kiểm tra và báo rõ thay vì crash im lặng (xem hàm areWritingLibsLoaded trong
-         app.js). -->
-    <script src="https://cdn.jsdelivr.net/npm/docx@9/build/index.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-    <script src="js/app.js"></script>
-</body>
-</html>
+    <div class="set-section">
+      <h3>Phát âm</h3>
+      <div class="set-item"><div class="s-label">Tốc độ đọc</div><select id="sSpeed" onchange="A.settings.save()"><option value="0.6">Chậm</option><option value="0.8" selected>Bình thường</option><option value="1">Nhanh</option></select></div>
+      <div class="set-item"><div><div class="s-label">Tự phát âm khi lật</div></div><div class="toggle" id="tAutoTTS" onclick="A.settings.toggle('autoTTS')"></div></div>
+    </div>
+    <div class="set-section">
+      <h3>Học tập</h3>
+      <div class="set-item"><div class="s-label">Số từ mỗi phiên</div><select id="sSession" onchange="A.settings.save()"><option value="10">10</option><option value="20" selected>20</option><option value="30">30</option><option value="50">50</option></select></div>
+      <div class="set-item"><div><div class="s-label">Ưu tiên từ khó</div></div><div class="toggle" id="tPriorHard" onclick="A.settings.toggle('priorHard')"></div></div>
+    </div>
+    <div class="set-section">
+      <h3>AI — Gemini</h3>
+      <div class="set-item" style="flex-direction:column;align-items:stretch;gap:8px"><div class="s-label">Gemini API Key</div><input type="password" id="sApiKey" placeholder="Nhập API key..." onchange="A.settings.save()"><div class="s-desc">Lưu tại browser, không gửi nơi khác</div></div>
+      <div class="set-item"><div class="s-label">Model Chat</div><select id="sChatModel" onchange="A.settings.save()"><option value="gemini-2.5-flash">Gemini 2.5 Flash</option><option value="gemini-2.0-flash" selected>Gemini 2.0 Flash</option><option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option></select></div>
+      <div class="set-item"><div class="s-label">Model Voice (Live)</div><select id="sVoiceModel" onchange="A.settings.save()"><option value="gemini-2.0-flash-live-001" selected>Gemini 2.0 Flash Live</option></select></div>
+    </div>
+    <div class="set-section">
+      <h3>Dữ liệu</h3>
+      <div class="set-item d-flex gap-8 flex-wrap" style="flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="A.data.export()">📤 Export</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()">📥 Import</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="A.data.import(event)">
+      </div>
+      <div class="set-item"><button class="btn btn-danger btn-sm" onclick="A.data.reset()">🗑 Xóa tất cả dữ liệu</button></div>
+    </div>
+  </section>
+</main>
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button onclick="A.nav('dict')" data-v="dict" class="active">📖<span>Tra từ</span></button>
+  <button onclick="A.nav('flashcard')" data-v="flashcard">🃏<span>Flash</span></button>
+  <button onclick="A.nav('games')" data-v="games">🎮<span>Game</span></button>
+  <button onclick="A.nav('chat')" data-v="chat">🤖<span>Chat</span></button>
+  <button onclick="A.nav('voice')" data-v="voice">📞<span>Gọi AI</span></button>
+  <button onclick="A.nav('writing')" data-v="writing">✍️<span>Viết</span></button>
+  <button onclick="A.nav('stats')" data-v="stats">📊<span>Stats</span></button>
+  <button onclick="A.nav('settings')" data-v="settings">⚙️<span>Cài</span></button>
+</nav>
+<!-- WORD MODAL -->
+<div class="modal-overlay" id="wordModal" onclick="if(event.target===this)A.closeModal()">
+  <div class="modal"><div class="modal-handle"></div><div id="modalBody"></div></div>
+</div>
+<!-- ADD WORD MODAL -->
+<div class="modal-overlay" id="addModal" onclick="if(event.target===this)A.closeAddModal()">
+  <div class="modal"><div class="modal-handle"></div><h2 style="margin-bottom:14px">➕ Thêm từ mới</h2><div id="addBody"></div></div>
+</div>
+<!-- VOICE CALL OVERLAY -->
+<div class="vc-overlay" id="vcOverlay">
+  <div class="vc-status"><div class="vc-dot" id="vcDot"></div><span id="vcStatusText">Đang kết nối...</span></div>
+  <div class="vc-timer" id="vcTimer">00:00</div>
+  <div class="vc-avatar-area">
+    <div class="vc-avatar"><div class="vc-avatar-ring" id="vcRing"></div>🤖</div>
+    <div class="vc-name">AI Korean Teacher</div>
+  </div>
+  <div class="vc-wave" id="vcWave"><div class="bar" style="--h:14px"></div><div class="bar" style="--h:24px"></div><div class="bar" style="--h:34px"></div><div class="bar" style="--h:42px"></div><div class="bar" style="--h:34px"></div><div class="bar" style="--h:24px"></div><div class="bar" style="--h:14px"></div></div>
+  <div class="vc-transcript" id="vcTranscript"></div>
+  <div class="vc-controls">
+    <div class="vc-ctrl mute" id="vcMute" onclick="A.voice.toggleMute()">🎤</div>
+    <div class="vc-ctrl end" onclick="A.voice.endCall()">📵</div>
+    <div class="vc-ctrl speaker" id="vcSpeaker" onclick="A.voice.toggleSpeaker()">🔊</div>
+  </div>
+</div>
+<!-- TOAST -->
+<div class="toast-box" id="toastBox"></div>
+</div>
