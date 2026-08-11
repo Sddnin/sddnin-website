@@ -1,227 +1,35 @@
 <!DOCTYPE html>
-<html lang="vi" data-theme="light">
+<html lang="vi" data-theme="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#3b82f6">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="description" content="Ứng dụng học tiếng Hàn toàn diện cho người Việt">
-<title>Học Tiếng Hàn 2.0</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EnglishFlow — Nền tảng tự học tiếng Anh</title>
+  <meta name="description" content="Nền tảng tự học tiếng Anh toàn diện cho người Việt. CEFR A1–C1.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
 </head>
 <body>
-<div id="app">
-  <header>
-    <div class="logo"><span class="flag">🇰🇷</span>Học Tiếng Hàn</div>
-    <div class="header-stats">
-      <div class="st">📚<span id="hTotal">0</span></div>
-      <div class="st">🔥<span id="hStreak">0</span>d</div>
-    </div>
-    <div class="header-actions">
-      <button id="themeBtn" title="Giao diện">🌙</button>
-      <button onclick="A.nav('settings')" title="Cài đặt">⚙️</button>
-    </div>
-  </header>
 
-  <div class="cat-bar" id="catBar"></div>
+  <nav id="sidebar" class="sidebar" aria-label="Main navigation"></nav>
+  <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile navigation"></nav>
 
-  <main>
-    <!-- DICTIONARY -->
-    <section class="view active" id="v-dict">
-      <div class="search-box">
-        <span class="s-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Tìm tiếng Hàn, Việt, romaji...">
-        <button class="clear-btn" id="searchClear" onclick="A.dict.clearSearch()">✕</button>
-      </div>
-      <div class="d-flex j-between a-center" style="margin-bottom:10px">
-        <span id="resultCount" style="font-size:.78rem;color:var(--text3)"></span>
-        <button class="btn btn-outline btn-sm" onclick="A.dict.showAddWord()">➕ Thêm từ</button>
-      </div>
-      <div class="word-list" id="wordList"></div>
-    </section>
+  <main id="app" class="main-content" role="main"></main>
 
-    <!-- FLASHCARD -->
-    <section class="view" id="v-flashcard">
-      <div class="fc-mode-bar" id="fcModeBar"></div>
-      <div class="fc-wrapper">
-        <div class="fc-container" id="fcContainer">
-          <div class="flashcard" id="flashcard">
-            <div class="fc-face fc-front">
-              <div class="fc-big" id="fcFront"></div>
-              <button class="btn-icon" onclick="event.stopPropagation();A.tts(A.fc.cur()?.front)">🔊</button>
-            </div>
-            <div class="fc-face fc-back">
-              <div class="fc-big" id="fcBack"></div>
-              <div class="fc-phon" id="fcRoman"></div>
-              <div class="fc-pos" id="fcPos"></div>
-              <button class="btn-icon mt-8" onclick="event.stopPropagation();A.tts(A.fc.cur()?.front)">🔊</button>
-            </div>
-          </div>
-          <div class="fc-swipe-hint left">◀</div>
-          <div class="fc-swipe-hint right">▶</div>
-        </div>
-        <div class="fc-controls">
-          <button onclick="A.fc.prev()" title="Trước">◀</button>
-          <button class="btn-icon" id="fcFav" onclick="A.fc.toggleFav()">🤍</button>
-          <button class="fc-main" onclick="A.fc.flip()">🔄</button>
-          <button class="btn-icon" id="fcHard" onclick="A.fc.markHard()">⚑</button>
-          <button onclick="A.fc.next()" title="Sau">▶</button>
-        </div>
-        <div class="fc-progress">
-          <span id="fcProg">0/0</span>
-          <div class="fc-bar"><div class="fill" id="fcFill"></div></div>
-        </div>
-      </div>
-    </section>
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  <div id="modal-container" aria-modal="true"></div>
 
-    <!-- GAMES -->
-    <section class="view" id="v-games">
-      <div id="gameSelect">
-        <h2 style="margin-bottom:14px;font-size:1.1rem">🎮 Mini Games</h2>
-        <div class="game-select">
-          <div class="game-card" onclick="A.game.start('quiz')"><div class="g-icon">📝</div><div class="g-name">Trắc nghiệm</div><div class="g-desc">Chọn nghĩa đúng</div></div>
-          <div class="game-card" onclick="A.game.start('match')"><div class="g-icon">🔗</div><div class="g-name">Nối từ</div><div class="g-desc">Ghép cặp Hàn-Việt</div></div>
-          <div class="game-card" onclick="A.game.start('typing')"><div class="g-icon">⌨️</div><div class="g-name">Gõ phím</div><div class="g-desc">Nhập tiếng Hàn</div></div>
-          <div class="game-card" onclick="A.game.start('speak')"><div class="g-icon">🎤</div><div class="g-name">Luyện nói</div><div class="g-desc">Phát âm chuẩn</div></div>
-        </div>
-      </div>
-      <div class="game-area" id="gameArea">
-        <div class="game-header">
-          <button class="btn btn-outline btn-sm" onclick="A.game.back()">← Quay lại</button>
-          <div class="game-score"><span id="gScore">🎯 0</span><span id="gStreak">🔥 0</span></div>
-        </div>
-        <div id="gameContent"></div>
-      </div>
-    </section>
-
-    <!-- AI CHAT -->
-    <section class="view" id="v-chat">
-      <div class="chat-top">
-        <div class="d-flex j-between a-center" style="margin-bottom:8px">
-          <div class="chat-models" id="chatModels"></div>
-          <span class="clear-chat-btn" onclick="A.chat.clear()">🗑 Xóa</span>
-        </div>
-        <div class="chat-scenes" id="chatScenes"></div>
-      </div>
-      <div class="chat-box">
-        <div class="chat-msgs" id="chatMsgs"></div>
-        <div class="c-input">
-          <input type="text" id="chatInput" placeholder="Nhập tin nhắn...">
-          <button class="btn btn-primary" onclick="A.chat.send()" style="padding:10px 14px">Gửi</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- VOICE AI -->
-    <section class="view" id="v-voice">
-      <div class="voice-tab">
-        <div class="vt-title">📞 Gọi điện với AI</div>
-        <div class="vt-desc">Nói chuyện trực tiếp bằng tiếng Hàn.<br>AI sẽ nghe, trả lời và sửa lỗi cho bạn.</div>
-        <div class="vt-call-btn" onclick="A.voice.startCall()">📞</div>
-        <div class="vt-info">Yêu cầu microphone • Gemini 3.1 Flash Live</div>
-      </div>
-    </section>
-
-    <!-- WRITING -->
-    <section class="view" id="v-writing">
-      <h2 style="margin-bottom:14px;font-size:1.1rem">✍️ Luyện viết</h2>
-      <div class="wr-options">
-        <label>Số dòng: <input type="number" id="wrLines" value="10" min="1" max="50" style="width:60px;margin-left:8px"></label>
-        <label><input type="checkbox" id="wrTrace" checked> Chữ mẫu (tracing)</label>
-        <label><input type="checkbox" id="wrRoman"> Romanization</label>
-        <label><input type="checkbox" id="wrMeaning" checked> Nghĩa tiếng Việt</label>
-        <div class="d-flex gap-8">
-          <button class="btn btn-primary btn-sm" onclick="A.writing.gen()">📄 Tạo bài tập</button>
-          <button class="btn btn-outline btn-sm" onclick="A.writing.print()">🖨️ In / PDF</button>
-        </div>
-      </div>
-      <div id="wrPreview"></div>
-    </section>
-
-    <!-- STATS -->
-    <section class="view" id="v-stats">
-      <h2 style="margin-bottom:14px;font-size:1.1rem">📊 Thống kê</h2>
-      <div class="stats-grid" id="statsGrid"></div>
-      <div class="chart-box"><h3>📈 Hoạt động 7 ngày</h3><div class="bar-chart" id="actChart"></div></div>
-      <div class="chart-box"><h3>🔥 Streak gần đây</h3><div class="streak-calendar" id="streakCal"></div></div>
-      <div class="chart-box"><h3>📚 Phân bố cấp độ</h3><div class="bar-chart" id="lvlChart"></div></div>
-    </section>
-
-    <!-- SETTINGS -->
-    <section class="view" id="v-settings">
-      <h2 style="margin-bottom:14px;font-size:1.1rem">⚙️ Cài đặt</h2>
-      <div class="set-section">
-        <h3>Giao diện</h3>
-        <div class="set-item"><div><div class="s-label">Chế độ tối</div><div class="s-desc">Dark / Light mode</div></div><div class="toggle" id="tDark" onclick="A.settings.toggleDark()"></div></div>
-      </div>
-      <div class="set-section">
-        <h3>Phát âm</h3>
-        <div class="set-item"><div class="s-label">Tốc độ đọc</div><select id="sSpeed" onchange="A.settings.save()"><option value="0.6">Chậm</option><option value="0.8" selected>Bình thường</option><option value="1">Nhanh</option></select></div>
-        <div class="set-item"><div><div class="s-label">Tự phát âm khi lật</div></div><div class="toggle" id="tAutoTTS" onclick="A.settings.toggle('autoTTS')"></div></div>
-      </div>
-      <div class="set-section">
-        <h3>Học tập</h3>
-        <div class="set-item"><div class="s-label">Số từ mỗi phiên</div><select id="sSession" onchange="A.settings.save()"><option value="10">10</option><option value="20" selected>20</option><option value="30">30</option><option value="50">50</option></select></div>
-        <div class="set-item"><div><div class="s-label">Ưu tiên từ khó</div></div><div class="toggle" id="tPriorHard" onclick="A.settings.toggle('priorHard')"></div></div>
-      </div>
-      <div class="set-section">
-        <h3>AI — Gemini</h3>
-        <div class="set-item" style="flex-direction:column;align-items:stretch;gap:8px"><div class="s-label">Gemini API Key</div><input type="password" id="sApiKey" placeholder="Nhập API key..." onchange="A.settings.save()"><div class="s-desc">Lưu tại browser, không gửi nơi khác</div></div>
-        <div class="set-item"><div class="s-label">Model Chat</div><select id="sChatModel" onchange="A.settings.save()"><option value="gemini-3.6-flash" selected>Gemini 3.6 Flash</option><option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option><option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option></select></div>
-        <div class="set-item"><div class="s-label">Model Voice (Live)</div><select id="sVoiceModel" onchange="A.settings.save()"><option value="gemini-3.1-flash-live-preview" selected>Gemini 3.1 Flash Live</option></select></div>
-      </div>
-      <div class="set-section">
-        <h3>Dữ liệu</h3>
-        <div class="set-item d-flex gap-8" style="flex-wrap:wrap">
-          <button class="btn btn-outline btn-sm" onclick="A.data.export()">📤 Export</button>
-          <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()">📥 Import</button>
-          <input type="file" id="importFile" accept=".json" style="display:none" onchange="A.data.import(event)">
-        </div>
-        <div class="set-item"><button class="btn btn-danger btn-sm" onclick="A.data.reset()">🗑 Xóa tất cả dữ liệu</button></div>
-      </div>
-    </section>
-  </main>
-
-  <nav class="bottom-nav">
-    <button onclick="A.nav('dict')" data-v="dict" class="active">📖<span>Tra từ</span></button>
-    <button onclick="A.nav('flashcard')" data-v="flashcard">🃏<span>Flash</span></button>
-    <button onclick="A.nav('games')" data-v="games">🎮<span>Game</span></button>
-    <button onclick="A.nav('chat')" data-v="chat">🤖<span>Chat</span></button>
-    <button onclick="A.nav('voice')" data-v="voice">📞<span>Gọi AI</span></button>
-    <button onclick="A.nav('writing')" data-v="writing">✍️<span>Viết</span></button>
-    <button onclick="A.nav('stats')" data-v="stats">📊<span>Stats</span></button>
-    <button onclick="A.nav('settings')" data-v="settings">⚙️<span>Cài</span></button>
-  </nav>
-
-  <div class="modal-overlay" id="wordModal" onclick="if(event.target===this)A.closeModal()">
-    <div class="modal"><div class="modal-handle"></div><div id="modalBody"></div></div>
-  </div>
-
-  <div class="modal-overlay" id="addModal" onclick="if(event.target===this)A.closeAddModal()">
-    <div class="modal"><div class="modal-handle"></div><h2 style="margin-bottom:14px">➕ Thêm từ mới</h2><div id="addBody"></div></div>
-  </div>
-
-  <div class="vc-overlay" id="vcOverlay">
-    <div class="vc-status"><div class="vc-dot" id="vcDot"></div><span id="vcStatusText">Đang kết nối...</span></div>
-    <div class="vc-timer" id="vcTimer">00:00</div>
-    <div class="vc-avatar-area">
-      <div class="vc-avatar"><div class="vc-avatar-ring" id="vcRing"></div>🤖</div>
-      <div class="vc-name">AI Korean Teacher</div>
-    </div>
-    <div class="vc-wave" id="vcWave"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
-    <div class="vc-transcript" id="vcTranscript"></div>
-    <div class="vc-controls">
-      <div class="vc-ctrl mute" id="vcMute" onclick="A.voice.toggleMute()">🎤</div>
-      <div class="vc-ctrl end" onclick="A.voice.endCall()">📵</div>
-      <div class="vc-ctrl speaker" id="vcSpeaker" onclick="A.voice.toggleSpeaker()">🔊</div>
-    </div>
-  </div>
-
-  <div class="toast-box" id="toastBox"></div>
-</div>
-
-<script src="js/app.js"></script>
+  <script src="js/constants.js"></script>
+  <script src="js/storage/local-storage.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/ui/toast.js"></script>
+  <script src="js/ui/modal.js"></script>
+  <script src="js/ui/components.js"></script>
+  <script src="js/auth/auth.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
