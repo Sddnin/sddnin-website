@@ -14,6 +14,7 @@ const UI = (() => {
   const btnAddDeck = document.getElementById('btn-add-deck');
   const btnImport = document.getElementById('btn-import');
   const btnExport = document.getElementById('btn-export');
+  const btnAiSettings = document.getElementById('btn-ai-settings');
 
   // Study elements
   const studyDeckSelect = document.getElementById('study-deck-select');
@@ -60,7 +61,7 @@ const UI = (() => {
     attachStudyEvents();
     attachQuizEvents();
     attachManageEvents();
-    showView('study');
+    setActiveNav('study');
   }
 
   function showView(viewName) {
@@ -180,8 +181,13 @@ const UI = (() => {
     cardFrontText.textContent = front;
     cardBackText.textContent = back;
     cardExample.textContent = card.example || '';
-    cardImage.src = card.image || '';
-    cardImage.style.display = card.image ? 'block' : 'none';
+    if (card.image) {
+      cardImage.src = card.image;
+      cardImage.style.display = 'block';
+    } else {
+      cardImage.removeAttribute('src');
+      cardImage.style.display = 'none';
+    }
     updateStudyProgress();
   }
 
@@ -418,10 +424,18 @@ const UI = (() => {
       if (e.target === modal) closeModal();
     });
 
+    btnAiSettings.addEventListener('click', () => AISettings.openSettingsModal());
+
     // Nút chuyển view
-    document.getElementById('nav-study').addEventListener('click', () => showView('study'));
-    document.getElementById('nav-quiz').addEventListener('click', () => showView('quiz'));
-    document.getElementById('nav-manage').addEventListener('click', () => showView('manage'));
+    document.getElementById('nav-study').addEventListener('click', () => setActiveNav('study'));
+    document.getElementById('nav-quiz').addEventListener('click', () => setActiveNav('quiz'));
+    document.getElementById('nav-manage').addEventListener('click', () => setActiveNav('manage'));
+  }
+
+  function setActiveNav(viewName) {
+    showView(viewName);
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('nav-' + viewName).classList.add('active');
   }
 
   async function refreshData() {
