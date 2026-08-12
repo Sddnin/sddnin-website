@@ -1,0 +1,19 @@
+[
+  {
+    "id": "deck1",
+    "name": "Động vật",
+    "cards": [
+      { "id": "c1", "front": "cat", "back": "con mèo", "example": "The cat is sleeping.", "image": "", "level": 0, "nextReview": 0, "reviewCount": 0 },
+      { "id": "c2", "front": "dog", "back": "con chó", "example": "I have a dog.", "image": "", "level": 0, "nextReview": 0, "reviewCount": 0 },
+      { "id": "c3", "front": "elephant", "back": "con voi", "example": "Elephants are big.", "image": "", "level": 0, "nextReview": 0, "reviewCount": 0 }
+    ]
+  },
+  {
+    "id": "deck2",
+    "name": "Trái cây",
+    "cards": [
+      { "id": "c4", "front": "apple", "back": "quả táo", "example": "An apple a day.", "image": "", "level": 0, "nextReview": 0, "reviewCount": 0 },
+      { "id": "c5", "front": "banana", "back": "quả chuối", "example": "I like bananas.", "image": "", "level": 0, "nextReview": 0, "reviewCount": 0 }
+    ]
+  }
+]
