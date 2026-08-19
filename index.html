@@ -1,408 +1,719 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>English Flashcards — Học từ vựng cùng AI</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#58cc02"/>
+<title>LinguaBuddy 🦉 – Học tiếng Anh & Hàn cùng bạn bè</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/baloo-2@latest/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/baloo-2@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/baloo-2@latest/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nunito@latest/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nunito@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nunito@latest/800.css">
+<style>
+:root{
+  --green:#58cc02; --green-d:#46a302; --green-l:#d7ffb8;
+  --blue:#1cb0f6;  --blue-d:#1899d6;  --blue-l:#ddf4ff;
+  --red:#ff4b4b;   --red-d:#d33131;   --red-l:#ffdfe0;
+  --yellow:#ffc800;--yellow-d:#e0a500;
+  --purple:#ce82ff;--purple-d:#a568cc;
+  --orange:#ff9600;--orange-d:#e08400;
+  --ink:#3c3c3c; --ink2:#8a8a8a; --line:#e5e5e5; --bg:#eef4fa;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:'Nunito','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;color:var(--ink);
+  background:var(--bg) radial-gradient(#d9e5f0 1.2px, transparent 1.2px); background-size:22px 22px; font-size:16px}
+h1,h2,h3,h4,.baloo{font-family:'Baloo 2','Nunito',sans-serif}
+button{font-family:inherit}
+#app{max-width:480px;margin:0 auto;min-height:100dvh;background:#fff;position:relative;box-shadow:0 0 44px rgba(30,60,90,.14)}
+#main{padding:14px 18px 118px}
+body.inlesson #topbar, body.inlesson #nav{display:none}
+body.inlesson #main{padding:0 18px 170px}
+
+/* ---------- TOPBAR ---------- */
+#topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:2px solid #f0f2f5}
+.logo{font-family:'Baloo 2';font-weight:800;font-size:19px;color:var(--green);display:flex;align-items:center;gap:6px}
+.logo b{color:var(--blue)}
+.tstats{display:flex;gap:14px}
+.stat{display:flex;align-items:center;gap:4px;font-weight:800;font-size:15px}
+.stat.h b{color:var(--red)} .stat.s b{color:var(--orange)} .stat.x b{color:var(--blue-d)}
+
+/* ---------- NAV ---------- */
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:60;
+  background:#fff;border-top:2px solid #f0f2f5;display:flex;padding:6px 8px calc(8px + env(safe-area-inset-bottom))}
+.navbtn{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:7px 4px;border-radius:14px;color:#9aa4af;font-weight:800;font-size:11px;cursor:pointer;transition:.15s}
+.navbtn .nico{font-size:22px;line-height:1}
+.navbtn.active{color:var(--blue-d);background:var(--blue-l)}
+.navbtn:active{transform:scale(.94)}
+
+/* ---------- BUTTONS ---------- */
+.btn{border:none;border-radius:16px;padding:13px 22px;font-weight:800;font-size:15px;letter-spacing:.6px;
+  text-transform:uppercase;cursor:pointer;transition:transform .06s, filter .15s;color:#fff}
+.btn:active{transform:translateY(4px)}
+.btn.green{background:var(--green);box-shadow:0 4px 0 var(--green-d)} .btn.green:active{box-shadow:0 0 0 var(--green-d)}
+.btn.blue{background:var(--blue);box-shadow:0 4px 0 var(--blue-d)} .btn.blue:active{box-shadow:0 0 0 var(--blue-d)}
+.btn.red{background:var(--red);box-shadow:0 4px 0 var(--red-d)} .btn.red:active{box-shadow:0 0 0 var(--red-d)}
+.btn.gray{background:#fff;color:var(--ink2);border:2px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.btn.gray:active{box-shadow:0 0 0 var(--line)}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn.small{padding:9px 14px;font-size:13px;border-radius:12px}
+
+/* ---------- HOME / PATH ---------- */
+.home-head{display:flex;align-items:center;gap:12px;margin:6px 0 12px}
+.home-head img{width:74px;height:74px;object-fit:cover;border-radius:50%;border:3px solid var(--green);background:#fff}
+.home-head h2{margin:0 0 6px;font-size:21px}
+.goalbar{height:14px;background:#e8edf2;border-radius:8px;overflow:hidden;position:relative}
+.goalfill{height:100%;background:var(--yellow);border-radius:8px;transition:width .5s}
+.goaltxt{font-size:12px;font-weight:800;color:var(--ink2);margin-top:3px}
+.course-tabs{display:flex;gap:10px;margin:6px 0 4px}
+.ctab{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:10px;font-weight:800;font-size:14px;
+  cursor:pointer;box-shadow:0 3px 0 var(--line);transition:.15s;color:var(--ink2)}
+.ctab.on{border-color:var(--blue);color:var(--blue-d);background:var(--blue-l);box-shadow:0 3px 0 #b5e3ff}
+.unitbanner{border-radius:18px;padding:14px 18px;color:#fff;margin:20px 0 6px}
+.unitbanner small{font-weight:800;letter-spacing:1.5px;opacity:.85}
+.unitbanner h3{margin:2px 0 2px;font-size:21px}
+.unitbanner p{margin:0;font-size:13px;opacity:.9}
+.nodes{display:flex;flex-direction:column;gap:26px;padding:26px 0 8px;align-items:center}
+.nrow{position:relative;display:flex;justify-content:center;transform:translateX(var(--off))}
+.node{position:relative;width:76px;height:76px;border-radius:50%;border:none;display:grid;place-items:center;
+  font-size:30px;cursor:pointer;transition:transform .08s}
+.node.locked{background:#e5e5e5;box-shadow:0 6px 0 #cfcfcf;color:#b3b3b3;cursor:not-allowed}
+.node.avail{background:var(--c);box-shadow:0 6px 0 var(--cd)}
+.node.avail:active{transform:translateY(5px);box-shadow:0 1px 0 var(--cd)}
+.node.done{background:var(--yellow);box-shadow:0 6px 0 var(--yellow-d)}
+.node.done:active{transform:translateY(5px);box-shadow:0 1px 0 var(--yellow-d)}
+.node.avail::before{content:'';position:absolute;inset:-9px;border-radius:50%;border:4px solid var(--c);animation:pulse 1.7s infinite}
+.crown{position:absolute;bottom:-6px;right:-10px;background:#fff;border:2px solid var(--yellow);color:var(--yellow-d);
+  border-radius:10px;font-size:11px;font-weight:800;padding:1px 6px}
+.startchip{position:absolute;top:-34px;left:50%;transform:translateX(-50%);background:#fff;color:var(--green);
+  font-family:'Baloo 2';font-weight:800;font-size:13px;letter-spacing:1px;padding:4px 12px;border-radius:12px;
+  border:2px solid var(--green);animation:bob 1.2s infinite;white-space:nowrap;z-index:2}
+.startchip::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);
+  border:6px solid transparent;border-top-color:var(--green);border-bottom:0}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-5px)}}
+@keyframes pulse{0%{transform:scale(.85);opacity:.8}70%{transform:scale(1.18);opacity:0}100%{opacity:0}}
+.endtrophy{text-align:center;font-size:52px;margin:26px 0 6px;filter:drop-shadow(0 4px 0 rgba(0,0,0,.12))}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(var(--off,0))}25%{transform:translateX(calc(var(--off,0px) - 7px))}75%{transform:translateX(calc(var(--off,0px) + 7px))}}
+
+/* ---------- LESSON ---------- */
+.lhead{display:flex;align-items:center;gap:12px;padding:16px 2px 6px}
+.lx{border:none;background:none;font-size:20px;color:#b0b7bf;cursor:pointer;font-weight:800}
+.pbar{flex:1;height:16px;background:#e8edf2;border-radius:10px;overflow:hidden}
+.pfill{height:100%;background:var(--green);border-radius:10px;transition:width .45s;position:relative}
+.pfill::after{content:'';position:absolute;left:8px;right:8px;top:4px;height:4px;background:rgba(255,255,255,.35);border-radius:4px}
+.lheart{font-weight:800;color:var(--red);font-size:15px;white-space:nowrap}
+.qwrap{animation:slidein .3s}
+@keyframes slidein{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+.qtitle{font-size:22px;margin:14px 0 14px}
+.wordcard{display:flex;align-items:center;gap:14px;background:#f7fafc;border:2px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:16px}
+.bigword{font-size:26px;font-weight:800}
+.rom{color:var(--ink2);font-size:13px;font-style:italic}
+.spk{width:52px;height:52px;flex:none;border:none;border-radius:16px;background:var(--blue);color:#fff;font-size:24px;
+  cursor:pointer;box-shadow:0 4px 0 var(--blue-d)}
+.spk:active{transform:translateY(4px);box-shadow:none}
+.spk.big{width:96px;height:96px;font-size:44px;border-radius:26px;margin:8px auto 18px;display:block}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);box-shadow:0 3px 0 var(--line);
+  border-radius:14px;padding:13px 14px;font-size:17px;font-weight:700;cursor:pointer;text-align:left;transition:.1s;width:100%}
+.opt .onum{width:26px;height:26px;flex:none;border:2px solid var(--line);border-radius:8px;color:var(--ink2);
+  display:grid;place-items:center;font-size:12px;font-weight:800}
+.opt.sel{border-color:var(--blue);background:var(--blue-l);box-shadow:0 3px 0 #b5e3ff;color:var(--blue-d)}
+.opt.sel .onum{border-color:var(--blue);color:var(--blue-d)}
+.opt.right{border-color:var(--green);background:var(--green-l);box-shadow:0 3px 0 #a5e26f;color:var(--green-d)}
+.opt.wrongsel{border-color:var(--red);background:var(--red-l);box-shadow:0 3px 0 #f5a9a9;color:var(--red-d)}
+.opt:disabled{cursor:default}
+.promptbox{background:var(--blue-l);border:2px solid #b5e3ff;border-radius:16px;padding:14px 16px;font-size:19px;font-weight:800;margin-bottom:16px;color:#106ea0}
+.anszone{min-height:58px;border-bottom:2px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;padding:10px 2px;align-content:flex-start}
+.bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:26px}
+.tile{background:#fff;border:2px solid var(--line);box-shadow:0 3px 0 var(--line);border-radius:12px;padding:9px 15px;
+  font-weight:800;font-size:16px;cursor:pointer;transition:.08s}
+.tile:active{transform:translateY(3px);box-shadow:none}
+.tile.used{opacity:.3;pointer-events:none}
+.typein{width:100%;border:2px solid var(--line);border-radius:14px;padding:14px;font-size:18px;font-weight:700;
+  font-family:inherit;outline:none;transition:.15s}
+.typein:focus{border-color:var(--blue)}
+.mcols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mtile{background:#fff;border:2px solid var(--line);box-shadow:0 3px 0 var(--line);border-radius:14px;padding:12px 8px;
+  font-weight:800;font-size:15px;cursor:pointer;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.mtile .rom{font-size:11px}
+.mtile.sel{border-color:var(--blue);background:var(--blue-l);box-shadow:0 3px 0 #b5e3ff;color:var(--blue-d)}
+.mtile.done{border-color:var(--green);background:var(--green-l);color:var(--green-d);pointer-events:none;opacity:.75;box-shadow:none}
+.mtile.shk{animation:shake2 .4s;border-color:var(--red);background:var(--red-l)}
+@keyframes shake2{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ---------- FOOTER BAR ---------- */
+#foot{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;z-index:70}
+.fbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px calc(16px + env(safe-area-inset-bottom));
+  background:#fff;border-top:2px solid #f0f2f5;animation:fup .25s}
+@keyframes fup{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.fbar.ok{background:var(--green-l);border-top-color:#b8e986}
+.fbar.bad{background:var(--red-l);border-top-color:#f5b3b3}
+.fmsg{display:flex;align-items:center;gap:12px;font-weight:800;font-size:17px}
+.fmsg .fic{font-size:26px}
+.fmsg .ans{font-size:14px;font-weight:700;color:var(--red-d);margin-top:2px}
+.fmsg .cmb{font-size:13px;color:var(--orange);margin-top:2px}
+.fbar.ok .fmsg b{color:var(--green-d)} .fbar.bad .fmsg b{color:var(--red-d)}
+
+/* ---------- FLASHCARDS ---------- */
+.flash-head{display:flex;align-items:center;gap:12px;margin:8px 0 14px}
+.flash-head h2{margin:0;font-size:23px}
+.deckcard{border:2px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 0 var(--line);position:relative;overflow:hidden}
+.deckcard .flagbg{position:absolute;right:-14px;top:-14px;font-size:88px;opacity:.12;transform:rotate(-10deg)}
+.decktop{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.decktop .fl{font-size:30px}
+.decktop h3{margin:0;font-size:19px}
+.decktop small{color:var(--ink2);font-weight:700}
+.kbar{height:12px;background:#e8edf2;border-radius:7px;overflow:hidden;margin:8px 0}
+.kfill{height:100%;background:var(--green);border-radius:7px;transition:width .5s}
+.fc-scene{perspective:1200px;width:100%;max-width:330px;height:390px;margin:6px auto 14px;cursor:pointer}
+.fc-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.35,.1,.25,1)}
+.fc-scene.flip .fc-inner{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:26px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:22px;text-align:center}
+.fc-front{background:linear-gradient(160deg,#eaf9dd,#d7ffb8);border:3px solid var(--green)}
+.fc-back{background:linear-gradient(160deg,#e3f5ff,#c9ecff);border:3px solid var(--blue);transform:rotateY(180deg)}
+.fc-word{font-size:34px;font-weight:800;line-height:1.2}
+.fc-hint{font-size:12px;font-weight:800;color:var(--ink2);letter-spacing:1px}
+.fc-btns{display:flex;gap:12px;justify-content:center}
+.fc-btns .btn{flex:1;max-width:170px}
+.fsess-head{display:flex;align-items:center;gap:12px;padding-top:14px}
+
+/* ---------- BOARD ---------- */
+.board-head{text-align:center;margin:10px 0 16px}
+.board-head .cup{font-size:56px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.1))}
+.board-head h2{margin:4px 0 2px;font-size:24px}
+.board-head p{margin:0;color:var(--ink2);font-weight:700;font-size:14px}
+.brow{display:flex;align-items:center;gap:12px;border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.brow.me{border-color:var(--blue);background:var(--blue-l)}
+.brow .rank{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;background:#eef2f6;color:var(--ink2)}
+.brow.r1 .rank{background:#ffe9a8;color:#a07800}.brow.r2 .rank{background:#e8e8e8;color:#777}.brow.r3 .rank{background:#ffe0c9;color:#c06000}
+.brow .bava{width:42px;height:42px;flex:none;border-radius:50%;background:#f2f6fa;display:grid;place-items:center;font-size:24px;border:2px solid var(--line)}
+.brow .bname{flex:1;font-weight:800;font-size:15px}
+.brow .bname small{display:block;color:var(--ink2);font-weight:700;font-size:11px}
+.brow .bxp{font-weight:800;color:var(--blue-d)}
+.bdel{border:none;background:none;color:#c4ccd4;cursor:pointer;font-size:15px;padding:4px}
+.bdel:hover{color:var(--red)}
+
+/* ---------- PROFILE ---------- */
+.pcard{border:2px solid var(--line);border-radius:20px;padding:18px;text-align:center;margin-bottom:14px;box-shadow:0 4px 0 var(--line)}
+.pava{width:88px;height:88px;border-radius:50%;background:var(--blue-l);border:3px solid var(--blue);display:grid;place-items:center;font-size:48px;margin:0 auto 8px}
+.pname{font-size:22px;margin:0;display:flex;align-items:center;justify-content:center;gap:8px}
+.pedit{border:none;background:none;cursor:pointer;font-size:15px}
+.pstats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.pstat{background:#f7fafc;border:2px solid var(--line);border-radius:14px;padding:10px}
+.pstat .v{font-size:20px;font-weight:800}
+.pstat .l{font-size:11px;font-weight:800;color:var(--ink2);letter-spacing:.5px}
+.achgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ach{border:2px solid var(--line);border-radius:16px;padding:12px;display:flex;gap:10px;align-items:center;background:#fff}
+.ach .ic{font-size:28px}
+.ach .t{font-size:13px;font-weight:800}
+.ach .d{font-size:11px;color:var(--ink2);font-weight:700}
+.ach.lock{opacity:.4;filter:grayscale(1)}
+.setrow{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-bottom:2px solid #f2f5f8;font-weight:800}
+.sw{width:52px;height:30px;border:none;border-radius:16px;background:#dfe6ec;position:relative;cursor:pointer;transition:.2s}
+.sw::after{content:'';position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.sw.on{background:var(--green)} .sw.on::after{left:25px}
+.credit{text-align:center;color:var(--ink2);font-size:12px;font-weight:700;margin:22px 0 6px}
+
+/* ---------- DONE / MODAL / TOAST ---------- */
+.done-wrap{text-align:center;padding-top:26px;animation:slidein .35s}
+.done-wrap img{width:190px;max-width:60%;margin:0 auto 6px;display:block}
+.done-wrap h2{font-size:27px;margin:4px 0}
+.done-wrap p{color:var(--ink2);font-weight:700;margin:4px 0 18px}
+.dstats{display:flex;gap:10px;justify-content:center;margin-bottom:22px}
+.dstat{border-radius:14px;padding:10px 14px;font-weight:800;min-width:92px}
+.dstat .v{font-size:20px}
+.dstat .l{font-size:10px;letter-spacing:1px;opacity:.8}
+.ds-xp{background:var(--blue-l);color:var(--blue-d);border:2px solid #b5e3ff}
+.ds-acc{background:var(--green-l);color:var(--green-d);border:2px solid #b8e986}
+.ds-perf{background:#fff3d1;color:#a07800;border:2px solid #ffd75e}
+#overlay{position:fixed;inset:0;background:rgba(20,30,45,.5);z-index:100;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:.2s;padding:18px}
+#overlay.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:24px;padding:26px 22px;width:min(100%,400px);text-align:center;
+  transform:translateY(16px);transition:.25s;max-height:88dvh;overflow:auto}
+#overlay.show .modal{transform:none}
+.modal h3{font-size:22px;margin:8px 0 4px}
+.modal p{color:var(--ink2);font-weight:700;margin:4px 0 14px;font-size:14px}
+.modal img.mimg{width:120px;margin:0 auto;display:block}
+.mrow{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.mrow .btn{flex:1}
+.avgrid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+.avb{width:52px;height:52px;border-radius:50%;border:2px solid var(--line);background:#f7fafc;font-size:26px;cursor:pointer;transition:.12s}
+.avb.on{border-color:var(--green);background:var(--green-l);transform:scale(1.1)}
+.minput{width:100%;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:16px;font-weight:700;font-family:inherit;outline:none}
+.minput:focus{border-color:var(--blue)}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.chip{background:var(--blue-l);color:var(--blue-d);border-radius:10px;padding:5px 10px;font-size:12px;font-weight:800}
+#toast{position:fixed;bottom:96px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:#fff;font-weight:800;
+  font-size:14px;padding:10px 18px;border-radius:14px;z-index:200;opacity:0;pointer-events:none;transition:.25s;max-width:88%;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.conf{position:fixed;top:-14px;z-index:300;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(108vh) rotate(760deg)}}
+.hcd{font-weight:800;color:var(--orange)}
+</style>
 </head>
 <body>
-  <div id="app">
-    <!-- Header -->
-    <header>
-      <h1>📚 <span class="brand-text">English Flashcards</span></h1>
-    </header>
+<div id="app">
+  <header id="topbar"></header>
+  <main id="main"></main>
+  <nav id="nav"></nav>
+</div>
+<div id="overlay"></div>
+<div id="toast"></div>
 
-    <div class="main-container">
-      <!-- Sidebar danh sách bộ thẻ -->
-      <aside id="sidebar">
-        <div class="sidebar-header">
-          <h2>📂 Bộ thẻ</h2>
-          <button id="btn-add-deck" class="btn-primary">+ Thêm mới</button>
-        </div>
-        <ul id="deck-list"></ul>
-        <div class="sidebar-footer">
-          <button id="btn-import" class="btn-secondary">📥 Nhập JSON</button>
-          <button id="btn-export" class="btn-secondary">📤 Xuất JSON</button>
-        </div>
-      </aside>
+<script>
+/* ================= IMG & CONST ================= */
+const IMG={
+ wave:'https://image.qwenlm.ai/public_source/3b92064c-48f4-45ac-bef1-2dcc8444efe0/1ed405e69-6d6b-4ab5-a0c7-10f8005c664f.png',
+ party:'https://image.qwenlm.ai/public_source/3b92064c-48f4-45ac-bef1-2dcc8444efe0/10872e656-f3ab-4929-8cb5-800e8090fdf0.png',
+ sad:'https://image.qwenlm.ai/public_source/3b92064c-48f4-45ac-bef1-2dcc8444efe0/1b6dfdc8c-a37e-4156-b234-bd1284fa666c.png'
+};
+const HEART_MS=15*60*1000, DAILY_GOAL=30;
+const UCOLORS=[{bg:'#58cc02',cd:'#46a302'},{bg:'#1cb0f6',cd:'#1899d6'},{bg:'#ce82ff',cd:'#a568cc'}];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+const yesterdayStr=()=>{const d=new Date(Date.now()-864e5);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function sample(a,n){return shuffle(a).slice(0,Math.min(n,a.length))}
+function seed(str){let h=0;for(const c of str){h=(h*31+c.charCodeAt(0))|0}return Math.abs(h)/2147483647}
+const norm=s=>String(s).toLowerCase().replace(/[.,!?;:"'’`,\-]/g,'').replace(/\s+/g,' ').trim();
 
-      <!-- Vùng nội dung chính -->
-      <main id="main-content">
-        <!-- View Học tập -->
-        <div id="study-view" class="view active">
-          <div class="study-controls">
-            <select id="study-deck-select">
-              <option value="">-- Chọn bộ thẻ --</option>
-            </select>
-            <div class="direction-btns">
-              <button id="btn-direction-en-vi" class="btn-option active">Anh → Việt</button>
-              <button id="btn-direction-vi-en" class="btn-option">Việt → Anh</button>
-            </div>
-            <button id="btn-start-study" class="btn-primary">Bắt đầu học</button>
-          </div>
+/* ================= COURSE DATA ================= */
+const COURSES={
+en:{name:'Tiếng Anh',flag:'🇬🇧',tts:'en-US',units:[
+ {title:'Khởi động',desc:'Chào hỏi, giới thiệu & gia đình',lessons:[
+  {id:'en1',icon:'👋',title:'Chào hỏi',words:[['hello','xin chào'],['goodbye','tạm biệt'],['good morning','chào buổi sáng'],['good night','chúc ngủ ngon'],['thank you','cảm ơn'],['sorry','xin lỗi']],
+   sentences:[['Hello, nice to meet you.','Xin chào, rất vui được gặp bạn.'],['Good morning, teacher!','Chào buổi sáng, cô giáo!'],['Thank you very much.','Cảm ơn bạn rất nhiều.']]},
+  {id:'en2',icon:'🙋',title:'Tôi và bạn',words:[['I','tôi'],['you','bạn'],['he','anh ấy'],['she','cô ấy'],['student','học sinh'],['teacher','giáo viên']],
+   sentences:[['I am a student.','Tôi là học sinh.'],['She is a teacher.','Cô ấy là giáo viên.'],['You are my friend.','Bạn là bạn của tôi.']]},
+  {id:'en3',icon:'👨👩‍',title:'Gia đình',words:[['family','gia đình'],['mother','mẹ'],['father','bố'],['brother','anh em trai'],['sister','chị em gái'],['love','yêu thương']],
+   sentences:[['I love my family.','Tôi yêu gia đình của tôi.'],['My mother is kind.','Mẹ của tôi rất hiền.'],['This is my brother.','Đây là anh trai của tôi.']]}
+ ]},
+ {title:'Ẩm thực',desc:'Đồ ăn, đồ uống & nhà hàng',lessons:[
+  {id:'en4',icon:'🍚',title:'Đồ ăn',words:[['rice','cơm'],['bread','bánh mì'],['egg','trứng'],['meat','thịt'],['fish','cá'],['fruit','trái cây']],
+   sentences:[['I eat rice every day.','Tôi ăn cơm mỗi ngày.'],['The fish is fresh.','Con cá thì tươi.'],['She likes bread and eggs.','Cô ấy thích bánh mì và trứng.']]},
+  {id:'en5',icon:'🥤',title:'Đồ uống',words:[['water','nước'],['milk','sữa'],['coffee','cà phê'],['tea','trà'],['juice','nước ép'],['delicious','ngon']],
+   sentences:[['I drink water.','Tôi uống nước.'],['This coffee is delicious.','Ly cà phê này ngon.'],['Do you like tea?','Bạn có thích trà không?']]},
+  {id:'en6',icon:'🍽️',title:'Nhà hàng',words:[['menu','thực đơn'],['order','gọi món'],['bill','hóa đơn'],['hungry','đói'],['full','no'],['waiter','phục vụ']],
+   sentences:[['I am very hungry.','Tôi đang rất đói.'],['Can I see the menu?','Tôi có thể xem thực đơn không?'],['The bill, please.','Làm ơn cho tôi xin hóa đơn.']]}
+ ]},
+ {title:'Thế giới quanh ta',desc:'Số đếm, màu sắc & động vật',lessons:[
+  {id:'en7',icon:'🔢',title:'Số đếm',words:[['one','một'],['two','hai'],['three','ba'],['four','bốn'],['five','năm'],['ten','mười']],
+   sentences:[['I have two cats.','Tôi có hai con mèo.'],['There are five apples.','Có năm quả táo.'],['One, two, three, go!','Một, hai, ba, đi!']]},
+  {id:'en8',icon:'🎨',title:'Màu sắc',words:[['red','màu đỏ'],['blue','màu xanh dương'],['green','màu xanh lá'],['yellow','màu vàng'],['black','màu đen'],['white','màu trắng']],
+   sentences:[['The sky is blue.','Bầu trời thì xanh.'],['My shirt is white.','Áo của tôi màu trắng.'],['I like green.','Tôi thích màu xanh lá.']]},
+  {id:'en9',icon:'🐾',title:'Động vật',words:[['cat','con mèo'],['dog','con chó'],['bird','con chim'],['rabbit','con thỏ'],['tiger','con hổ'],['cute','dễ thương']],
+   sentences:[['The cat is cute.','Con mèo thì dễ thương.'],['Dogs are friendly.','Những chú chó thì thân thiện.'],['I can see a bird.','Tôi có thể thấy một con chim.']]}
+ ]}
+]},
+ko:{name:'Tiếng Hàn',flag:'🇰🇷',tts:'ko-KR',units:[
+ {title:'Khởi động',desc:'Chào hỏi, giới thiệu & gia đình',lessons:[
+  {id:'ko1',icon:'👋',title:'Chào hỏi',words:[['안녕하세요','xin chào','an-nyeong-ha-se-yo'],['감사합니다','cảm ơn','gam-sa-ham-ni-da'],['죄송합니다','xin lỗi','joe-song-ham-ni-da'],['네','vâng','ne'],['아니요','không','a-ni-yo'],['안녕히 가세요','tạm biệt','an-nyeong-hi ga-se-yo']],
+   sentences:[['안녕하세요, 저는 민수예요.','Xin chào, tôi là Minsu.'],['감사합니다, 친구!','Cảm ơn bạn!'],['네, 맞아요.','Vâng, đúng rồi.']]},
+  {id:'ko2',icon:'🙋',title:'Tôi và bạn',words:[['저','tôi','jeo'],['이름','tên','i-reum'],['학생','học sinh','hak-saeng'],['선생님','giáo viên','seon-saeng-nim'],['친구','bạn bè','chin-gu'],['한국','Hàn Quốc','han-guk']],
+   sentences:[['저는 학생이에요.','Tôi là học sinh.'],['제 이름은 지수예요.','Tên tôi là Jisoo.'],['제 친구예요.','Đây là bạn của tôi.']]},
+  {id:'ko3',icon:'👨‍👩‍👧',title:'Gia đình',words:[['가족','gia đình','ga-jok'],['어머니','mẹ','eo-meo-ni'],['아버지','bố','a-beo-ji'],['언니','chị gái','eon-ni'],['오빠','anh trai','o-ppa'],['동생','em','dong-saeng']],
+   sentences:[['가족을 사랑해요.','Tôi yêu gia đình.'],['우리 어머니예요.','Đây là mẹ của tôi.'],['남동생이 있어요.','Tôi có một em trai.']]}
+ ]},
+ {title:'Ẩm thực',desc:'Đồ ăn, đồ uống & nhà hàng',lessons:[
+  {id:'ko4',icon:'🍚',title:'Đồ ăn',words:[['밥','cơm','bap'],['김치','kim chi','gim-chi'],['빵','bánh mì','ppang'],['고기','thịt','go-gi'],['비빔밥','cơm trộn','bi-bim-bap'],['맛있다','ngon','ma-sit-da']],
+   sentences:[['비빔밥이 맛있어요.','Cơm trộn rất ngon.'],['밥을 먹어요.','Tôi ăn cơm.'],['김치를 좋아해요.','Tôi thích kim chi.']]},
+  {id:'ko5',icon:'🥤',title:'Đồ uống',words:[['물','nước','mul'],['우유','sữa','u-yu'],['커피','cà phê','keo-pi'],['차','trà','cha'],['주스','nước ép','ju-seu'],['마시다','uống','ma-si-da']],
+   sentences:[['물을 마셔요.','Tôi uống nước.'],['커피를 좋아해요.','Tôi thích cà phê.'],['녹차가 맛있어요.','Trà xanh rất ngon.']]},
+  {id:'ko6',icon:'🍽️',title:'Nhà hàng',words:[['메뉴','thực đơn','me-nyu'],['주문','đặt món','ju-mun'],['계산서','hóa đơn','gye-san-seo'],['배고프다','đói','bae-go-peu-da'],['맛있게 드세요','chúc ngon miệng','ma-sit-ge deu-se-yo']],
+   sentences:[['배고파요.','Tôi đói rồi.'],['메뉴를 보여 주세요.','Cho tôi xem thực đơn nhé.'],['계산서 주세요.','Cho tôi xin hóa đơn.']]}
+ ]},
+ {title:'Thế giới quanh ta',desc:'Số đếm, màu sắc & động vật',lessons:[
+  {id:'ko7',icon:'🔢',title:'Số đếm',words:[['하나','một','ha-na'],['둘','hai','dul'],['셋','ba','set'],['넷','bốn','net'],['다섯','năm','da-seot'],['열','mười','yeol']],
+   sentences:[['하나, 둘, 셋!','Một, hai, ba!'],['책이 다섯 권 있어요.','Tôi có năm quyển sách.'],['저는 열 살이에요.','Tôi mười tuổi.']]},
+  {id:'ko8',icon:'🎨',title:'Màu sắc',words:[['빨간색','màu đỏ','ppal-gan-saek'],['파란색','màu xanh dương','pa-ran-saek'],['초록색','màu xanh lá','cho-rok-saek'],['노란색','màu vàng','no-ran-saek'],['검은색','màu đen','geo-mun-saek'],['하얀색','màu trắng','ha-yan-saek']],
+   sentences:[['하늘이 파란색이에요.','Bầu trời màu xanh dương.'],['빨간색을 좋아해요.','Tôi thích màu đỏ.'],['고양이가 검은색이에요.','Con mèo màu đen.']]},
+  {id:'ko9',icon:'🐾',title:'Động vật',words:[['고양이','con mèo','go-yang-i'],['강아지','con chó','gang-a-ji'],['새','con chim','sae'],['토끼','con thỏ','to-kki'],['호랑이','con hổ','ho-rang-i'],['귀엽다','dễ thương','gwi-yeop-da']],
+   sentences:[['고양이가 귀여워요.','Con mèo thật dễ thương.'],['강아지를 좋아해요.','Tôi thích chó con.'],['토끼가 뛰어요.','Con thỏ đang nhảy.']]}
+ ]}
+]}};
+COURSES.en.units.forEach(u=>u.lessons.forEach(l=>{l.words=l.words.map(a=>({w:a[0],m:a[1],r:a[2]||''}));l.sentences=l.sentences.map(s=>({s:s[0],t:s[1]}))}));
+COURSES.ko.units.forEach(u=>u.lessons.forEach(l=>{l.words=l.words.map(a=>({w:a[0],m:a[1],r:a[2]||''}));l.sentences=l.sentences.map(s=>({s:s[0],t:s[1]}))}));
+const flatLessons=cid=>COURSES[cid].units.flatMap(u=>u.lessons);
+const allWords=C=>C.units.flatMap(u=>u.lessons.flatMap(l=>l.words));
+const TOK={};
+function courseTokens(cid){if(!TOK[cid]){const s=new Set();COURSES[cid].units.forEach(u=>u.lessons.forEach(l=>l.sentences.forEach(x=>x.s.split(' ').forEach(t=>{const n=norm(t);if(n)s.add(n)}))));TOK[cid]=[...s]}return TOK[cid]}
 
-          <div id="study-area" style="display: none;">
-            <div class="progress-bar">
-              <div class="progress-fill" id="study-progress-fill"></div>
-              <span id="study-progress-text">0/0</span>
-            </div>
+/* ================= STATE ================= */
+const KEY='linguabuddy_v1';
+function fresh(){return{user:{name:'',avatar:'🦉',xp:0,streak:0,lastDate:'',hearts:5,heartsAt:Date.now(),sound:true,course:'en',joined:todayStr()},
+ done:{},known:{en:[],ko:[]},xpDay:{date:'',xp:0},
+ friends:[{id:'f1',name:'Minh Anh',a:'🦊',xp:230},{id:'f2',name:'Jisoo',a:'🐰',xp:175},{id:'f3',name:'Đức',a:'🐻',xp:95}]}}
+let S;
+try{S=Object.assign(fresh(),JSON.parse(localStorage.getItem(KEY)||'null'))||fresh()}catch(e){S=fresh()}
+S.user=Object.assign(fresh().user,S.user); S.known=S.known||{en:[],ko:[]};
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+function syncHearts(){const now=Date.now();if(S.user.hearts<5){const add=Math.floor((now-S.user.heartsAt)/HEART_MS);
+ if(add>0){S.user.hearts=Math.min(5,S.user.hearts+add);S.user.heartsAt=S.user.hearts>=5?now:S.user.heartsAt+add*HEART_MS;save()}}else S.user.heartsAt=now}
+function loseHeart(){if(S.user.hearts>=5)S.user.heartsAt=Date.now();S.user.hearts=Math.max(0,S.user.hearts-1);save();renderTop()}
+function touchStreak(){const t=todayStr();if(S.user.lastDate!==t){S.user.streak=(S.user.lastDate===yesterdayStr())?S.user.streak+1:1;S.user.lastDate=t}}
+function addXP(n){S.user.xp+=n;if(S.xpDay.date!==todayStr())S.xpDay={date:todayStr(),xp:0};S.xpDay.xp+=n;touchStreak();save();renderTop()}
+function heartCd(){const ms=Math.max(0,HEART_MS-(Date.now()-S.user.heartsAt));const m=Math.floor(ms/60000),s=Math.floor(ms%60000/1000);return m+' phút '+String(s).padStart(2,'0')+' giây'}
 
-            <div class="flashcard-container" id="flashcard">
-              <div class="flashcard-inner">
-                <div class="flashcard-front">
-                  <p id="card-front-text"></p>
-                  <button id="btn-speak-front" class="speak-btn" title="Phát âm">🔊</button>
-                </div>
-                <div class="flashcard-back">
-                  <p id="card-back-text"></p>
-                  <p id="card-example" class="example"></p>
-                  <img id="card-image" alt="" style="max-width: 200px; display: none;">
-                  <button id="btn-speak-back" class="speak-btn" title="Phát âm">🔊</button>
-                </div>
-              </div>
-            </div>
+/* ================= AUDIO ================= */
+let AC=null;
+function tone(f,d,t=0,type='sine',g=.14){if(!S.user.sound)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+ const o=AC.createOscillator(),v=AC.createGain();o.type=type;o.frequency.value=f;v.gain.value=g;o.connect(v);v.connect(AC.destination);
+ const n=AC.currentTime+t;o.start(n);v.gain.setValueAtTime(g,n);v.gain.exponentialRampToValueAtTime(.001,n+d);o.stop(n+d)}catch(e){}}
+function sfx(k){if(k==='ok'){tone(660,.12);tone(880,.2,.11)}else if(k==='bad'){tone(196,.22,0,'square',.07);tone(147,.3,.12,'square',.07)}
+ else if(k==='click'){tone(620,.05,0,'triangle',.05)}else if(k==='done'){[523,659,784,1047].forEach((f,i)=>tone(f,.18,i*.12))}}
+let VOICES=[];
+function loadVoices(){if(window.speechSynthesis)VOICES=speechSynthesis.getVoices()}
+if(window.speechSynthesis){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+function hasVoice(lang){return VOICES.some(v=>v.lang&&v.lang.toLowerCase().startsWith(lang.slice(0,2)))}
+function speak(txt,lang){if(!S.user.sound||!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance(txt);u.lang=lang;u.rate=.85;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 
-            <div class="swipe-indicator swipe-indicator-left" id="swipe-indicator-left">❌ Chưa nhớ</div>
-            <div class="swipe-indicator swipe-indicator-right" id="swipe-indicator-right">✅ Nhớ rồi</div>
+/* ================= UI HELPERS ================= */
+let toastT;function toast(m){const t=$('#toast');t.innerHTML=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2300)}
+function openModal(html,lock=false){const o=$('#overlay');o.innerHTML='<div class="modal">'+html+'</div>';o.dataset.lock=lock?'1':'0';o.classList.add('show')}
+function closeModal(){$('#overlay').classList.remove('show')}
+$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay'&&$('#overlay').dataset.lock!=='1')closeModal()});
+function confetti(){const cols=['#58cc02','#1cb0f6','#ffc800','#ff4b4b','#ce82ff','#ff9600'];
+ for(let i=0;i<90;i++){const d=document.createElement('div');d.className='conf';d.style.left=Math.random()*100+'vw';
+  const sz=6+Math.random()*8;d.style.width=d.style.height=sz+'px';d.style.background=cols[i%6];
+  d.style.animationDuration=(2.2+Math.random()*2)+'s';d.style.animationDelay=(Math.random()*.6)+'s';
+  d.style.borderRadius=Math.random()>.5?'50%':'2px';document.body.appendChild(d);setTimeout(()=>d.remove(),5000)}}
+const praise=()=>['Chính xác!','Tuyệt vời!','Đỉnh quá!','Chuẩn luôn!','Giỏi lắm!'][Math.floor(Math.random()*5)];
 
-            <p class="swipe-hint" id="swipe-hint" style="display: none;">👈 Vuốt trái = Chưa nhớ &nbsp;|&nbsp; Vuốt phải = Nhớ rồi 👉</p>
+/* ================= ROUTER ================= */
+let screen='path', L=null, F=null;
+function go(n){screen=n;document.body.classList.toggle('inlesson',['lesson','done','cardsess'].includes(n));renderMain();renderNav()}
+function renderTop(){$('#topbar').innerHTML=`<div class="logo">🦉 Lingua<b>Buddy</b></div>
+ <div class="tstats"><div class="stat s" title="Chuỗi ngày">🔥<b>${S.user.streak}</b></div>
+ <div class="stat h" title="Tim">❤️<b>${S.user.hearts}</b></div>
+ <div class="stat x" title="XP">💎<b>${S.user.xp}</b></div></div>`}
+function renderNav(){const items=[['path','🏠','Học'],['flash','🃏','Thẻ từ'],['board','🏆','Bạn bè'],['profile','👤','Tôi']];
+ $('#nav').innerHTML=items.map(i=>`<button class="navbtn ${screen===i[0]?'active':''}" data-act="go" data-arg="${i[0]}"><span class="nico">${i[1]}</span>${i[2]}</button>`).join('')}
+function renderMain(){({path:renderPath,flash:renderFlash,board:renderBoard,profile:renderProfile,done:()=>{},lesson:()=>{},cardsess:()=>{}})[screen]()}
 
-            <div class="study-nav-controls">
-              <button id="btn-prev-card" class="study-nav-btn" title="Thẻ trước (phím ←)" disabled>← Trước</button>
-              <button id="btn-reshuffle" class="study-nav-btn study-nav-btn-icon" title="Xáo lại các thẻ còn lại">🔀</button>
-              <button id="btn-skip-card" class="study-nav-btn" title="Bỏ qua, không tính điểm (phím →)">Bỏ qua →</button>
-            </div>
-          </div>
-        </div>
+/* ================= PATH ================= */
+function renderPath(){
+ const cid=S.user.course,C=COURSES[cid],ls=flatLessons(cid);
+ const gx=S.xpDay.date===todayStr()?S.xpDay.xp:0;
+ const firstAvail=ls.findIndex(l=>(S.done[l.id]||0)===0);
+ let h=`<div class="home-head"><img src="${IMG.wave}" alt="mascot">
+  <div style="flex:1"><h2>Chào ${esc(S.user.name)}! 👋</h2>
+  <div class="goalbar"><div class="goalfill" style="width:${Math.min(100,gx/DAILY_GOAL*100)}%"></div></div>
+  <div class="goaltxt">Mục tiêu hôm nay: ${gx}/${DAILY_GOAL} XP ${gx>=DAILY_GOAL?'· Đạt rồi! 🎉':''}</div></div></div>
+  <div class="course-tabs">
+   <button class="ctab ${cid==='en'?'on':''}" data-act="set-course" data-arg="en">🇬🇧 Tiếng Anh</button>
+   <button class="ctab ${cid==='ko'?'on':''}" data-act="set-course" data-arg="ko">🇰🇷 Tiếng Hàn</button>
+  </div>`;
+ C.units.forEach((u,ui)=>{const col=UCOLORS[ui%3];
+  h+=`<div class="unitbanner" style="background:${col.bg};box-shadow:0 4px 0 ${col.cd}"><small>PHẦN ${ui+1}</small><h3>${u.title}</h3><p>${u.desc}</p></div><div class="nodes">`;
+  u.lessons.forEach(l=>{const gi=ls.findIndex(x=>x.id===l.id);const dn=S.done[l.id]||0;
+   const st=dn>0?'done':(gi===firstAvail?'avail':'locked');
+   const off=[0,72,0,-72][gi%4];
+   h+=`<div class="nrow" style="--off:${off}px">
+    ${st==='avail'?'<div class="startchip">BẮT ĐẦU</div>':''}
+    <button class="node ${st}" style="--c:${col.bg};--cd:${col.cd}" data-act="node" data-arg="${l.id}">
+     <span>${dn>0?'👑':(st==='locked'?'🔒':l.icon)}</span>
+     ${dn>0?`<span class="crown">×${dn}</span>`:''}
+    </button></div>`});
+  h+='</div>'});
+ h+='<div class="endtrophy">🏆</div>';
+ $('#main').innerHTML=h}
 
-        <!-- View Kiểm tra -->
-        <div id="quiz-view" class="view">
-          <div class="quiz-controls">
-            <select id="quiz-deck-select">
-              <option value="">-- Chọn bộ thẻ --</option>
-            </select>
-          </div>
+/* ================= LESSON FLOW ================= */
+function makeQuiz(cid,l){const qs=[];const C=COURSES[cid];
+ qs.push({t:'match',pairs:sample(l.words,Math.min(5,l.words.length))});
+ sample(l.words,2).forEach(w=>qs.push({t:'choice',word:w}));
+ const lw=sample(l.words,1)[0];
+ qs.push(hasVoice(C.tts)?{t:'listen',word:lw}:{t:'rev',word:lw});
+ sample(l.sentences,Math.min(2,l.sentences.length)).forEach(s=>qs.push({t:'build',sent:s}));
+ if(cid==='en')qs.push({t:'type',sent:sample(l.sentences,1)[0]});
+ return shuffle(qs)}
+function startLesson(lid){syncHearts();
+ if(S.user.hearts<=0){heartsOut();return}
+ L={cid:S.user.course,lid,practice:false,qs:makeQuiz(S.user.course,flatLessons(S.user.course).find(x=>x.id===lid)),i:0,wrong:0,combo:0};
+ go('lesson');renderQ()}
+function startPractice(){const cid=S.user.course;const ls=flatLessons(cid);
+ const dn=ls.filter(l=>S.done[l.id]);const pool=dn.length?dn:ls;
+ L={cid,lid:null,practice:true,qs:makeQuiz(cid,sample(pool,1)[0]).slice(0,5),i:0,wrong:0,combo:0};
+ go('lesson');renderQ()}
+function lhead(){const pct=Math.round(L.i/L.qs.length*100);
+ return `<div class="lhead"><button class="lx" data-act="quit">✕</button>
+ <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+ <div class="lheart">${L.practice?'💪 ∞':'❤️ '+S.user.hearts}</div></div>`}
+function footer(mode,extra){
+ if(mode==='hidden')return '<div class="fbar" style="visibility:hidden"><div></div><div></div></div>';
+ if(mode==='check')return `<div class="fbar"><div></div><button class="btn blue" id="checkbtn" data-act="check" disabled>KIỂM TRA</button></div>`;
+ if(mode==='ok')return `<div class="fbar ok"><div class="fmsg"><div class="fic">✅</div><div><b>${praise()}</b>${L.combo>=2?`<div class="cmb">🔥 Combo x${L.combo}</div>`:''}</div></div><button class="btn green" data-act="next">TIẾP TỤC</button></div>`;
+ return `<div class="fbar bad"><div class="fmsg"><div class="fic">❌</div><div><b>Chưa đúng rồi!</b><div class="ans">Đáp án: ${esc(extra||'')}</div></div></div><button class="btn red" data-act="next">TIẾP TỤC</button></div>`}
+function showFooter(m,a){const f=$('#foot');if(f)f.innerHTML=footer(m,a)}
+function mkOpts(q,kind){const pool=allWords(COURSES[L.cid]);let opts;
+ if(kind==='m'){const others=sample(pool.filter(x=>x.m!==q.word.m),3).map(x=>({main:x.m,sub:''}));
+  opts=shuffle([{main:q.word.m,sub:''},...others]);L.ansIdx=opts.findIndex(o=>o.main===q.word.m)}
+ else{const others=sample(pool.filter(x=>x.w!==q.word.w),3).map(x=>({main:x.w,sub:x.r}));
+  opts=shuffle([{main:q.word.w,sub:q.word.r},...others]);L.ansIdx=opts.findIndex(o=>o.main===q.word.w)}
+ L.opts=opts}
+function renderQ(){const q=L.qs[L.i];L.q=q;L.sel=null;L.answered=false;
+ let body='',foot=footer('check');
+ if(q.t==='choice'||q.t==='rev'||q.t==='listen'){
+  if(q.t==='choice')mkOpts(q,'m');else mkOpts(q,'w');
+  const head=q.t==='choice'?`<div class="wordcard"><button class="spk" data-act="speak" data-arg="${encodeURIComponent(q.word.w)}">🔊</button><div><div class="bigword">${q.word.w}</div>${q.word.r?`<div class="rom">${q.word.r}</div>`:''}</div></div>`
+   :q.t==='rev'?`<div class="promptbox">“${q.word.m}”</div>`
+   :`<button class="spk big" data-act="speak" data-arg="${encodeURIComponent(q.word.w)}">🔊</button>`;
+  const title=q.t==='choice'?'Chọn nghĩa đúng của từ này':q.t==='rev'?'Từ nào có nghĩa là:':'Nghe và chọn từ đúng';
+  body=`<div class="qwrap"><h3 class="qtitle">${title}</h3>${head}
+   <div class="opts">${L.opts.map((o,i)=>`<button class="opt" data-act="sel" data-arg="${i}"><span class="onum">${i+1}</span><span>${o.main}${o.sub?`<div class="rom">${o.sub}</div>`:''}</span></button>`).join('')}</div></div>`;
+  if(q.t==='listen')setTimeout(()=>speak(q.word.w,COURSES[L.cid].tts),350);
+ }else if(q.t==='build'){
+  const toks=q.sent.s.split(' ');
+  const dist=sample(courseTokens(L.cid).filter(t=>!toks.map(norm).includes(t)),3);
+  L.bq={bank:shuffle([...toks,...dist]).map(t=>({txt:t,used:false})),placed:[]};
+  body=`<div class="qwrap"><h3 class="qtitle">Dịch câu này</h3><div class="promptbox">${q.sent.t}</div>
+   <div class="anszone" id="zone"></div><div class="bank" id="bank"></div></div>`;
+  setTimeout(renderBuild,0);
+ }else if(q.t==='type'){
+  body=`<div class="qwrap"><h3 class="qtitle">Dịch sang tiếng ${L.cid==='en'?'Anh':'Hàn'}</h3>
+  <div class="promptbox">${q.sent.t}</div><input class="typein" id="typein" autocomplete="off" placeholder="Nhập câu trả lời..."></div>`;
+ }else if(q.t==='match'){
+  L.m={pairs:q.pairs,left:shuffle(q.pairs.map((p,i)=>({txt:p.w,sub:p.r,id:i,done:false}))),right:shuffle(q.pairs.map((p,i)=>({txt:p.m,id:i,done:false}))),sel:null,done:0};
+  foot=footer('hidden');
+  body=`<div class="qwrap"><h3 class="qtitle">Ghép các cặp từ</h3><div class="mcols" id="mcols"></div></div>`;
+  setTimeout(renderMatch,0);
+ }
+ $('#main').innerHTML=lhead()+body+`<div id="foot">${foot}</div>`;
+ if(q.t==='type'){const inp=$('#typein');inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')acts.check()})}}
+function renderBuild(){const z=$('#zone'),b=$('#bank');if(!z)return;
+ z.innerHTML=L.bq.placed.map((bi,p)=>`<button class="tile" data-act="tilep" data-arg="${p}">${L.bq.bank[bi].txt}</button>`).join('');
+ b.innerHTML=L.bq.bank.map((t,i)=>`<button class="tile ${t.used?'used':''}" data-act="tile" data-arg="${i}">${t.txt}</button>`).join('');
+ const cb=$('#checkbtn');if(cb)cb.disabled=L.bq.placed.length===0}
+function renderMatch(){const m=$('#mcols');if(!m)return;const M=L.m;
+ const cell=(it,side,i)=>`<button class="mtile ${it.done?'done':''} ${M.sel&&M.sel.side===side&&M.sel.idx===i?'sel':''} ${(M.shake&&M.shake.includes(it))?'shk':''}" data-act="mtile" data-arg="${side}${i}">${it.txt}${it.sub?`<span class="rom">${it.sub}</span>`:''}</button>`;
+ m.innerHTML=M.left.map((it,i)=>cell(it,'L',i)).join('')+M.right.map((it,i)=>cell(it,'R',i)).join('')}
+function grade(ok,ans){if(L.answered)return;L.answered=true;
+ if(ok){L.combo++;sfx('ok');showFooter('ok')}
+ else{L.combo=0;L.wrong++;sfx('bad');
+  if(!L.practice){loseHeart();if(S.user.hearts<=0){setTimeout(heartsOut,650);return}}
+  showFooter('bad',ans)}
+ if(L.q.t==='choice'||L.q.t==='rev'||L.q.t==='listen'){
+  document.querySelectorAll('.opt').forEach((o,i)=>{o.disabled=true;if(i===L.ansIdx)o.classList.add('right');if(i===L.sel&&!ok)o.classList.add('wrongsel')})}}
+function finishLesson(){const total=L.qs.length,acc=Math.max(0,Math.round((total-L.wrong)/total*100));
+ if(L.practice){S.user.hearts=Math.min(5,S.user.hearts+1);addXP(5);save();renderPracticeDone();return}
+ const isNew=(S.done[L.lid]||0)===0;
+ S.done[L.lid]=Math.min(5,(S.done[L.lid]||0)+1);
+ let xp=isNew?15:5;const perfect=L.wrong===0;if(perfect){xp+=5;S.user.hearts=Math.min(5,S.user.hearts+1)}
+ addXP(xp);save();
+ L.result={xp,perfect,acc,isNew};go('done');renderDone()}
+function renderDone(){const r=L.result;sfx('done');confetti();
+ $('#main').innerHTML=`<div class="done-wrap"><img src="${IMG.party}" alt="yay">
+  <h2>${r.perfect?'HOÀN HẢO! 🌟':'BÀI HỌC HOÀN THÀNH!'}</h2>
+  <p>${r.isNew?'Bài học mới đã mở khóa!':'Ôn tập thật chắc kiến thức nhé!'}</p>
+  <div class="dstats"><div class="dstat ds-xp"><div class="v">+${r.xp}</div><div class="l">XP</div></div>
+  <div class="dstat ds-acc"><div class="v">${r.acc}%</div><div class="l">CHÍNH XÁC</div></div>
+  <div class="dstat ds-perf"><div class="v">${r.perfect?'+1 ❤️':'—'}</div><div class="l">THƯỞNG</div></div></div>
+  <button class="btn green wide" data-act="done-home">TIẾP TỤC</button></div>`}
+function renderPracticeDone(){sfx('done');
+ $('#main').innerHTML=`<div class="done-wrap"><img src="${IMG.party}" alt="yay">
+  <h2>LUYỆN TẬP XONG! 💪</h2><p>+1 ❤️ và +5 XP cho bạn!</p>
+  <div class="dstats"><div class="dstat ds-xp"><div class="v">+5</div><div class="l">XP</div></div>
+  <div class="dstat ds-perf"><div class="v">+1 ❤️</div><div class="l">HỒI TIM</div></div></div>
+  <button class="btn green wide" data-act="done-home">TIẾP TỤC</button></div>`}
+function heartsOut(){openModal(`<img class="mimg" src="${IMG.sad}" alt="sad">
+ <h3>Hết tim rồi! 💔</h3>
+ <p>Sai nhiều quá nên tim cạn mất... Luyện tập để hồi tim, hoặc chờ <span class="hcd" id="hcd">${heartCd()}</span> nữa sẽ có tim mới.</p>
+ <div class="mrow"><button class="btn green" data-act="practice">Luyện tập +1❤️</button></div>
+ <div class="mrow"><button class="btn gray" data-act="close">Để sau</button></div>`,true)}
 
-          <!-- Màn chọn loại trò chơi -->
-          <div id="game-picker" class="game-picker">
-            <button class="game-card" data-game="mc" id="game-card-mc">
-              <span class="game-card-icon">🎯</span>
-              <span class="game-card-title">Trắc nghiệm</span>
-              <span class="game-card-desc">Chọn đáp án đúng trong 4 lựa chọn</span>
-            </button>
-            <button class="game-card" data-game="listen" id="game-card-listen">
-              <span class="game-card-icon">🎧</span>
-              <span class="game-card-title">Nghe đoán từ</span>
-              <span class="game-card-desc">Nghe phát âm, gõ đúng từ tiếng Anh</span>
-            </button>
-            <button class="game-card" data-game="speedtype" id="game-card-speedtype">
-              <span class="game-card-icon">⏱️</span>
-              <span class="game-card-title">Nối từ tốc độ</span>
-              <span class="game-card-desc">Gõ nhanh nghĩa trước khi hết giờ</span>
-            </button>
-            <button class="game-card" data-game="match" id="game-card-match">
-              <span class="game-card-icon">🧩</span>
-              <span class="game-card-title">Ghép thẻ</span>
-              <span class="game-card-desc">Lật ô tìm cặp Anh - Việt giống nhau</span>
-            </button>
-            <button class="game-card" data-game="fillblank" id="game-card-fillblank">
-              <span class="game-card-icon">✏️</span>
-              <span class="game-card-title">Điền từ</span>
-              <span class="game-card-desc">Điền từ còn thiếu vào câu ví dụ</span>
-            </button>
-          </div>
+/* ================= FLASHCARDS ================= */
+function deckOf(cid){const cards=[];COURSES[cid].units.forEach(u=>u.lessons.forEach(l=>l.words.forEach((w,i)=>cards.push({id:l.id+':'+i,...w}))))
+ return{cid,cards}}
+function renderFlash(){const tot=deckOf('en').cards.length+deckOf('ko').cards.length;
+ const kn=(S.known.en||[]).length+(S.known.ko||[]).length;
+ let h=`<div class="flash-head"><h2>🃏 Flashcard</h2></div>
+ <div class="deckcard" style="border-color:var(--green)"><div style="font-weight:800">📚 Đã thuộc <span style="color:var(--green-d)">${kn}</span>/${tot} từ vựng</div>
+ <div class="kbar"><div class="kfill" style="width:${tot?Math.round(kn/tot*100):0}%"></div></div>
+ <div style="font-size:12px;font-weight:700;color:var(--ink2)">Lật thẻ, nghe phát âm và tự kiểm tra trí nhớ của bạn!</div></div>`;
+ ['en','ko'].forEach(cid=>{const d=deckOf(cid);const k=(S.known[cid]||[]).length;
+  h+=`<div class="deckcard"><div class="flagbg">${COURSES[cid].flag}</div>
+   <div class="decktop"><span class="fl">${COURSES[cid].flag}</span><div><h3>${COURSES[cid].name}</h3><small>${k}/${d.cards.length} từ đã thuộc</small></div></div>
+   <div class="kbar"><div class="kfill" style="width:${d.cards.length?Math.round(k/d.cards.length*100):0}%"></div></div>
+   <button class="btn blue wide" data-act="deck" data-arg="${cid}">HỌC THẺ ✨</button></div>`});
+ h+=`<div class="credit">Mẹo: học 10 thẻ mỗi ngày giúp nhớ lâu hơn 90% đó! 🧠</div>`;
+ $('#main').innerHTML=h}
+function startDeck(cid){const d=deckOf(cid);const known=S.known[cid]||[];
+ const un=shuffle(d.cards.filter(c=>!known.includes(c.id)));
+ const kn=shuffle(d.cards.filter(c=>known.includes(c.id)));
+ const queue=[...un,...kn].slice(0,10).map(c=>({c,tries:0}));
+ F={cid,queue,total:queue.length,done:0,new:0,flipped:false};
+ go('cardsess');renderCard()}
+function renderCard(){if(!F.queue.length){renderCardSum();return}
+ const card=F.queue[0].c;const pct=Math.round(F.done/F.total*100);
+ $('#main').innerHTML=`<div class="fsess-head"><button class="lx" data-act="quit">✕</button>
+  <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+  <div class="lheart">🃏 ${F.total-F.done}</div></div>
+  <div class="fc-scene ${F.flipped?'flip':''}" id="fcscene" data-act="flip">
+   <div class="fc-inner">
+    <div class="fc-face fc-front"><button class="spk" data-act="speak" data-arg="${encodeURIComponent(card.w)}">🔊</button>
+     <div class="fc-word">${card.w}</div>${card.r?`<div class="rom">${card.r}</div>`:''}
+     <div class="fc-hint">CHẠM ĐỂ LẬT 👆</div></div>
+    <div class="fc-face fc-back"><div class="fc-hint">${card.w}</div>
+     <div class="fc-word" style="font-size:28px">${card.m}</div>
+     <button class="spk small" style="width:44px;height:44px;font-size:20px" data-act="speak" data-arg="${encodeURIComponent(card.w)}">🔊</button></div>
+   </div></div>
+  <div class="fc-btns" style="${F.flipped?'':'visibility:hidden'}">
+   <button class="btn gray" data-act="later">🤔 Chưa thuộc</button>
+   <button class="btn green" data-act="known">🎉 Thuộc rồi</button></div>`}
+function renderCardSum(){const xp=3+F.new;addXP(xp);sfx('done');confetti();
+ $('#main').innerHTML=`<div class="done-wrap"><img src="${IMG.party}" alt="yay">
+  <h2>ÔN THẺ XONG! 🃏</h2><p>Hôm nay bạn ôn ${F.done} thẻ, thuộc mới ${F.new} từ!</p>
+  <div class="dstats"><div class="dstat ds-xp"><div class="v">+${xp}</div><div class="l">XP</div></div>
+  <div class="dstat ds-acc"><div class="v">${F.new}</div><div class="l">TỪ MỚI</div></div></div>
+  <div class="mrow"><button class="btn gray" data-act="go" data-arg="flash">Về thẻ</button>
+  <button class="btn green" data-act="deck" data-arg="${F.cid}">Ôn tiếp</button></div></div>`}
 
-          <button id="btn-back-to-games" class="btn-secondary btn-back-games" style="display:none;">← Chọn trò chơi khác</button>
+/* ================= BOARD ================= */
+function renderBoard(){const t=todayStr();
+ const rows=[{name:S.user.name,a:S.user.avatar,xp:S.user.xp,me:true},
+  ...S.friends.map(f=>({name:f.name,a:f.a,xp:f.xp+Math.floor(seed(f.id+t)*30),id:f.id}))].sort((a,b)=>b.xp-a.xp);
+ let h=`<div class="board-head"><div class="cup">🏆</div><h2>Bảng vàng hội bạn</h2>
+  <p>Đua top tuần này – ai lười học là bét bảng nha! 😜</p></div>`;
+ rows.forEach((r,i)=>{h+=`<div class="brow ${r.me?'me':''} r${i+1}">
+  <div class="rank">${i<3?['🥇','🥈',''][i]:i+1}</div>
+  <div class="bava">${r.a}</div>
+  <div class="bname">${esc(r.name)}${r.me?' <small>(Bạn)</small>':''}</div>
+  <div class="bxp">💎 ${r.xp}</div>
+  ${r.id?`<button class="bdel" data-act="delfriend-open" data-arg="${r.id}" title="Xóa">✕</button>`:''}</div>`});
+ h+=`<button class="btn blue wide" data-act="addfriend-open">➕ THÊM BẠN VÀO BẢNG</button>
+ <div class="credit">XP tăng mỗi khi học bài & ôn flashcard đó!</div>`;
+ $('#main').innerHTML=h}
 
-          <!-- Trắc nghiệm (game gốc, không đổi logic) -->
-          <div id="quiz-area" style="display: none;">
-            <div class="quiz-progress">
-              <span id="quiz-progress-text">Câu 1/10</span>
-              <span id="quiz-score">Điểm: 0</span>
-            </div>
-            <div class="quiz-question-row">
-              <div class="quiz-question" id="quiz-question"></div>
-              <button id="btn-speak-quiz-question" class="speak-btn on-light" title="Phát âm">🔊</button>
-            </div>
-            <div class="quiz-options" id="quiz-options"></div>
-            <button id="btn-next-question" class="btn-primary" style="display:none;">Câu tiếp theo</button>
-          </div>
+/* ================= PROFILE ================= */
+function renderProfile(){const lessonsDone=Object.keys(S.done).length;
+ const known=(S.known.en||[]).length+(S.known.ko||[]).length;
+ const ACH=[['🎓','Bước đầu tiên','Hoàn thành bài học đầu tiên',lessonsDone>=1],
+  ['📚','Chăm chỉ','Hoàn thành 5 bài học',lessonsDone>=5],
+  ['🏆','Học bá','Hoàn thành 15 bài học',lessonsDone>=15],
+  ['🔥','Giữ lửa 3 ngày','Chuỗi 3 ngày học',S.user.streak>=3],
+  ['🌋','Bất khả chiến bại','Chuỗi 7 ngày học',S.user.streak>=7],
+  ['🃏','Nhà sưu tầm','Thuộc 20 flashcard',known>=20],
+  ['🧠','Siêu trí nhớ','Thuộc 60 flashcard',known>=60],
+  ['💎','Đại gia XP','Đạt 500 XP',S.user.xp>=500]];
+ $('#main').innerHTML=`<div class="pcard"><div class="pava">${S.user.avatar}</div>
+  <h3 class="pname">${esc(S.user.name)} <button class="pedit" data-act="editname-open">✏️</button></h3>
+  <div style="color:var(--ink2);font-weight:700;font-size:13px">Thành viên từ ${S.user.joined}</div>
+  <div class="pstats">
+   <div class="pstat"><div class="v" style="color:var(--blue-d)">💎 ${S.user.xp}</div><div class="l">TỔNG XP</div></div>
+   <div class="pstat"><div class="v" style="color:var(--orange)">🔥 ${S.user.streak}</div><div class="l">CHUỖI NGÀY</div></div>
+   <div class="pstat"><div class="v" style="color:var(--green-d)">📗 ${lessonsDone}</div><div class="l">BÀI HỌC</div></div>
+   <div class="pstat"><div class="v" style="color:var(--purple-d)">🃏 ${known}</div><div class="l">TỪ ĐÃ THUỘC</div></div>
+  </div></div>
+  <h3 style="margin:16px 0 10px">🏅 Thành tích</h3>
+  <div class="achgrid">${ACH.map(a=>`<div class="ach ${a[3]?'':'lock'}"><div class="ic">${a[0]}</div><div><div class="t">${a[1]}</div><div class="d">${a[2]}</div></div></div>`).join('')}</div>
+  <h3 style="margin:18px 0 6px">⚙️ Cài đặt</h3>
+  <div class="setrow"><span>🔊 Âm thanh & giọng đọc</span><button class="sw ${S.user.sound?'on':''}" data-act="toggle-sound"></button></div>
+  <div class="setrow"><span>💪 Luyện tập hồi tim</span><button class="btn small blue" data-act="practice">Luyện tập</button></div>
+  <div class="setrow" style="border:none"><span>🗑️ Xóa toàn bộ tiến độ</span><button class="btn small red" data-act="reset-open">Xóa</button></div>
+  <div class="credit">LinguaBuddy 🦉 – made with ❤️ cho hội bạn thân</div>`}
 
-          <!-- Nghe đoán từ -->
-          <div id="listen-area" style="display: none;">
-            <div class="quiz-progress">
-              <span id="listen-progress-text">Câu 1/10</span>
-              <span id="listen-score">Điểm: 0</span>
-            </div>
-            <div class="listen-play-row">
-              <button id="btn-listen-replay" class="listen-replay-btn" title="Phát lại">🔊</button>
-              <p class="listen-hint">Nghe rồi gõ đúng từ tiếng Anh</p>
-            </div>
-            <div class="listen-input-row">
-              <input type="text" id="listen-input" class="listen-input" autocomplete="off" placeholder="Gõ từ bạn nghe được...">
-              <button id="btn-listen-submit" class="btn-primary">Kiểm tra</button>
-            </div>
-            <div id="listen-feedback" class="listen-feedback"></div>
-            <button id="btn-listen-next" class="btn-primary" style="display:none;">Câu tiếp theo</button>
-          </div>
+/* ================= ACTIONS ================= */
+const acts={
+ go:(a)=>go(a),
+ 'set-course':a=>{S.user.course=a;save();renderPath();toast(a==='en'?'Đã chuyển sang Tiếng Anh 🇬🇧':'Đã chuyển sang Tiếng Hàn 🇰')},
+ node:(a,el)=>{const ls=flatLessons(S.user.course);const gi=ls.findIndex(x=>x.id===a);const dn=S.done[a]||0;
+  const firstAvail=ls.findIndex(l=>(S.done[l.id]||0)===0);
+  if(dn===0&&gi!==firstAvail){el.closest('.nrow').classList.add('shake');setTimeout(()=>el.closest('.nrow').classList.remove('shake'),450);
+   toast('🔒 Hoàn thành bài trước để mở khóa nhé!');sfx('bad');return}
+  const l=ls[gi];sfx('click');
+  openModal(`<div style="font-size:56px">${l.icon}</div><h3>${l.title}</h3>
+   <div class="chips"><span class="chip">❓ ~${makeQuiz(S.user.course,l).length} câu hỏi</span><span class="chip">❤️ -1 khi sai</span><span class="chip">💎 +${dn?5:15} XP</span>${dn?`<span class="chip">👑 ×${dn}</span>`:''}</div>
+   <p>${dn?'Ôn lại để nhớ thật lâu nhé!':'Sẵn sàng chinh phục bài mới chưa?'}</p>
+   <div class="mrow"><button class="btn gray" data-act="close">Hủy</button>
+   <button class="btn green" data-act="start-lesson" data-arg="${a}">${dn?'ÔN TẬP':'HỌC THÔI'}</button></div>`)},
+ 'start-lesson':a=>{closeModal();startLesson(a)},
+ quit:()=>openModal(`<h3>Thoát bài học? 🥺</h3><p>Tiến độ bài này sẽ mất đó nha...</p>
+  <div class="mrow"><button class="btn gray" data-act="close">Ở lại</button><button class="btn red" data-act="quit-yes">Thoát</button></div>`),
+ 'quit-yes':()=>{closeModal();L=null;go('path')},
+ sel:(a,el)=>{if(L.answered)return;L.sel=+a;sfx('click');
+  document.querySelectorAll('.opt').forEach((o,i)=>o.classList.toggle('sel',i===+a));
+  const cb=$('#checkbtn');if(cb)cb.disabled=false},
+ check:()=>{if(L.answered)return;const q=L.q;
+  if(q.t==='choice'||q.t==='rev'||q.t==='listen'){if(L.sel==null)return;
+   grade(L.sel===L.ansIdx,q.t==='choice'?q.word.m:q.word.w)}
+  else if(q.t==='build'){const built=L.bq.placed.map(i=>L.bq.bank[i].txt).join(' ');
+   grade(norm(built)===norm(q.sent.s),q.sent.s)}
+  else if(q.t==='type'){const v=$('#typein').value;grade(norm(v)===norm(q.sent.s),q.sent.s)}},
+ next:()=>{L.i++;if(L.i>=L.qs.length)finishLesson();else renderQ()},
+ speak:(a)=>speak(decodeURIComponent(a),COURSES[L?L.cid:S.user.course].tts),
+ tile:a=>{if(L.answered)return;const i=+a;if(L.bq.bank[i].used)return;sfx('click');L.bq.bank[i].used=true;L.bq.placed.push(i);renderBuild()},
+ tilep:a=>{if(L.answered)return;const p=+a;const i=L.bq.placed[p];L.bq.bank[i].used=false;L.bq.placed.splice(p,1);sfx('click');renderBuild()},
+ mtile:a=>{if(L.answered)return;const side=a[0],idx=+a.slice(1);const M=L.m;
+  const arr=side==='L'?M.left:M.right;const it=arr[idx];if(it.done)return;
+  if(M.sel&&M.sel.side===side){M.sel=(M.sel.idx===idx)?null:{side,idx};sfx('click');renderMatch();return}
+  if(!M.sel){M.sel={side,idx};sfx('click');renderMatch();return}
+  const other=M.sel.side==='L'?M.left[M.sel.idx]:M.right[M.sel.idx];
+  if(other.id===it.id){other.done=it.done=true;M.sel=null;M.done++;sfx('ok');
+   if(M.done===M.pairs.length){L.answered=true;setTimeout(()=>showFooter('ok'),300)}
+   renderMatch()}
+  else{L.wrong++;L.combo=0;sfx('bad');M.shake=[other,it];M.sel=null;renderMatch();
+   setTimeout(()=>{M.shake=null;renderMatch()},450)}},
+ flip:()=>{if(!F||!F.queue.length)return;if(!F.flipped){F.flipped=true;$('#fcscene').classList.add('flip');
+   const btns=document.querySelector('.fc-btns');if(btns)btns.style.visibility='visible';sfx('click')}},
+ later:()=>{const q=F.queue.shift();q.tries++;if(q.tries<2)F.queue.push(q);F.done++;F.flipped=false;sfx('click');renderCard()},
+ known:()=>{const q=F.queue.shift();const k=S.known[F.cid]||(S.known[F.cid]=[]);
+  if(!k.includes(q.c.id)){k.push(q.c.id);F.new++;save()}F.done++;F.flipped=false;sfx('ok');renderCard()},
+ deck:a=>startDeck(a),
+ practice:()=>{closeModal();startPractice()},
+ 'done-home':()=>{L=null;go('path')},
+ 'addfriend-open':()=>openModal(`<div style="font-size:44px">🤝</div><h3>Thêm bạn mới</h3>
+  <p>Rủ bạn bè cùng đua XP nào!</p>
+  <input class="minput" id="fname" maxlength="16" placeholder="Tên của bạn ấy...">
+  <div class="avgrid" id="favgrid">${['🐶','🐱','🦊','','🐼','','🦁',''].map((a,i)=>`<button class="avb ${i===0?'on':''}" data-act="fav" data-arg="${a}">${a}</button>`).join('')}</div>
+  <input type="hidden" id="favsel" value="🐶">
+  <div class="mrow"><button class="btn gray" data-act="close">Hủy</button><button class="btn blue" data-act="addfriend">Thêm ngay</button></div>`),
+ fav:(a,el)=>{document.querySelectorAll('#favgrid .avb').forEach(b=>b.classList.remove('on'));el.classList.add('on');$('#favsel').value=a;sfx('click')},
+ addfriend:()=>{const n=($('#fname').value||'').trim();if(!n){toast('Nhập tên bạn ấy đã nha! 😅');return}
+  S.friends.push({id:'f'+Date.now(),name:n,a:$('#favsel').value,xp:30+Math.floor(Math.random()*120)});save();closeModal();renderBoard();toast(`Đã thêm ${esc(n)} vào bảng bạn bè! 🎉`)},
+ 'delfriend-open':a=>openModal(`<h3>Xóa bạn này? 🥲</h3><p>Người ấy sẽ không còn trên bảng xếp hạng nữa.</p>
+  <div class="mrow"><button class="btn gray" data-act="close">Thôi</button><button class="btn red" data-act="delfriend" data-arg="${a}">Xóa</button></div>`),
+ delfriend:a=>{S.friends=S.friends.filter(f=>f.id!==a);save();closeModal();renderBoard();toast('Đã xóa khỏi bảng bạn bè')},
+ 'editname-open':()=>openModal(`<h3>Đổi tên & avatar</h3>
+  <input class="minput" id="nname" maxlength="16" value="${esc(S.user.name)}">
+  <div class="avgrid" id="obavgrid">${['🦉','🐸','','🐼','','🦄','','🐶'].map(a=>`<button class="avb ${a===S.user.avatar?'on':''}" data-act="obav" data-arg="${a}">${a}</button>`).join('')}</div>
+  <input type="hidden" id="obavsel" value="${S.user.avatar}">
+  <div class="mrow"><button class="btn gray" data-act="close">Hủy</button><button class="btn green" data-act="savename">Lưu lại</button></div>`),
+ obav:(a,el)=>{document.querySelectorAll('#obavgrid .avb').forEach(b=>b.classList.remove('on'));el.classList.add('on');$('#obavsel').value=a;sfx('click')},
+ savename:()=>{const n=($('#nname').value||'').trim();if(!n){toast('Tên không được trống nha!');return}
+  S.user.name=n;S.user.avatar=$('#obavsel').value;save();closeModal();renderTop();renderMain();toast('Đã cập nhật hồ sơ! ✨')},
+ 'toggle-sound':()=>{S.user.sound=!S.user.sound;save();renderProfile();if(S.user.sound)sfx('ok')},
+ 'reset-open':()=>openModal(`<img class="mimg" src="${IMG.sad}"><h3>Xóa hết tiến độ? 😱</h3>
+  <p>XP, chuỗi ngày, thành tích... sẽ mất sạch đó!</p>
+  <div class="mrow"><button class="btn gray" data-act="close">Thôi</button><button class="btn red" data-act="reset">Xóa hết</button></div>`),
+ reset:()=>{localStorage.removeItem(KEY);location.reload()},
+ close:()=>closeModal()
+};
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;
+ const fn=acts[el.dataset.act];if(fn)fn(el.dataset.arg,el)});
 
-          <!-- Nối từ tốc độ -->
-          <div id="speedtype-area" style="display: none;">
-            <div class="quiz-progress">
-              <span id="speedtype-progress-text">Câu 1/10</span>
-              <span id="speedtype-score">Điểm: 0</span>
-            </div>
-            <div class="speedtype-timer-bar">
-              <div class="speedtype-timer-fill" id="speedtype-timer-fill"></div>
-            </div>
-            <div class="quiz-question" id="speedtype-question"></div>
-            <div class="listen-input-row">
-              <input type="text" id="speedtype-input" class="listen-input" autocomplete="off" placeholder="Gõ nhanh nghĩa...">
-              <button id="btn-speedtype-submit" class="btn-primary">Gửi</button>
-            </div>
-            <div id="speedtype-feedback" class="listen-feedback"></div>
-          </div>
-
-          <!-- Ghép thẻ (lật ô trí nhớ) -->
-          <div id="match-area" style="display: none;">
-            <div class="quiz-progress">
-              <span id="match-progress-text">0/0 cặp</span>
-              <span id="match-moves">Lượt lật: 0</span>
-            </div>
-            <div id="match-grid" class="match-grid"></div>
-          </div>
-
-          <!-- Điền từ vào chỗ trống -->
-          <div id="fillblank-area" style="display: none;">
-            <div class="quiz-progress">
-              <span id="fillblank-progress-text">Câu 1/10</span>
-              <span id="fillblank-score">Điểm: 0</span>
-            </div>
-            <div class="quiz-question" id="fillblank-sentence"></div>
-            <div class="listen-input-row">
-              <input type="text" id="fillblank-input" class="listen-input" autocomplete="off" placeholder="Điền từ còn thiếu...">
-              <button id="btn-fillblank-submit" class="btn-primary">Kiểm tra</button>
-            </div>
-            <div id="fillblank-feedback" class="listen-feedback"></div>
-            <button id="btn-fillblank-next" class="btn-primary" style="display:none;">Câu tiếp theo</button>
-          </div>
-        </div>
-
-        <!-- View Ngữ pháp -->
-        <div id="grammar-view" class="view">
-          <div class="grammar-placeholder">
-            <p>📝 Chưa có nội dung ngữ pháp. Sẽ được bổ sung sau.</p>
-          </div>
-        </div>
-      </main>
-    </div>
-
-    <!-- Bottom Navigation Bar -->
-    <nav id="bottom-nav">
-      <button id="nav-study" class="bottom-nav-btn" title="Học"><span class="nav-icon">📖</span><span class="nav-label">Học</span></button>
-      <button id="nav-quiz" class="bottom-nav-btn" title="Quiz"><span class="nav-icon">❓</span><span class="nav-label">Quiz</span></button>
-      <button id="nav-grammar" class="bottom-nav-btn" title="Ngữ pháp"><span class="nav-icon">📝</span><span class="nav-label">Ngữ pháp</span></button>
-      <button id="btn-open-settings" class="bottom-nav-btn" title="Cài đặt"><span class="nav-icon">⚙️</span><span class="nav-label">Cài đặt</span></button>
-    </nav>
-
-    <!-- ============== AI: Floating action buttons ============== -->
-    <div class="ai-fab-group">
-      <button id="btn-open-chat" class="ai-fab chat-fab" title="Chat với gia sư AI">
-        💬
-        <span class="fab-badge" id="chat-fab-badge"></span>
-      </button>
-      <button id="btn-open-voice" class="ai-fab voice-fab" title="Gọi thoại với gia sư AI">
-        🎙️
-      </button>
-    </div>
-
-    <!-- ============== AI: Chat panel ============== -->
-    <div id="chat-panel">
-      <div class="chat-header">
-        <div class="chat-header-title">
-          <span class="chat-avatar" id="chat-avatar">🤖</span>
-          <span id="chat-title-text">Gia sư AI</span>
-        </div>
-        <div class="chat-header-actions">
-          <button id="btn-clear-chat" title="Xoá cuộc trò chuyện">🗑️</button>
-          <button id="btn-close-chat" title="Đóng">✕</button>
-        </div>
-      </div>
-      <div class="chat-mode-bar">
-        <button id="btn-chat-mode-tutor" class="chat-mode-btn active" data-mode="tutor" title="Giải thích ngữ pháp, từ vựng bằng tiếng Việt">
-          📚 Gia sư
-        </button>
-        <button id="btn-chat-mode-buddy" class="chat-mode-btn" data-mode="buddy" title="Trò chuyện tự nhiên, chỉ tiếng Anh, luyện phản xạ">
-          🌎 Bạn chat (EN)
-        </button>
-      </div>
-      <div class="chat-model-bar">
-        <label>Model</label>
-        <select id="chat-model-select">
-          <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
-          <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
-          <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
-        </select>
-      </div>
-      <div id="chat-messages"></div>
-      <div class="chat-input-row">
-        <textarea id="chat-input" rows="1" placeholder="Hỏi gia sư AI về từ vựng, ngữ pháp..."></textarea>
-        <button id="btn-send-chat" class="chat-send-btn" title="Gửi">➤</button>
-      </div>
-    </div>
-
-    <!-- ============== AI: Voice call overlay ============== -->
-    <div id="voice-overlay">
-      <div class="voice-top">
-        <div class="voice-status-pill">
-          <span class="voice-status-dot" id="voice-status-dot"></span>
-          <span id="voice-status-text">Sẵn sàng</span>
-        </div>
-        <div class="voice-title">Gia sư AI — Luyện nói</div>
-        <div class="voice-subtitle" id="voice-subtitle">Đang dùng Gemini 3.1 Flash Live</div>
-      </div>
-
-      <div class="voice-orb-wrap">
-        <div class="voice-orb" id="voice-orb">
-          <span class="voice-orb-icon">🎙️</span>
-        </div>
-      </div>
-
-      <div class="voice-transcript" id="voice-transcript">
-        <span class="transcript-label">Nội dung</span>
-        <span id="voice-transcript-text">Nhấn nút mic để bắt đầu nói.</span>
-      </div>
-
-      <div class="voice-controls">
-        <button id="btn-mute-voice" class="voice-ctrl-btn mute-btn" title="Tắt/bật micro">🎤</button>
-        <button id="btn-end-voice" class="voice-ctrl-btn end-call-btn" title="Kết thúc cuộc gọi">📞</button>
-      </div>
-    </div>
-
-    <!-- ============== Toasts ============== -->
-    <div id="toast-container"></div>
-
-    <!-- Modal -->
-    <div id="modal" class="modal">
-      <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <div id="modal-body"></div>
-      </div>
-    </div>
-
-    <!-- Templates -->
-    <template id="deck-form-template">
-      <h3>Thêm / Sửa bộ thẻ</h3>
-      <input type="text" id="deck-name-input" placeholder="Tên bộ thẻ" required>
-      <button id="btn-save-deck" class="btn-primary">Lưu</button>
-    </template>
-
-    <template id="card-form-template">
-      <h3>Thêm / Sửa thẻ</h3>
-      <input type="text" id="card-front-input" placeholder="Từ vựng (mặt trước)" required>
-      <input type="text" id="card-back-input" placeholder="Nghĩa (mặt sau)" required>
-      <input type="text" id="card-example-input" placeholder="Ví dụ (tuỳ chọn)">
-      <input type="url" id="card-image-input" placeholder="URL ảnh minh hoạ (tuỳ chọn)">
-      <button id="btn-save-card" class="btn-primary">Lưu</button>
-    </template>
-
-    <template id="import-template">
-      <h3>Nhập dữ liệu JSON</h3>
-      <textarea id="import-json" rows="10" placeholder='Dán nội dung JSON vào đây...'></textarea>
-      <button id="btn-do-import" class="btn-primary">Nhập</button>
-    </template>
-
-    <template id="settings-template">
-      <h3>⚙️ Cài đặt</h3>
-
-      <div class="settings-section">
-        <label>📇 Quản lý thẻ</label>
-        <div class="manage-controls">
-          <select id="manage-deck-select">
-            <option value="">-- Chọn bộ thẻ --</option>
-          </select>
-          <button id="btn-add-card" class="btn-primary">+ Thêm thẻ</button>
-          <button id="btn-edit-deck-name" class="btn-secondary">✏️ Đổi tên bộ</button>
-          <button id="btn-delete-deck" class="btn-danger">🗑️ Xoá bộ</button>
-        </div>
-        <div id="cards-container" class="cards-grid"></div>
-      </div>
-
-      <div class="settings-section settings-divider">
-        <label>🔑 Cài đặt AI</label>
-        <p class="form-hint">
-          Nhập API key Gemini của riêng bạn để dùng tính năng Chat và Gọi thoại AI.
-          Key được lưu <strong>chỉ trên trình duyệt của bạn</strong> (localStorage), không gửi đi đâu khác ngoài Google.
-          Lấy key miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
-        </p>
-
-        <div class="settings-section">
-          <label for="gemini-api-key-input">Gemini API Key</label>
-          <div class="key-input-row">
-            <input type="password" id="gemini-api-key-input" placeholder="AIza...">
-            <button type="button" id="btn-toggle-key-visibility" class="btn-toggle-visibility">👁️</button>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <label>Model dùng cho Chat (nhắn tin văn bản)</label>
-          <div class="model-choice-grid" id="chat-model-choice-grid">
-            <label class="model-choice" data-value="gemini-3.6-flash">
-              <input type="radio" name="chat-model-choice" value="gemini-3.6-flash">
-              <span>
-                <span class="model-name">Gemini 3.6 Flash</span>
-                <span class="model-desc">Mạnh nhất trong 3 lựa chọn, phản hồi chất lượng cao</span>
-              </span>
-            </label>
-            <label class="model-choice" data-value="gemini-3.5-flash">
-              <input type="radio" name="chat-model-choice" value="gemini-3.5-flash">
-              <span>
-                <span class="model-name">Gemini 3.5 Flash</span>
-                <span class="model-desc">Cân bằng giữa tốc độ và chất lượng</span>
-              </span>
-            </label>
-            <label class="model-choice" data-value="gemini-3.5-flash-lite">
-              <input type="radio" name="chat-model-choice" value="gemini-3.5-flash-lite">
-              <span>
-                <span class="model-name">Gemini 3.5 Flash Lite</span>
-                <span class="model-desc">Nhanh nhất, tiết kiệm nhất</span>
-              </span>
-            </label>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <label>Gọi thoại (Voice)</label>
-          <div class="model-choice">
-            <span style="font-size:1.1rem;">🎙️</span>
-            <span>
-              <span class="model-name">Gemini 3.1 Flash Live</span>
-              <span class="model-desc">Model realtime duy nhất dùng cho tính năng gọi thoại</span>
-            </span>
-          </div>
-        </div>
-
-        <button id="btn-save-ai-settings" class="btn-primary" style="width:100%;">Lưu cài đặt AI</button>
-        <div class="settings-status" id="ai-settings-status"></div>
-      </div>
-    </template>
-
-  </div>
-
-  <script src="js/storage.js"></script>
-  <script src="js/speech.js"></script>
-  <script src="js/study.js"></script>
-  <script src="js/quiz.js"></script>
-  <script src="js/listen-game.js"></script>
-  <script src="js/speedtype-game.js"></script>
-  <script src="js/match-game.js"></script>
-  <script src="js/fillblank-game.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/toast.js"></script>
-  <script src="js/ai-settings.js"></script>
-  <script src="js/gemini-chat.js"></script>
-  <script src="js/gemini-live.js"></script>
-  <script src="js/app.js"></script>
+/* ================= BOOT ================= */
+function onboarding(){openModal(`<img class="mimg" src="${IMG.wave}" alt="owl">
+ <h3>Chào mừng đến LinguaBuddy! 🦉</h3>
+ <p>Ứng dụng học tiếng Anh & Hàn dành riêng cho hội bạn thân. Đặt tên để bắt đầu nhé!</p>
+ <input class="minput" id="obname" maxlength="16" placeholder="Tên của bạn...">
+ <div class="avgrid" id="obavgrid">${['🦉','🐸','🦊','🐼','🐰','🦄','🐯','🐶'].map((a,i)=>`<button class="avb ${i===0?'on':''}" data-act="obav" data-arg="${a}">${a}</button>`).join('')}</div>
+ <input type="hidden" id="obavsel" value="🦉">
+ <div class="mrow"><button class="btn green wide" data-act="obstart">BẮT ĐẦU 🚀</button></div>`,true)}
+acts.obstart=()=>{const n=($('#obname').value||'').trim();if(!n){toast('Cho mình xin cái tên nha! 😊');return}
+ S.user.name=n;S.user.avatar=$('#obavsel').value;S.user.joined=todayStr();save();closeModal();renderTop();renderMain();
+ toast(`Chúc ${esc(n)} học thật vui! 🎉`);sfx('done')};
+syncHearts();renderTop();renderNav();renderMain();
+if(!S.user.name)onboarding();
+setInterval(()=>{syncHearts();renderTop();const c=$('#hcd');if(c)c.textContent=heartCd()},1000);
+</script>
 </body>
 </html>
